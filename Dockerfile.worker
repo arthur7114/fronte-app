@@ -1,0 +1,34 @@
+FROM node:20-alpine AS base
+
+FROM base AS builder
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+COPY . .
+RUN npx turbo prune --scope=@super/worker --docker
+
+FROM base AS installer
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+COPY --from=builder /app/out/json/ ./
+COPY --from=builder /app/out/package-lock.json ./
+RUN npm ci
+
+COPY --from=builder /app/out/full/ ./
+RUN npx turbo build --filter=@super/worker
+
+FROM base AS runner
+WORKDIR /app
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 workeruser
+USER workeruser
+
+# Copy over the built worker
+COPY --from=installer --chown=workeruser:nodejs /app/apps/worker/dist ./apps/worker/dist
+COPY --from=installer --chown=workeruser:nodejs /app/apps/worker/package.json ./apps/worker/package.json
+COPY --from=installer --chown=workeruser:nodejs /app/packages ./packages
+COPY --from=installer --chown=workeruser:nodejs /app/node_modules ./node_modules
+
+CMD ["node", "apps/worker/dist/index.js"]

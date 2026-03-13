@@ -1,0 +1,26 @@
+{
+    "name": "super",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "turbo dev",
+        "build": "turbo build",
+        "lint": "turbo lint",
+        "typecheck": "turbo typecheck",
+        "dev:web": "turbo dev --filter=web",
+        "dev:worker": "turbo dev --filter=worker",
+        "build:web": "turbo build --filter=web",
+        "build:worker": "turbo build --filter=worker"
+    },
+    "devDependencies": {
+        "turbo": "^2",
+        "typescript": "^5.7"
+    },
+    "packageManager": "npm@10.9.2",
+    "engines": {
+        "node": ">=20"
+    }
+}
