@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           expertise_level: string | null
           id: string
+          model: string
           tenant_id: string
           tone_of_voice: string | null
           updated_at: string
@@ -28,6 +29,7 @@ export type Database = {
           created_at?: string
           expertise_level?: string | null
           id?: string
+          model?: string
           tenant_id: string
           tone_of_voice?: string | null
           updated_at?: string
@@ -37,6 +39,7 @@ export type Database = {
           created_at?: string
           expertise_level?: string | null
           id?: string
+          model?: string
           tenant_id?: string
           tone_of_voice?: string | null
           updated_at?: string

@@ -1,65 +1,103 @@
 # Product Roadmap
 
-## Overview
+## Visão geral
 
-O produto completo será evoluído em fases.
+O produto completo evolui em fases, mas o foco atual ainda é fechar o MVP com qualidade operacional.
 
-O MVP cobre apenas a base de blog + conteúdo automatizado.
-
----
-
-## Phase 1 — Site Foundation
-
-Objetivo:
-
-criar a base de site/blog com identidade própria
-
-Entregas possíveis:
-
-- criação de site
-- configuração de branding
-- páginas básicas
-- tema inicial
-- domínio/subdomínio
+Hoje o projeto já avançou bem nas fases de base, blog e automação inicial. O próximo trabalho deve priorizar fechamento de escopo antes de expansão.
 
 ---
 
-## Phase 2 — Blog Engine
+## Fase 1 — Foundation e acesso
 
 Objetivo:
 
-entregar a estrutura editorial do produto
+criar a base operacional do produto
 
-Entregas possíveis:
+Status atual:
 
+praticamente concluída
+
+Entregas já cobertas:
+
+- auth
+- sessão SSR
+- workspace
+- onboarding
+- shell autenticado do app
+
+---
+
+## Fase 2 — Blog Engine e CMS
+
+Objetivo:
+
+entregar a estrutura editorial mínima do produto
+
+Status atual:
+
+praticamente concluída
+
+Entregas já cobertas:
+
+- site/blog
 - posts
-- categorias
-- tags
-- SEO básico
-- sitemap
-- RSS
-- agendamento
+- editor básico
+- fluxo editorial
+- blog público
 
 ---
 
-## Phase 3 — AI Content Production
+## Fase 3 — AI Content Production
 
 Objetivo:
 
 automatizar pesquisa, planejamento e escrita
 
-Entregas possíveis:
+Status atual:
+
+parcialmente concluída, com o núcleo já funcional
+
+Entregas já cobertas:
 
 - topic research
-- competitor analysis
+- aprovação humana
 - briefs
 - draft generation
-- editorial approval
-- learning rules
+- jobs reais por tenant
+
+Pendências principais:
+
+- `publish_post`
+- UI de `ai_rules`
+- melhor observabilidade
+- decisão final sobre exposição de `modelo` na UI
 
 ---
 
-## Phase 4 — Results Analysis
+## Fase 4 — Governança de consumo de IA
+
+Objetivo:
+
+transformar a IA em capability comercial controlada pela plataforma
+
+Direção:
+
+- IA vendida pela plataforma
+- sem BYO key no MVP
+- modelo como variável de qualidade e custo
+- introdução de sistemática de créditos
+
+Entregas possíveis:
+
+- seleção de modelo
+- medição de consumo por operação
+- saldo e histórico de créditos
+- limites por plano
+
+---
+
+## Fase 5 — Results Analysis
 
 Objetivo:
 
@@ -72,43 +110,31 @@ Entregas possíveis:
 - CTR
 - ranking
 - performance dashboard
-- sugestões de refresh
 
 ---
 
-## Phase 5 — Contact Base Management
+## Fase 6 — Contact Base e automações
 
 Objetivo:
 
-capturar e organizar leads do site/blog
+expandir o produto além do blog engine
 
 Entregas possíveis:
 
-- formulários
 - contatos
-- tags
-- origem
-- status básico
-- integração com CRM externo
-
----
-
-## Phase 6 — Email Scheduling and Webhook Automations
-
-Objetivo:
-
-ativar ações automatizadas a partir de eventos do sistema
-
-Entregas possíveis:
-
-- sequências de e-mail
-- disparos por webhook
+- origem e status básico
 - integrações externas
-- triggers por formulário
-- triggers por publicação
+- automações por evento
+- webhooks e sequências futuras
 
 ---
 
-## Product Direction
+## Próximo foco recomendado
 
-A longo prazo, o produto deixa de ser apenas um blog engine e passa a operar como uma plataforma de marketing automation orientada por conteúdo.
+Antes de abrir novas frentes grandes, o roadmap imediato deve priorizar:
+
+- fechar o restante do escopo do MVP
+- endurecer operação de jobs e IA
+- preparar a camada de consumo por modelo/créditos
+
+O produto já deixou de ser apenas uma promessa técnica. Agora o trabalho mais valioso é transformar o núcleo já funcional em operação previsível e comercializável.

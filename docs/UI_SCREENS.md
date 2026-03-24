@@ -1,175 +1,272 @@
 # UI Screens
 
-Este documento descreve todas as telas da aplicação.
+Este documento lista as telas reais do produto no estado atual do MVP.
 
 ---
 
-## Authentication
+## Auth e entrada
 
-### Login
+### `/auth/login`
 
-Campos:
-- Email  
-- Password  
+Objetivo:
 
-### Signup
+permitir entrada por email e senha
 
-Campos:
-- Email  
-- Password  
-- Company Name  
+Principais elementos:
 
----
+- email
+- senha
+- feedback de erro
+- redirecionamento conforme estado do usuário
 
-## Dashboard
+### `/auth/signup`
 
-Página inicial do usuário.
+Objetivo:
 
-Elementos:
-- Site summary  
-- Recent posts  
-- Automation status  
+criar a conta inicial
 
----
+Principais elementos:
 
-## Site Management
-
-### Create Site
-
-Campos:
-- Site name  
-- Language  
-- Subdomain  
-
-### Theme Settings
-
-Configuração visual.
-
-Campos:
-- Logo  
-- Colors  
-- Typography  
-
-### Domain Settings
-
-Campos:
-- Subdomain  
-- Custom domain  
+- email
+- senha
+- feedback de sucesso
+- fallback para confirmação de email quando necessário
 
 ---
 
-## Blog
+## Onboarding
 
-### Posts List
+### `/onboarding`
 
-Lista de artigos.
+Objetivo:
 
-Filtros:
-- Status  
-- Date  
-- Author  
+criar o primeiro workspace
 
-### Post Editor
+Principais elementos:
 
-Editor principal.
+- nome do workspace
+- slug do workspace
+- contexto da etapa atual
 
-Campos:
-- Title  
-- Slug  
-- Content  
-- Meta description  
-- Featured image  
+### `/onboarding/site`
 
-### Scheduled Posts
+Objetivo:
 
-Lista de posts agendados.
+criar o primeiro site do workspace
 
-O usuário pode:
-- Alterar data  
-- Editar conteúdo  
+Principais elementos:
+
+- nome do site
+- idioma
+- subdomínio
 
 ---
 
-## Automation
+## App autenticado
 
-### Automation Settings
+### `/app/overview`
 
-Campos:
-- Keywords  
-- Language  
-- Expertise level  
-- Posts per week  
-- Approval required  
+Objetivo:
 
-### Topic Suggestions
+ser a home operacional do produto
 
-Lista de temas sugeridos.
+Principais elementos:
 
-O usuário pode:
-- Approve  
-- Reject  
-- Edit  
+- resumo de posts
+- temas pendentes
+- briefings prontos
+- jobs em andamento
+- atalhos principais
 
----
+### `/app/posts`
 
-## AI Configuration
+Objetivo:
 
-### AI Settings
+listar e operar os posts do site atual
 
-Campos:
-- AI provider  
-- API key  
-- Model  
-- Temperature  
-- Max tokens  
+Principais elementos:
 
-### Editorial Preferences
+- tabela/lista de posts
+- status editorial
+- atalho para novo post
 
-Campos:
-- Tone of voice  
-- Writing style  
-- Expertise level  
+### `/app/posts/new`
 
-### AI Rules
+Objetivo:
 
-Lista de regras aprendidas.
+abrir um novo rascunho
 
-O usuário pode:
-- Editar  
-- Remover  
-- Resetar  
+Principais elementos:
 
----
+- título
+- slug
+- conteúdo
+- ações editoriais
 
-## Contacts
+### `/app/posts/[id]`
 
-### Contacts List
+Objetivo:
 
-Lista de leads capturados.
+editar um post existente
 
-Campos:
-- Name  
-- Email  
-- Source  
+Principais elementos:
+
+- formulário do post
+- status atual
+- ações editoriais
 
 ---
 
-## Analytics
+## Automação
 
-### Post Performance
+### `/app/automation`
 
-Métricas por post.
+Objetivo:
 
-- Views  
-- Clicks  
-- Ranking  
+configurar a operação editorial automatizada
+
+Principais elementos:
+
+- `keywords_seed`
+- `language`
+- `frequency`
+- `approval_required`
+- `tone_of_voice`
+- `writing_style`
+- `expertise_level`
+- botão para pesquisar temas
+
+### `/app/automation/topics`
+
+Objetivo:
+
+curar os temas gerados pelo worker
+
+Principais elementos:
+
+- lista de topics sugeridos
+- editar tema
+- aprovar
+- rejeitar
+
+### `/app/automation/briefs`
+
+Objetivo:
+
+acompanhar briefings gerados e disparar drafts
+
+Principais elementos:
+
+- lista de briefings
+- ângulo
+- keywords
+- ação de gerar draft
+
+### `/app/jobs`
+
+Objetivo:
+
+acompanhar a fila real de processamento
+
+Principais elementos:
+
+- tipo do job
+- status
+- tentativas
+- horário
+- resultado resumido
+- erro resumido
 
 ---
 
-## Admin Tools
+## Configurações
 
-Ferramentas administrativas.
+### `/app/settings/account`
 
-- Reprocess jobs  
-- System logs  
-- Tenant management
+Objetivo:
+
+gerenciar dados básicos da conta
+
+Principais elementos:
+
+- email somente leitura
+- nome visível
+- logout
+
+### `/app/settings/workspace`
+
+Objetivo:
+
+editar a identidade do workspace
+
+Principais elementos:
+
+- nome
+- slug
+
+### `/app/settings/site`
+
+Objetivo:
+
+editar o site atual
+
+Principais elementos:
+
+- nome
+- idioma
+- subdomínio
+
+### `/app/settings/ai`
+
+Objetivo:
+
+editar preferências editoriais da IA
+
+Principais elementos:
+
+- tom
+- estilo
+- nível de profundidade
+- indicação de que o runtime é da plataforma
+
+### `/app/settings/automation`
+
+Objetivo:
+
+editar a configuração editorial da automação
+
+Principais elementos:
+
+- keywords
+- idioma
+- frequência
+- aprovação obrigatória
+
+---
+
+## Blog público
+
+### `/blog/[subdomain]`
+
+Objetivo:
+
+mostrar a listagem pública de posts publicados
+
+### `/blog/[subdomain]/[postSlug]`
+
+Objetivo:
+
+mostrar a página individual de um post publicado
+
+---
+
+## O que não existe hoje como tela concluída
+
+- configuração de API key própria
+- seleção de provider pelo usuário
+- seleção de modelo na UI atual
+- theme builder
+- domain settings avançado
+- contacts
+- analytics
+- admin tools

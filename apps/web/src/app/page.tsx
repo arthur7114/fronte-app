@@ -1,65 +1,82 @@
-import Image from "next/image";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { PageFrame } from "@/components/page-frame";
+import { getAuthContext } from "@/lib/auth-context";
 
-export default function Home() {
+export default async function HomePage() {
+  const { user, tenant } = await getAuthContext();
+
+  if (user) {
+    redirect(tenant ? "/app" : "/onboarding");
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <PageFrame
+      eyebrow="Base do MVP"
+      title={<>Acesso, site e primeiro blog.</>}
+      description="O produto agora mostra o caminho completo do bloco 2: entrar, configurar o site, abrir o CMS e ver o blog publico por caminho."
+      aside={
+        <div className="w-full max-w-sm border border-black/12 bg-white/85 p-5 shadow-[0_22px_70px_rgba(17,17,17,0.08)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
+            Fluxo
           </p>
+          <div className="mt-4 space-y-4">
+            <div className="border-b border-black/8 pb-4">
+              <p className="text-sm font-medium text-black/55">1. Site</p>
+              <p className="mt-1 text-lg font-semibold text-black">Configurar nome, idioma e subdominio</p>
+            </div>
+            <div className="border-b border-black/8 pb-4">
+              <p className="text-sm font-medium text-black/55">2. Posts</p>
+              <p className="mt-1 text-lg font-semibold text-black">Criar, editar e acompanhar status</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-black/55">3. Blog</p>
+              <p className="mt-1 text-lg font-semibold text-black">Publicar e abrir a rota publica</p>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      }
+    >
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <article className="border border-black/10 bg-white/82 p-5 transition duration-200 hover:-translate-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
+            Entradas
+          </p>
+          <p className="mt-3 text-2xl font-semibold tracking-[-0.04em]">
+            Site, posts e blog publico no mesmo fluxo.
+          </p>
+        </article>
+        <article className="border border-black/10 bg-[#f8f3ec] p-5 transition duration-200 hover:-translate-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
+            Rotas
+          </p>
+          <p className="mt-3 text-2xl font-semibold tracking-[-0.04em]">
+            /app/site, /app/posts e /blog/[subdomain].
+          </p>
+        </article>
+        <article className="border border-black/10 bg-white/82 p-5 transition duration-200 hover:-translate-y-1 sm:col-span-2 xl:col-span-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
+            Entrada
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3 text-sm">
+            <Link href="/auth/signup" className="underline decoration-black/25 underline-offset-4">
+              Criar conta
+            </Link>
+            <Link href="/auth/login" className="underline decoration-black/25 underline-offset-4">
+              Entrar
+            </Link>
+            <Link href="/app/site" className="underline decoration-black/25 underline-offset-4">
+              Criar site
+            </Link>
+            <Link href="/app/posts" className="underline decoration-black/25 underline-offset-4">
+              Abrir posts
+            </Link>
+            <Link href="/app" className="underline decoration-black/25 underline-offset-4">
+              Continuar fluxo
+            </Link>
+          </div>
+        </article>
+      </section>
+    </PageFrame>
   );
 }

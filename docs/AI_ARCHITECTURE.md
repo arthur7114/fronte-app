@@ -2,221 +2,187 @@
 
 ## Overview
 
-Este documento descreve a arquitetura de inteligência artificial da plataforma.
+Este documento descreve a arquitetura de IA do produto no estado atual do MVP.
 
-A IA é responsável por:
+A IA hoje é responsável por:
 
 - pesquisar temas
-- analisar concorrentes
-- gerar briefs de conteúdo
-- escrever artigos
-- revisar conteúdo
-- aplicar preferências editoriais do usuário
-- agendar publicações
+- gerar briefings
+- gerar drafts
+- aplicar preferências editoriais do tenant
+- consumir regras de IA quando elas existirem no banco
 
-A arquitetura segue o modelo **Agent Pipeline**, onde múltiplos agentes executam tarefas específicas.
+O desenho do produto continua AI-first, mas o pipeline ativo ainda é deliberadamente enxuto.
 
 ---
 
-# AI Pipeline
+## Diretriz operacional
 
-O pipeline principal de geração de conteúdo segue o fluxo:
+No MVP atual:
 
-keyword seeds
-→ research
-→ topic clustering
-→ topic suggestions
-→ user approval
-→ brief generation
-→ article generation
-→ review
-→ scheduling
-→ publishing
+- a IA é operada pela plataforma
+- o usuário não conecta token próprio
+- o runtime é centralizado no ambiente do projeto
 
-Cada etapa pode gerar um job executado por um worker.
+O usuário configura preferências editoriais e automação. A infraestrutura de LLM permanece sob controle da plataforma.
 
 ---
 
-# AI Agents
+## Pipeline ativo hoje
 
-## Research Agent
+O fluxo real já implementado é:
 
-Responsável por:
+`keywords_seed -> research_topics -> topic_candidates -> aprovação humana -> generate_brief -> content_brief -> generate_post -> post em draft`
 
-- pesquisar palavras-chave
-- analisar resultados de busca
-- identificar concorrentes
-- extrair headings e estruturas de artigos
-
-Inputs:
-
-- seed keywords
-- language
-- niche
-
-Outputs:
-
-- topic_candidates
-- competitor_sources
+Esse é o loop principal já validado no produto.
 
 ---
 
-## Topic Clustering Agent
+## Etapas do pipeline
 
-Responsável por:
+### 1. Configuração editorial
 
-- agrupar temas similares
-- eliminar redundâncias
-- sugerir tópicos de alto valor
+O tenant define:
 
-Outputs:
+- `keywords_seed`
+- `language`
+- `frequency`
+- `approval_required`
+- `tone_of_voice`
+- `writing_style`
+- `expertise_level`
 
-topic suggestions list
+Essas informações alimentam os prompts e o comportamento do worker.
 
----
+### 2. Research
 
-## Brief Generator Agent
+O job `research_topics` usa a configuração editorial do tenant e gera `topic_candidates`.
 
-Gera um brief editorial contendo:
+Saída:
 
-- título sugerido
-- palavras-chave
-- ângulo do artigo
-- estrutura de headings
-- intenção de busca
+- sugestões de tema
+- score/origem quando disponível
 
----
+### 3. Curadoria humana
 
-## Content Writer Agent
+O usuário revisa os temas sugeridos e pode:
 
-Responsável por:
+- aprovar
+- rejeitar
+- editar antes de aprovar
 
-- gerar o artigo completo
-- aplicar estilo editorial
-- incluir headings estruturados
-- gerar meta description
+O MVP continua com humano no loop entre tema, briefing e draft.
 
-Output:
+### 4. Brief generation
 
-post draft
+O job `generate_brief` transforma um tema aprovado em `content_brief`.
 
----
+Elementos esperados:
 
-## Content Reviewer Agent
+- tema
+- ângulo
+- keywords
+- estrutura editorial mínima
 
-Responsável por:
+### 5. Draft generation
 
-- verificar consistência
-- verificar redundâncias
-- aplicar regras editoriais
-- aplicar regras de IA aprendidas
+O job `generate_post` transforma o briefing em um post real no CMS.
 
----
+Saída:
 
-## Publishing Agent
-
-Responsável por:
-
-- agendar posts
-- publicar posts
-- atualizar sitemap
-- atualizar RSS
+- post criado em `draft`
 
 ---
 
-# AI Memory System
+## Preferências editoriais
 
-A IA possui três tipos de memória.
+O sistema já usa uma camada explícita de preferências do tenant.
 
-## Editorial Preferences
+Campos atuais:
 
-Preferências definidas pelo usuário.
+- `tone_of_voice`
+- `writing_style`
+- `expertise_level`
 
-Exemplos:
-
-tone_of_voice  
-expertise_level  
-target_audience
+Essas preferências fazem parte do contrato real do produto, não só da arquitetura teórica.
 
 ---
 
-## AI Rules
+## Regras de IA
 
-Regras explícitas criadas a partir de feedback do usuário.
+O schema possui `ai_rules` e o worker já consegue consumi-las.
 
-Exemplo:
+Estado atual:
 
-avoid_topics  
-avoid_style  
-mandatory_sections
+- capacidade de backend existe
+- UI e loop de produto ainda não estão completos
 
----
-
-## Rejection Learning
-
-Quando um post é rejeitado:
-
-usuário pode marcar:
-
-"usar como aprendizado"
-
-Isso gera uma regra persistente.
+Isso significa que `ai_rules` fazem parte da arquitetura, mas ainda não da experiência fechada do MVP.
 
 ---
 
-# Prompt Assembly
+## Runtime, provider e modelo
 
-Prompts enviados ao modelo são construídos combinando:
+### Runtime atual
 
-base prompt  
-+ editorial preferences  
-+ ai rules  
-+ content brief
+- IA da plataforma
+- credenciais mantidas no ambiente do projeto
+- operação centralizada
 
----
+### Provider
 
-# AI Providers
+Hoje o runtime ativo está centrado em OpenAI via ambiente da plataforma.
 
-O sistema permite dois modos.
+O produto pode evoluir para model routing ou abstração maior de provider no futuro, mas isso não é a experiência atual do MVP.
 
-## User API Mode
+### Modelo
 
-Usuário fornece sua própria API key.
+O `modelo` é uma variável importante do produto porque interfere em:
 
-Exemplos:
+- qualidade de saída
+- latência
+- consumo de tokens
+- custo operacional
 
-OpenAI  
-Anthropic  
-Google AI
-
----
-
-## Platform Mode
-
-Usuário utiliza créditos da plataforma.
+Mesmo quando não estiver exposto na UI atual, ele deve ser tratado como dimensão real de produto e monetização.
 
 ---
 
-# AI Settings (Tenant Level)
+## Economia de uso
 
-Campos configuráveis:
+A direção do produto é vender capacidade de IA da própria plataforma.
 
-ai_provider  
-api_key  
-model  
-temperature  
-max_tokens  
-tone_of_voice  
-writing_style  
-expertise_level
+Isso implica:
+
+- sem BYO key no MVP
+- consumo controlado internamente
+- futura leitura comercial baseada em créditos
+
+O débito de consumo tende a variar conforme:
+
+- tipo de operação
+- volume de tokens
+- modelo utilizado
 
 ---
 
-# Future Extensions
+## O que ainda não está ativo
 
-Possíveis evoluções:
+Estas etapas continuam como evolução futura:
 
-automatic content refresh  
-SERP monitoring  
-automatic internal linking  
-content gap analysis
+- revisão automática mais rica
+- publicação automática
+- aprendizado completo a partir de rejeições
+- política de consumo exposta ao usuário
+- seleção de modelo na UI, se isso entrar no fechamento comercial do módulo
+
+---
+
+## Próximos passos arquiteturais naturais
+
+- implementar `publish_post`
+- fechar a camada de `ai_rules`
+- aumentar observabilidade do pipeline
+- conectar a arquitetura de IA à futura sistemática de créditos
+
+O ponto importante é que a arquitetura já saiu do papel: o pipeline principal existe e roda com jobs reais.

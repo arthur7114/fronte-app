@@ -11,6 +11,7 @@ export const APP_DEFAULTS = {
     frequency: "weekly",
     maxJobAttempts: 3,
     plan: "free",
+    aiModel: "gpt-5.4-mini",
 } as const;
 
 /**
@@ -32,6 +33,59 @@ export const POST_STATUSES: readonly PostStatus[] = [
     "scheduled",
     "published",
     "rejected",
+] as const;
+
+/**
+ * Topic candidate moderation status.
+ */
+export type TopicCandidateStatus = "pending" | "approved" | "rejected";
+
+export const TOPIC_CANDIDATE_STATUSES: readonly TopicCandidateStatus[] = [
+    "pending",
+    "approved",
+    "rejected",
+] as const;
+
+/**
+ * Content brief lifecycle status.
+ */
+export type ContentBriefStatus = "pending" | "approved";
+
+export const CONTENT_BRIEF_STATUSES: readonly ContentBriefStatus[] = [
+    "pending",
+    "approved",
+] as const;
+
+/**
+ * Supported AI models in the MVP.
+ */
+export type AiModel =
+    | "gpt-4.1-nano"
+    | "gpt-4.1-mini"
+    | "gpt-4.1"
+    | "gpt-5.4-nano"
+    | "gpt-5.4-mini"
+    | "gpt-5.4";
+
+export const AI_MODELS: readonly AiModel[] = [
+    "gpt-4.1-nano",
+    "gpt-4.1-mini",
+    "gpt-4.1",
+    "gpt-5.4-nano",
+    "gpt-5.4-mini",
+    "gpt-5.4",
+] as const;
+
+/**
+ * Guided AI rule presets exposed in the MVP.
+ */
+export type AiRuleType = "avoid_topic" | "tone" | "style" | "structure";
+
+export const AI_RULE_TYPES: readonly AiRuleType[] = [
+    "avoid_topic",
+    "tone",
+    "style",
+    "structure",
 ] as const;
 
 /**

@@ -1,30 +1,30 @@
 # MVP Scope
 
-## Objective
+## Objetivo
 
-Definir com precisão o que entra e o que não entra no MVP.
+Definir com clareza o que entra e o que não entra no MVP operacional do Super.
 
 ---
 
 ## In Scope
 
-### Tenant e Auth
+### Tenant e auth
 
-- signup (via Supabase Auth)
-- login (via Supabase Auth)
-- criação de tenant
-- sessão autenticada (gerenciada pelo Supabase)
+- signup via Supabase Auth
+- login via Supabase Auth
+- criação do primeiro workspace
+- sessão autenticada com SSR
 - papéis básicos por membership
 
 ---
 
-### Blog
+### Site e blog
 
-- criação de blog
+- criação do primeiro site/blog
 - configuração de nome
 - idioma
 - subdomínio
-- tema inicial
+- tema inicial padrão
 - listagem pública de posts
 - página individual de post
 
@@ -39,7 +39,7 @@ Definir com precisão o que entra e o que não entra no MVP.
 - aprovar post
 - rejeitar post
 - agendar post
-- publicar post
+- publicar post manualmente
 
 ---
 
@@ -53,7 +53,7 @@ Definir com precisão o que entra e o que não entra no MVP.
 - aprovação obrigatória ou não
 - pesquisa inicial de temas
 - lista de topics sugeridos
-- aprovação/rejeição/edição de topics
+- aprovação, rejeição e edição de topics
 - geração de brief
 - geração de draft
 
@@ -61,22 +61,37 @@ Definir com precisão o que entra e o que não entra no MVP.
 
 ### Configuração de IA
 
-- selecionar provider
-- informar API key
-- escolher modelo
-- definir tom
-- definir estilo
-- definir regras básicas
+- preferências editoriais de IA
+- tom
+- estilo
+- nível de profundidade
+- exibição do runtime da IA como infraestrutura da plataforma
+- preparação de produto para seleção de modelo no desenho futuro
+
+### Diretriz de produto para IA
+
+- a IA é operada pela plataforma
+- o usuário não conecta API key própria no MVP
+- o modelo continua relevante como variável de custo, qualidade e consumo
 
 ---
 
-### Worker e Jobs
+### Worker e jobs
 
 - job de pesquisa
 - job de geração de brief
 - job de geração de post
-- job de publicação
-- lista de jobs básicos por tenant
+- lista básica de jobs por tenant
+
+### Já implementado no código
+
+- `research_topics`
+- `generate_brief`
+- `generate_post`
+
+### Ainda pendente no escopo original
+
+- `publish_post`
 
 ---
 
@@ -90,22 +105,25 @@ Definir com precisão o que entra e o que não entra no MVP.
 - múltiplos sites avançados por tenant
 - AI memory sofisticada com embeddings
 - personalização visual profunda de site builder
+- API key própria do usuário
+- provider externo conectado diretamente pelo cliente
 
 ---
 
-## MVP Risks
+## Risks do MVP
 
 - qualidade inconsistente da geração de conteúdo
-- complexidade de domínio customizado
-- acoplamento excessivo entre app e worker
-- falta de observabilidade dos jobs
-- regras de IA pouco previsíveis no início
+- custo variável conforme modelo e volume de uso
+- falta de observabilidade mais forte dos jobs
+- regras de IA ainda pouco controláveis sem UI de `ai_rules`
+- acoplamento excessivo entre app e worker se o pipeline crescer sem disciplina
 
 ---
 
-## MVP Constraints
+## Constraints do MVP
 
 - manter baixa complexidade operacional
 - priorizar velocidade de implementação
 - priorizar clareza arquitetural
 - evitar microserviços prematuros
+- manter o runtime de IA centralizado na plataforma
