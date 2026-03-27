@@ -13,7 +13,10 @@
         "dev:web": "turbo dev --filter=web",
         "dev:worker": "turbo dev --filter=worker",
         "build:web": "turbo build --filter=web",
-        "build:worker": "turbo build --filter=worker"
+        "build:worker": "turbo build --filter=worker",
+        "start": "npm run start:web",
+        "start:web": "npm --workspace @super/web run start",
+        "start:worker": "npm --workspace @super/worker run start"
     },
     "devDependencies": {
         "turbo": "^2",
