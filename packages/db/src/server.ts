@@ -14,9 +14,13 @@ type ServerSupabaseClient = ReturnType<typeof _createServerClient<Database, "pub
 export function createServerClient(
     cookieStore: CookieAdapter,
 ): ServerSupabaseClient {
+    const supabaseKey =
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
     return _createServerClient<Database, "public">(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        supabaseKey!,
         {
             cookies: {
                 getAll() {

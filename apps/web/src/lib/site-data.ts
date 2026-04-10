@@ -1,12 +1,13 @@
 import type { Tables } from "@super/db";
 import { normalizeSiteSubdomain } from "@/lib/site";
-import { getAdminSupabaseClient } from "@/lib/supabase/admin";
+import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin";
+import { getServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function getSiteBySubdomain(subdomain: string) {
-  const admin = getAdminSupabaseClient();
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
   const normalizedSubdomain = normalizeSiteSubdomain(subdomain);
 
-  const result = (await admin
+  const result = (await (db as any)
     .from("sites")
     .select("*")
     .eq("subdomain", normalizedSubdomain)

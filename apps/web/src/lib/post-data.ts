@@ -1,10 +1,11 @@
 import type { Tables } from "@super/db";
 import { normalizePostSlug } from "@/lib/post";
-import { getAdminSupabaseClient } from "@/lib/supabase/admin";
+import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin";
+import { getServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function listPostsForSite(tenantId: string, siteId: string) {
-  const admin = getAdminSupabaseClient();
-  const result = (await admin
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
     .from("posts")
     .select("*")
     .eq("tenant_id", tenantId)
@@ -22,8 +23,8 @@ export async function listPostsForSite(tenantId: string, siteId: string) {
 }
 
 export async function getPostForSite(tenantId: string, siteId: string, postId: string) {
-  const admin = getAdminSupabaseClient();
-  const result = (await admin
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
     .from("posts")
     .select("*")
     .eq("tenant_id", tenantId)
@@ -42,8 +43,8 @@ export async function getPostForSite(tenantId: string, siteId: string, postId: s
 }
 
 export async function listPublishedPostsForSite(siteId: string) {
-  const admin = getAdminSupabaseClient();
-  const result = (await admin
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
     .from("posts")
     .select("*")
     .eq("site_id", siteId)
@@ -62,8 +63,8 @@ export async function listPublishedPostsForSite(siteId: string) {
 }
 
 export async function getPublishedPostBySlug(siteId: string, slug: string) {
-  const admin = getAdminSupabaseClient();
-  const result = (await admin
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
     .from("posts")
     .select("*")
     .eq("site_id", siteId)

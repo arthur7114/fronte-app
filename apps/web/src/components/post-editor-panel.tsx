@@ -51,7 +51,7 @@ export function PostEditorPanel({ post, mode }: PostEditorPanelProps) {
 
   return (
     <section className="grid gap-6 lg:grid-cols-[1fr_0.85fr]">
-      <form action={formAction} className="border border-black/12 bg-[rgba(255,255,255,0.84)] p-6 shadow-[0_24px_80px_rgba(17,17,17,0.08)] sm:p-8">
+      <form action={formAction} className="dashboard-surface rounded-lg p-6 sm:p-8">
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
             {mode === "new" ? "Novo post" : "Editor"}
@@ -131,7 +131,7 @@ export function PostEditorPanel({ post, mode }: PostEditorPanelProps) {
               name="intent"
               value="save_draft"
               disabled={isPending}
-              className="inline-flex h-11 items-center justify-center border border-black bg-black px-4 text-xs font-semibold uppercase tracking-[0.22em] text-white transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+              className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-4 text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
             >
               {isPending ? "Salvando..." : "Salvar rascunho"}
             </button>
@@ -140,7 +140,7 @@ export function PostEditorPanel({ post, mode }: PostEditorPanelProps) {
               name="intent"
               value="send_to_review"
               disabled={isPending}
-              className="inline-flex h-11 items-center justify-center border border-black/12 bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-black transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+              className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-foreground transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
             >
               Enviar para aprovacao
             </button>
@@ -149,7 +149,7 @@ export function PostEditorPanel({ post, mode }: PostEditorPanelProps) {
               name="intent"
               value="approve"
               disabled={isPending}
-              className="inline-flex h-11 items-center justify-center border border-black/12 bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-black transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+              className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-foreground transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
             >
               Aprovar
             </button>
@@ -158,7 +158,7 @@ export function PostEditorPanel({ post, mode }: PostEditorPanelProps) {
               name="intent"
               value="reject"
               disabled={isPending}
-              className="inline-flex h-11 items-center justify-center border border-black/12 bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-black transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+              className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-foreground transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
             >
               Rejeitar
             </button>
@@ -167,7 +167,7 @@ export function PostEditorPanel({ post, mode }: PostEditorPanelProps) {
               name="intent"
               value="schedule"
               disabled={isPending}
-              className="inline-flex h-11 items-center justify-center border border-black/12 bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-black transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+              className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-foreground transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
             >
               Agendar
             </button>
@@ -176,7 +176,7 @@ export function PostEditorPanel({ post, mode }: PostEditorPanelProps) {
               name="intent"
               value="publish_now"
               disabled={isPending}
-              className="inline-flex h-11 items-center justify-center border border-black bg-[#8f4b0d] px-4 text-xs font-semibold uppercase tracking-[0.22em] text-white transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+              className="inline-flex h-11 items-center justify-center rounded-lg bg-accent px-4 text-xs font-semibold uppercase tracking-[0.22em] text-accent-foreground transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
             >
               Publicar agora
             </button>
@@ -184,7 +184,7 @@ export function PostEditorPanel({ post, mode }: PostEditorPanelProps) {
         </div>
       </form>
 
-      <aside className="space-y-4 border border-black/12 bg-[#fbf7f1] p-6 sm:p-8">
+      <aside className="dashboard-surface rounded-lg p-6 sm:p-8">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
             Pre-visualizacao

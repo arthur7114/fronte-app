@@ -16,10 +16,13 @@ export async function proxy(request: NextRequest) {
       headers: request.headers,
     },
   });
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseKey!,
     {
       cookies: {
         getAll() {
@@ -28,6 +31,14 @@ export async function proxy(request: NextRequest) {
         setAll(cookiesToSet: CookieBatch) {
           cookiesToSet.forEach(({ name, value, options }) => {
             request.cookies.set(name, value);
+            void options;
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options);
           });
         },

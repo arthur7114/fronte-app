@@ -8,8 +8,12 @@ type BrowserSupabaseClient = ReturnType<typeof _createBrowserClient<Database, "p
  * Uses cookie-based auth automatically.
  */
 export function createBrowserClient(): BrowserSupabaseClient {
+    const supabaseKey =
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
     return _createBrowserClient<Database, "public">(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        supabaseKey!,
     );
 }

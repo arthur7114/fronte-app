@@ -24,11 +24,11 @@ function formatDateTime(value: string) {
 function getTopicStatusClass(status: string) {
   switch (status) {
     case "approved":
-      return "border-[#2f6b4f] bg-[#edf7ef] text-[#2f6b4f]";
+      return "border-success/20 bg-success/10 text-success";
     case "rejected":
-      return "border-[#b3422f] bg-[#fff0ec] text-[#b3422f]";
+      return "border-danger/20 bg-danger/10 text-danger";
     default:
-      return "border-[#8b5b13] bg-[#fff4df] text-[#8b5b13]";
+      return "border-warning/20 bg-warning/10 text-warning";
   }
 }
 
@@ -44,7 +44,7 @@ export function AutomationTopicsPanel({ topics }: AutomationTopicsPanelProps) {
   return (
     <section className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-[1.06fr_0.94fr]">
-        <article className="border border-black/12 bg-[rgba(255,255,255,0.84)] p-6 shadow-[0_24px_80px_rgba(17,17,17,0.08)] sm:p-8">
+        <article className="dashboard-surface rounded-lg p-6 sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
             Curadoria
           </p>
@@ -57,19 +57,19 @@ export function AutomationTopicsPanel({ topics }: AutomationTopicsPanelProps) {
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="border border-black/10 bg-[#fbf7f1] p-4">
+            <div className="rounded-lg border border-border bg-secondary/35 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                 Pendentes
               </p>
               <p className="mt-2 text-2xl font-semibold text-black">{pendingCount}</p>
             </div>
-            <div className="border border-black/10 bg-[#fbf7f1] p-4">
+            <div className="rounded-lg border border-border bg-secondary/35 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                 Aprovados
               </p>
               <p className="mt-2 text-2xl font-semibold text-black">{approvedCount}</p>
             </div>
-            <div className="border border-black/10 bg-[#fbf7f1] p-4">
+            <div className="rounded-lg border border-border bg-secondary/35 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                 Rejeitados
               </p>
@@ -78,7 +78,7 @@ export function AutomationTopicsPanel({ topics }: AutomationTopicsPanelProps) {
           </div>
         </article>
 
-        <aside className="space-y-4 border border-black/12 bg-[#fbf7f1] p-6 sm:p-8">
+        <aside className="dashboard-surface rounded-lg p-6 sm:p-8">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
               Criterio de triagem
@@ -102,7 +102,7 @@ export function AutomationTopicsPanel({ topics }: AutomationTopicsPanelProps) {
 
       <div className="space-y-4">
         {topics.length === 0 ? (
-          <div className="border border-black/12 bg-[rgba(255,255,255,0.84)] p-6 text-sm leading-7 text-black/62 shadow-[0_24px_80px_rgba(17,17,17,0.08)]">
+          <div className="dashboard-surface rounded-lg p-6 text-sm leading-7 text-black/62">
             Nenhum tema foi gerado ainda. Volte em Automacao para enfileirar uma nova
             pesquisa.
           </div>
@@ -114,7 +114,7 @@ export function AutomationTopicsPanel({ topics }: AutomationTopicsPanelProps) {
               <form
                 key={topic.id}
                 action={formAction}
-                className="border border-black/12 bg-[rgba(255,255,255,0.84)] p-6 shadow-[0_24px_80px_rgba(17,17,17,0.08)] sm:p-8"
+                className="dashboard-surface rounded-lg p-6 sm:p-8"
               >
                 <input type="hidden" name="topic_id" value={topic.id} />
 
@@ -127,7 +127,7 @@ export function AutomationTopicsPanel({ topics }: AutomationTopicsPanelProps) {
                       name="topic"
                       defaultValue={topic.topic}
                       rows={3}
-                      className="w-full border border-black/15 bg-white px-4 py-4 text-xl font-semibold tracking-[-0.03em] text-black outline-none transition focus:border-black focus:shadow-[0_0_0_4px_rgba(17,17,17,0.06)]"
+                      className="w-full rounded-lg border border-border bg-white px-4 py-4 text-xl font-semibold tracking-[-0.03em] text-black outline-none transition focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
                     />
                     <p className="text-sm leading-7 text-black/62">
                       {topic.source ?? "Sem origem"} - {formatDateTime(topic.created_at)}
@@ -144,7 +144,7 @@ export function AutomationTopicsPanel({ topics }: AutomationTopicsPanelProps) {
                 </div>
 
                 <div className="mt-6 grid gap-3 md:grid-cols-3">
-                  <div className="border border-black/10 bg-[#fbf7f1] p-4">
+                  <div className="rounded-lg border border-border bg-secondary/35 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                       Pontuacao
                     </p>
@@ -152,13 +152,13 @@ export function AutomationTopicsPanel({ topics }: AutomationTopicsPanelProps) {
                       {topic.score ?? "Sem score"}
                     </p>
                   </div>
-                  <div className="border border-black/10 bg-[#fbf7f1] p-4">
+                  <div className="rounded-lg border border-border bg-secondary/35 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                       Origem
                     </p>
                     <p className="mt-2 text-lg font-medium text-black">{topic.source ?? "-"}</p>
                   </div>
-                  <div className="border border-black/10 bg-[#fbf7f1] p-4">
+                  <div className="rounded-lg border border-border bg-secondary/35 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                       Status atual
                     </p>
@@ -186,7 +186,7 @@ export function AutomationTopicsPanel({ topics }: AutomationTopicsPanelProps) {
                     name="intent"
                     value="approve"
                     disabled={isPending}
-                    className="inline-flex h-11 items-center justify-center border border-black bg-black px-4 text-xs font-semibold uppercase tracking-[0.22em] text-white transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+                    className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-4 text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
                   >
                     Aprovar e gerar briefing
                   </button>
@@ -195,7 +195,7 @@ export function AutomationTopicsPanel({ topics }: AutomationTopicsPanelProps) {
                     name="intent"
                     value="reject"
                     disabled={isPending}
-                    className="inline-flex h-11 items-center justify-center border border-black/12 bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-black transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+                    className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-black transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
                   >
                     Rejeitar
                   </button>

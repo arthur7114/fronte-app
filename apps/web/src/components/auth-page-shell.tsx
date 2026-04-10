@@ -12,9 +12,9 @@ type AuthPageShellProps = {
 
 export function AuthPageShell({ eyebrow, title, description, note, children }: AuthPageShellProps) {
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-[#1e293b]">
+    <main className="min-h-screen bg-background text-foreground">
       <div className="relative isolate overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.12),transparent_30%),radial-gradient(circle_at_80%_20%,rgba(249,115,22,0.12),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,250,252,0.96))]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(18,179,166,0.12),transparent_30%),radial-gradient(circle_at_80%_20%,rgba(249,115,22,0.1),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.9),rgba(244,247,251,0.96))]" />
         <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-6 sm:px-8">
           <header className="flex items-center justify-between gap-6">
             <BrandMark subtle />
@@ -23,27 +23,27 @@ export function AuthPageShell({ eyebrow, title, description, note, children }: A
 
           <section className="grid flex-1 gap-8 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
             <div className="max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[#2563eb]">
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-primary">
                 Operacao SaaS
               </p>
-              <h1 className="mt-4 max-w-3xl text-5xl font-semibold tracking-[-0.065em] text-[#1e293b] sm:text-6xl lg:text-7xl">
+              <h1 className="mt-4 max-w-3xl text-5xl font-semibold tracking-[-0.065em] text-foreground sm:text-6xl lg:text-7xl">
                 {title}
               </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-[#475569] sm:text-xl">
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl">
                 {description}
               </p>
 
-              <div className="mt-8 grid gap-3 text-sm text-[#475569] sm:grid-cols-2">
-                <div className="border border-black/10 bg-white/80 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#2563eb]">
+              <div className="mt-8 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
+                <div className="dashboard-surface rounded-lg p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
                     Caminho claro
                   </p>
                   <p className="mt-2 leading-7">
                     Um acesso, um contexto e uma proxima acao visivel.
                   </p>
                 </div>
-                <div className="border border-black/10 bg-white/80 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#f97316]">
+                <div className="dashboard-surface rounded-lg p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">
                     Sem ruido
                   </p>
                   <p className="mt-2 leading-7">
@@ -55,7 +55,7 @@ export function AuthPageShell({ eyebrow, title, description, note, children }: A
 
             <div className="space-y-4">
               {children}
-              <div className="border border-black/10 bg-white/85 px-4 py-3 text-sm leading-7 text-[#475569] shadow-[0_16px_50px_rgba(15,23,42,0.06)]">
+              <div className="dashboard-surface rounded-lg px-4 py-3 text-sm leading-7 text-muted-foreground">
                 {note}
               </div>
             </div>

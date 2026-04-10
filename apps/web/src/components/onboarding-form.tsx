@@ -13,7 +13,7 @@ export function OnboardingForm() {
   const [slugTouched, setSlugTouched] = useState(false);
 
   return (
-    <section className="border border-black/12 bg-[rgba(255,255,255,0.84)] p-6 shadow-[0_24px_80px_rgba(17,17,17,0.08)] sm:p-8">
+    <section className="dashboard-surface rounded-lg p-6 sm:p-8">
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1fr_0.8fr]">
         <div className="space-y-5">
           <div>
@@ -45,7 +45,7 @@ export function OnboardingForm() {
                   }
                 }}
                 placeholder="Super Editorial"
-                className="w-full border border-black/15 bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-black focus:shadow-[0_0_0_4px_rgba(17,17,17,0.06)]"
+                className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
               />
             </label>
 
@@ -63,7 +63,7 @@ export function OnboardingForm() {
                   setSlug(normalizeTenantSlug(event.target.value));
                 }}
                 placeholder="super-editorial"
-                className="w-full border border-black/15 bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-black focus:shadow-[0_0_0_4px_rgba(17,17,17,0.06)]"
+                className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
               />
             </label>
 
@@ -77,7 +77,7 @@ export function OnboardingForm() {
               <button
                 type="submit"
                 disabled={isPending}
-                className="inline-flex h-12 items-center justify-center border border-black bg-black px-5 text-sm font-semibold uppercase tracking-[0.24em] text-white transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+                className="inline-flex h-12 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold uppercase tracking-[0.24em] text-primary-foreground transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
               >
                 {isPending ? "Criando espaco..." : "Criar espaco"}
               </button>
@@ -85,7 +85,7 @@ export function OnboardingForm() {
           </form>
         </div>
 
-        <div className="border border-black/10 bg-[#fbf7f1] p-5">
+        <div className="rounded-lg border border-border bg-secondary/35 p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
             O que este bloco valida
           </p>

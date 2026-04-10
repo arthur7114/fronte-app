@@ -17,19 +17,19 @@ export function PageHeader({
   actions,
 }: PageHeaderProps) {
   return (
-    <header className="border border-black/10 bg-white/85 p-6 shadow-[0_24px_70px_rgba(17,17,17,0.06)] sm:p-8">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+    <header className="space-y-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-3xl">
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-black/45">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
               {eyebrow}
             </p>
             {badge ? <StatusBadge>{badge}</StatusBadge> : null}
           </div>
-          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.055em] text-black sm:text-5xl">
+          <h1 className="mt-3 text-3xl font-semibold tracking-[-0.05em] text-foreground sm:text-4xl">
             {title}
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-8 text-black/64 sm:text-lg">
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
             {description}
           </p>
         </div>

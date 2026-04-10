@@ -20,15 +20,15 @@ function formatDateTime(value: string | null | undefined) {
 function getJobStatusClass(status: string) {
   switch (status) {
     case "completed":
-      return "border-[#2f6b4f] bg-[#edf7ef] text-[#2f6b4f]";
+      return "border-success/20 bg-success/10 text-success";
     case "failed":
-      return "border-[#b3422f] bg-[#fff0ec] text-[#b3422f]";
+      return "border-danger/20 bg-danger/10 text-danger";
     case "running":
-      return "border-[#8b5b13] bg-[#fff4df] text-[#8b5b13]";
+      return "border-warning/20 bg-warning/10 text-warning";
     case "cancelled":
-      return "border-[#475569]/20 bg-[#f8fafc] text-[#475569]";
+      return "border-border bg-muted text-muted-foreground";
     default:
-      return "border-[#2563eb]/15 bg-[#eff6ff] text-[#1d4ed8]";
+      return "border-primary/15 bg-primary/10 text-primary";
   }
 }
 
@@ -119,7 +119,7 @@ export function AutomationJobsPanel({ jobs }: AutomationJobsPanelProps) {
   return (
     <section className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-        <article className="border border-black/12 bg-[rgba(255,255,255,0.84)] p-6 shadow-[0_24px_80px_rgba(17,17,17,0.08)] sm:p-8">
+        <article className="dashboard-surface rounded-lg p-6 sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
             Jobs
           </p>
@@ -132,19 +132,19 @@ export function AutomationJobsPanel({ jobs }: AutomationJobsPanelProps) {
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="border border-black/10 bg-[#fbf7f1] p-4">
+            <div className="rounded-lg border border-border bg-secondary/35 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                 Rodando
               </p>
               <p className="mt-2 text-2xl font-semibold text-black">{runningCount}</p>
             </div>
-            <div className="border border-black/10 bg-[#fbf7f1] p-4">
+            <div className="rounded-lg border border-border bg-secondary/35 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                 Falhos
               </p>
               <p className="mt-2 text-2xl font-semibold text-black">{failedCount}</p>
             </div>
-            <div className="border border-black/10 bg-[#fbf7f1] p-4">
+            <div className="rounded-lg border border-border bg-secondary/35 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                 Publicacoes agendadas
               </p>
@@ -153,7 +153,7 @@ export function AutomationJobsPanel({ jobs }: AutomationJobsPanelProps) {
           </div>
         </article>
 
-        <aside className="space-y-4 border border-black/12 bg-[#fbf7f1] p-6 sm:p-8">
+        <aside className="dashboard-surface rounded-lg p-6 sm:p-8">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
               Leitura do painel
@@ -176,8 +176,8 @@ export function AutomationJobsPanel({ jobs }: AutomationJobsPanelProps) {
         </aside>
       </div>
 
-      <div className="overflow-hidden border border-black/12 bg-[rgba(255,255,255,0.84)] shadow-[0_24px_80px_rgba(17,17,17,0.08)]">
-        <div className="grid grid-cols-[1fr_0.8fr_0.72fr_0.95fr_0.9fr_1.4fr] border-b border-black/10 bg-[#fbf7f1] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-black/45">
+      <div className="dashboard-surface overflow-hidden rounded-lg">
+        <div className="grid grid-cols-[1fr_0.8fr_0.72fr_0.95fr_0.9fr_1.4fr] border-b border-border bg-secondary/35 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-black/45">
           <span>Tipo</span>
           <span>Status</span>
           <span>Tentativas</span>
@@ -197,7 +197,7 @@ export function AutomationJobsPanel({ jobs }: AutomationJobsPanelProps) {
             return (
               <article
                 key={job.id}
-                className="grid grid-cols-[1fr_0.8fr_0.72fr_0.95fr_0.9fr_1.4fr] border-b border-black/8 px-4 py-4 text-sm last:border-b-0"
+                className="grid grid-cols-[1fr_0.8fr_0.72fr_0.95fr_0.9fr_1.4fr] border-b border-border px-4 py-4 text-sm last:border-b-0"
               >
                 <div className="space-y-1 pr-3">
                   <p className="font-semibold text-black">

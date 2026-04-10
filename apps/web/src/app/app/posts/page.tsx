@@ -24,9 +24,10 @@ export default async function PostsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Conteudo"
-        title="Posts e fluxo editorial."
-        description="A operacao do CMS fica concentrada aqui: lista, abertura de rascunhos e acompanhamento do status sem sair do app."
+        eyebrow="Artigos"
+        title="Seu escritorio editorial."
+        description="Aqui o time escreve, revisa, agenda e publica. O motor de IA prepara o terreno; a decisao final continua clara na mesa editorial."
+        badge={<span>{site.subdomain}</span>}
       />
       <PostsBoard posts={posts} site={site} />
     </div>

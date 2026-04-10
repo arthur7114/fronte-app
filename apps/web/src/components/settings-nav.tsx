@@ -22,29 +22,29 @@ export function SettingsNav({
 }: SettingsNavProps) {
   return (
     <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-      <div className="rounded-[28px] border border-[#2563eb]/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,250,252,0.92))] p-4 shadow-[0_24px_80px_rgba(15,23,42,0.06)]">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#2563eb]/60">
+      <div className="dashboard-surface rounded-lg p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
           Contexto
         </p>
-        <h2 className="mt-3 text-xl font-semibold tracking-[-0.04em] text-[#1e293b]">
+        <h2 className="mt-3 text-xl font-semibold tracking-[-0.04em] text-foreground">
           {workspaceName}
         </h2>
-        <p className="mt-1 text-sm leading-6 text-[#475569]">slug / {workspaceSlug}</p>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">slug / {workspaceSlug}</p>
 
-        <div className="mt-4 grid gap-2 rounded-3xl border border-[#1e293b]/8 bg-white/85 p-3 text-sm">
+        <div className="mt-4 grid gap-2 rounded-lg border border-border bg-white/85 p-3 text-sm">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[#64748b]">Site</span>
-            <span className="font-medium text-[#1e293b]">{siteLabel}</span>
+            <span className="text-muted-foreground">Site</span>
+            <span className="font-medium text-foreground">{siteLabel}</span>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[#64748b]">Area</span>
-            <span className="font-medium text-[#1e293b]">Configuracoes</span>
+            <span className="text-muted-foreground">Area</span>
+            <span className="font-medium text-foreground">Configuracoes</span>
           </div>
         </div>
 
         <Link
           href="/app/overview"
-          className="mt-4 inline-flex h-10 items-center justify-center rounded-full border border-[#2563eb]/18 bg-[#eff6ff] px-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#2563eb] transition duration-200 hover:-translate-y-0.5"
+          className="mt-4 inline-flex h-10 items-center justify-center rounded-lg border border-border bg-white px-4 text-xs font-semibold uppercase tracking-[0.2em] text-foreground transition duration-200 hover:-translate-y-0.5"
         >
           Voltar ao painel
         </Link>
@@ -57,10 +57,10 @@ export function SettingsNav({
             href={item.href}
             aria-current={item.active ? "page" : undefined}
             className={[
-              "block rounded-[24px] border px-4 py-3 transition duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+              "block rounded-lg border px-4 py-3 transition duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
               item.active
-                ? "border-[#1d4ed8] bg-[#1d4ed8] text-white shadow-[0_14px_34px_rgba(29,78,216,0.18)]"
-                : "border-[#1e293b]/10 bg-white/88 text-[#1e293b] hover:border-[#2563eb]/20 hover:bg-white",
+                ? "border-primary bg-primary text-primary-foreground shadow-[0_14px_34px_rgba(18,179,166,0.18)]"
+                : "border-border bg-white/88 text-foreground hover:border-primary/20 hover:bg-white",
             ].join(" ")}
           >
             <div className="flex items-center justify-between gap-3">
