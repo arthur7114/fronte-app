@@ -8,17 +8,17 @@ type StatusBadgeProps = {
 };
 
 const TONE_CLASSES: Record<StatusTone, string> = {
-  neutral: "border-black/10 bg-white/80 text-black/70",
-  success: "border-[#2f6b4f]/20 bg-[#edf7ef] text-[#2f6b4f]",
-  warning: "border-[#8b5b13]/20 bg-[#fff4df] text-[#8b5b13]",
-  danger: "border-[#b3422f]/20 bg-[#fff0ec] text-[#b3422f]",
-  info: "border-[#2553eb]/20 bg-[#eef4ff] text-[#2553eb]",
+  neutral: "border-border bg-secondary/55 text-foreground/75",
+  success: "border-success/20 bg-success/10 text-success",
+  warning: "border-warning/20 bg-warning/10 text-warning",
+  danger: "border-danger/20 bg-danger/10 text-danger",
+  info: "border-primary/20 bg-primary/10 text-primary",
 };
 
 export function StatusBadge({ tone = "neutral", children }: StatusBadgeProps) {
   return (
     <span
-      className={`inline-flex items-center border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] ${TONE_CLASSES[tone]}`}
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${TONE_CLASSES[tone]}`}
     >
       {children}
     </span>

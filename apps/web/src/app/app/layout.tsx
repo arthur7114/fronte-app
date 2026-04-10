@@ -1,8 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { LogoutButton } from "@/components/logout-button";
 import { APP_NAV_ITEMS } from "@/lib/app-navigation";
 import { getAuthContext } from "@/lib/auth-context";
 
@@ -26,17 +24,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       workspace={tenant.name}
       site={site.subdomain}
       navItems={APP_NAV_ITEMS}
-      topbarActions={
-        <>
-          <Link
-            href="/app/settings/account"
-            className="inline-flex h-10 items-center justify-center border border-black/10 bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-black transition duration-200 hover:-translate-y-0.5"
-          >
-            {profile?.full_name || user.email || "Conta"}
-          </Link>
-          <LogoutButton />
-        </>
-      }
+      userLabel={profile?.full_name || tenant.name}
+      userEmail={user.email || undefined}
     >
       {children}
     </AppShell>

@@ -14,12 +14,12 @@ export function SettingsFeedback({ state }: SettingsFeedbackProps) {
   return (
     <div aria-live="polite" className="space-y-3">
       {state.error ? (
-        <p className="rounded-[20px] border border-[#dc2626]/15 bg-[#fff7f7] px-4 py-3 text-sm leading-7 text-[#b91c1c]">
+        <p className="rounded-lg border border-danger/15 bg-danger/10 px-4 py-3 text-sm leading-7 text-danger">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p className="rounded-[20px] border border-[#16a34a]/15 bg-[#f0fdf4] px-4 py-3 text-sm leading-7 text-[#15803d]">
+        <p className="rounded-lg border border-success/15 bg-success/10 px-4 py-3 text-sm leading-7 text-success">
           {state.success}
         </p>
       ) : null}

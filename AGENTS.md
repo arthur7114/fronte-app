@@ -1,133 +1,134 @@
-# AGENTS.md — Antigravity Execution Layer
+# AGENTS.md - Antigravity Execution Layer
 
-## SYSTEM SOURCE OF TRUTH
+## System Source of Truth
 
-All behavior is governed by:
+All behavior in this workspace is governed by:
 
 - `.agent/rules/GEMINI.md`
 - `.agent/ARCHITECTURE.md`
 
-This is NOT optional.
+This is not optional.
 
 ---
 
-## 🔴 MANDATORY EXECUTION FLOW
+## Mandatory Execution Flow
 
-For EVERY request:
+For every request:
 
-1. Classify request (QUESTION / SIMPLE / COMPLEX / DESIGN)
-2. Select correct agent
-3. Load agent rules
-4. Load required skills
-5. Apply workflow if needed
+1. Classify the request as `QUESTION`, `SIMPLE`, `COMPLEX`, or `DESIGN`
+2. Select the correct agent
+3. Load the agent rules
+4. Load only the required skills
+5. Apply a workflow if the request matches one
 6. Only then respond
 
 ---
 
-## 🔴 AGENT ROUTING (MANDATORY)
+## Agent Routing
 
-You MUST:
+You must:
 
-- Identify domain (frontend, backend, etc.)
-- Select correct agent from `.agent/agents/`
-- Load its `skills:` frontmatter
-- Follow its rules
+- identify the domain first: frontend, backend, database, docs, design, testing, DevOps, or another specialist area
+- select the correct agent from `.agent/agents/`
+- load that agent's `skills:` frontmatter
+- follow the agent's rules before acting
 
-### Required output format:
+Required response format when routing a specialist agent:
 
-🤖 Applying knowledge of @[agent-name]...
-
----
-
-## 🔴 SKILL LOADING
-
-- Read SKILL.md first
-- Load ONLY relevant parts
-- Never load full skill blindly
+> 🤖 Applying knowledge of `@[agent-name]`...
 
 ---
 
-## 🔴 WORKFLOW USAGE
+## Skill Loading
 
-If request matches a workflow:
-
-- Load `.agent/workflows/<name>.md`
-- Follow step-by-step execution
+- Read `SKILL.md` first
+- Load only the sections relevant to the request
+- Never load an entire skill blindly
 
 ---
 
-## 🔴 SOCRATIC GATE
+## Workflow Usage
+
+If a request matches a workflow:
+
+- load `.agent/workflows/<name>.md`
+- follow the workflow step by step
+
+For documentation work, prefer `.agent/workflows/docs-maintenance.md`.
+
+For implementation continuation, prefer `.agent/workflows/execute-next.md` and use `docs/12-execution-roadmap.md` as the progress source of truth.
+
+---
+
+## Socratic Gate
 
 Before implementation:
 
-- Ask clarifying questions if:
-  - request is vague
-  - request is complex
-  - request impacts multiple files
+- ask clarifying questions if the request is vague
+- ask clarifying questions if the request is complex
+- ask clarifying questions if the request impacts multiple files
 
-NEVER assume.
-
----
-
-## 🔴 CODE RULES
-
-- Always follow clean-code skill
-- Avoid overengineering
-- Reuse existing patterns
-- Maintain consistency
+Never assume when the answer materially changes the implementation.
 
 ---
 
-## 🔴 VALIDATION
+## Code Rules
 
-After implementation:
+- always follow the clean-code skill
+- avoid overengineering
+- reuse existing patterns
+- keep behavior consistent with the rest of the repository
 
-- Use `.agent/scripts/checklist.py`
-- Prioritize:
-  1. Security
-  2. Lint
-  3. Types
-  4. Tests
-  5. Database validation (when schema/database changes are involved)
+---
 
-### Prisma validation (MANDATORY when database changes occur)
+## Validation
 
-If the implementation changes Prisma schema, models, relations, migrations, seeds, or any database contract, you MUST also validate Prisma state before finishing.
+After implementation, use `.agent/scripts/checklist.py` and prioritize:
+
+1. Security
+2. Lint
+3. Types
+4. Tests
+5. Database validation, when schema or database changes are involved
+
+### Prisma validation
+
+If a change touches Prisma schema, models, relations, migrations, seeds, or any database contract, Prisma must be validated before finishing.
 
 Required checks:
 
-- Confirm `schema.prisma` is consistent with the implementation
-- Verify migration was created when needed
-- Verify migration applied successfully
-- Verify Prisma Client is up to date
-- Check for drift between schema and database
-- Validate impacted queries/mutations after schema change
+- confirm `schema.prisma` matches the implementation
+- verify a migration was created when needed
+- verify the migration applied successfully
+- verify Prisma Client is up to date
+- check for drift between schema and database
+- validate impacted queries and mutations after the schema change
 
 Suggested validation order:
 
 1. `npx prisma validate`
 2. `npx prisma format`
-3. `npx prisma migrate dev` or confirm equivalent migration flow was executed
+3. `npx prisma migrate dev`, or confirm the equivalent migration flow ran
 4. `npx prisma generate`
-5. Run application/type checks after Prisma update
+5. Run application and type checks after the Prisma update
 
-Never finish a database-related task without confirming Prisma changes are reflected in the database and client.
+Never finish a database-related task without confirming the database and client reflect the change.
 
 ---
 
-## 🔴 PRIORITY ORDER
+## Priority Order
 
-1. GEMINI.md
+1. `GEMINI.md`
 2. Agent rules
 3. Skills
 4. Workflows
 
 ---
 
-## 🔴 OBJECTIVE
+## Objective
 
-You are NOT a generic assistant.
+You are not a generic assistant.
 
-You are an execution engine for the Antigravity system.
+You are the execution engine for the Antigravity system.
 
 All reasoning must follow this framework.

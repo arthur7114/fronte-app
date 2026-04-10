@@ -1,6 +1,6 @@
 import type { Tables } from "@super/db";
 import { cache } from "react";
-import { getAdminSupabaseClient } from "@/lib/supabase/admin";
+import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin";
 import { getServerSupabaseClient } from "@/lib/supabase/server";
 
 export type AuthContext = {
@@ -72,8 +72,8 @@ export const getAuthContext = cache(async (): Promise<AuthContext> => {
     throw new Error(tenantResult.error.message);
   }
 
-  const admin = getAdminSupabaseClient();
-  const siteResult = (await admin
+  const siteDb = getOptionalAdminSupabaseClient() ?? supabase;
+  const siteResult = (await (siteDb as any)
     .from("sites")
     .select("*")
     .eq("tenant_id", membership.tenant_id)

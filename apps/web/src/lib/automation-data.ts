@@ -1,9 +1,10 @@
 import type { Tables } from "@super/db";
-import { getAdminSupabaseClient } from "@/lib/supabase/admin";
+import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin";
+import { getServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function getAutomationConfigForTenant(tenantId: string) {
-  const admin = getAdminSupabaseClient();
-  const result = (await admin
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
     .from("automation_configs")
     .select("*")
     .eq("tenant_id", tenantId)
@@ -20,8 +21,8 @@ export async function getAutomationConfigForTenant(tenantId: string) {
 }
 
 export async function getAiPreferencesForTenant(tenantId: string) {
-  const admin = getAdminSupabaseClient();
-  const result = (await admin
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
     .from("ai_preferences")
     .select("*")
     .eq("tenant_id", tenantId)
@@ -38,8 +39,8 @@ export async function getAiPreferencesForTenant(tenantId: string) {
 }
 
 export async function listAiRulesForTenant(tenantId: string) {
-  const admin = getAdminSupabaseClient();
-  const result = (await admin
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
     .from("ai_rules")
     .select("*")
     .eq("tenant_id", tenantId)
@@ -56,8 +57,8 @@ export async function listAiRulesForTenant(tenantId: string) {
 }
 
 export async function listTopicCandidatesForTenant(tenantId: string) {
-  const admin = getAdminSupabaseClient();
-  const result = (await admin
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
     .from("topic_candidates")
     .select("*")
     .eq("tenant_id", tenantId)
@@ -74,8 +75,8 @@ export async function listTopicCandidatesForTenant(tenantId: string) {
 }
 
 export async function getTopicCandidateForTenant(tenantId: string, topicId: string) {
-  const admin = getAdminSupabaseClient();
-  const result = (await admin
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
     .from("topic_candidates")
     .select("*")
     .eq("tenant_id", tenantId)
@@ -93,8 +94,8 @@ export async function getTopicCandidateForTenant(tenantId: string, topicId: stri
 }
 
 export async function listContentBriefsForTenant(tenantId: string) {
-  const admin = getAdminSupabaseClient();
-  const result = (await admin
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
     .from("content_briefs")
     .select("*")
     .eq("tenant_id", tenantId)
@@ -111,8 +112,8 @@ export async function listContentBriefsForTenant(tenantId: string) {
 }
 
 export async function getContentBriefForTenant(tenantId: string, briefId: string) {
-  const admin = getAdminSupabaseClient();
-  const result = (await admin
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
     .from("content_briefs")
     .select("*")
     .eq("tenant_id", tenantId)
@@ -130,8 +131,8 @@ export async function getContentBriefForTenant(tenantId: string, briefId: string
 }
 
 export async function listAutomationJobsForTenant(tenantId: string) {
-  const admin = getAdminSupabaseClient();
-  const result = (await admin
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
     .from("automation_jobs")
     .select("*")
     .eq("tenant_id", tenantId)

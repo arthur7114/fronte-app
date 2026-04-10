@@ -22,21 +22,20 @@ export function SettingsSectionCard({
   return (
     <section
       className={[
-        "rounded-[32px] border border-[#1e293b]/10 bg-white/88 p-6 shadow-[0_24px_90px_rgba(15,23,42,0.06)] sm:p-8",
+        "dashboard-surface rounded-lg p-6 sm:p-8",
         className,
       ].join(" ")}
     >
       <div className="max-w-2xl">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#2563eb]/70">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
           {eyebrow}
         </p>
-        <h2
-          className="mt-3 text-3xl font-semibold tracking-[-0.05em] text-[#0f172a]"
-          style={{ fontFamily: "var(--settings-heading-font), Georgia, serif" }}
-        >
+        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.05em] text-foreground">
           {title}
         </h2>
-        <p className="mt-4 text-sm leading-7 text-[#475569] sm:text-base">{description}</p>
+        <p className="mt-4 text-sm leading-7 text-muted-foreground sm:text-base">
+          {description}
+        </p>
       </div>
 
       <div className="mt-6">{children}</div>

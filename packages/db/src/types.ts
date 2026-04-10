@@ -200,6 +200,78 @@ export type Database = {
           },
         ]
       }
+      business_briefings: {
+        Row: {
+          business_name: string
+          competitors: string[] | null
+          created_at: string
+          customer_profile: string
+          desired_keywords: string[] | null
+          id: string
+          keyword_motivation: string | null
+          location: string | null
+          notes: string | null
+          offerings: string
+          segment: string
+          site_id: string | null
+          status: string
+          summary: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          business_name: string
+          competitors?: string[] | null
+          created_at?: string
+          customer_profile: string
+          desired_keywords?: string[] | null
+          id?: string
+          keyword_motivation?: string | null
+          location?: string | null
+          notes?: string | null
+          offerings: string
+          segment: string
+          site_id?: string | null
+          status?: string
+          summary?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string
+          competitors?: string[] | null
+          created_at?: string
+          customer_profile?: string
+          desired_keywords?: string[] | null
+          id?: string
+          keyword_motivation?: string | null
+          location?: string | null
+          notes?: string | null
+          offerings?: string
+          segment?: string
+          site_id?: string | null
+          status?: string
+          summary?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_briefings_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_briefings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           created_at: string

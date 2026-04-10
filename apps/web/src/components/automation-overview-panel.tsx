@@ -76,10 +76,7 @@ export function AutomationOverviewPanel({
 
   return (
     <section className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
-      <form
-        action={settingsFormAction}
-        className="border border-black/12 bg-[rgba(255,255,255,0.84)] p-6 shadow-[0_24px_80px_rgba(17,17,17,0.08)] sm:p-8"
-      >
+      <form action={settingsFormAction} className="dashboard-surface rounded-lg p-6 sm:p-8">
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
             Configuracao da automacao
@@ -104,7 +101,7 @@ export function AutomationOverviewPanel({
               value={keywordsSeed}
               onChange={(event) => setKeywordsSeed(event.target.value)}
               placeholder="seo local, conteudo evergreen, inbound marketing"
-              className="w-full border border-black/15 bg-white px-4 py-4 text-base leading-7 outline-none transition placeholder:text-black/30 focus:border-black focus:shadow-[0_0_0_4px_rgba(17,17,17,0.06)]"
+              className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base leading-7 outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
             />
           </label>
 
@@ -117,7 +114,7 @@ export function AutomationOverviewPanel({
                 name="language"
                 value={language}
                 onChange={(event) => setLanguage(event.target.value)}
-                className="w-full border border-black/15 bg-white px-4 py-4 text-base outline-none transition focus:border-black focus:shadow-[0_0_0_4px_rgba(17,17,17,0.06)]"
+                className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base outline-none transition focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
               >
                 {SITE_LANGUAGE_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -135,7 +132,7 @@ export function AutomationOverviewPanel({
                 name="frequency"
                 value={frequency}
                 onChange={(event) => setFrequency(event.target.value)}
-                className="w-full border border-black/15 bg-white px-4 py-4 text-base outline-none transition focus:border-black focus:shadow-[0_0_0_4px_rgba(17,17,17,0.06)]"
+                className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base outline-none transition focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
               >
                 {FREQUENCIES.map((option) => (
                   <option key={option} value={option}>
@@ -146,7 +143,7 @@ export function AutomationOverviewPanel({
             </label>
           </div>
 
-          <label className="flex items-start gap-3 border border-black/10 bg-[#fbf7f1] px-4 py-4 text-sm leading-7 text-black/65">
+          <label className="flex items-start gap-3 rounded-lg border border-border bg-secondary/35 px-4 py-4 text-sm leading-7 text-black/65">
             <input
               type="checkbox"
               name="approval_required"
@@ -169,7 +166,7 @@ export function AutomationOverviewPanel({
                 value={toneOfVoice}
                 onChange={(event) => setToneOfVoice(event.target.value)}
                 placeholder="Direto, consultivo"
-                className="w-full border border-black/15 bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-black focus:shadow-[0_0_0_4px_rgba(17,17,17,0.06)]"
+                className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
               />
             </label>
 
@@ -182,7 +179,7 @@ export function AutomationOverviewPanel({
                 value={writingStyle}
                 onChange={(event) => setWritingStyle(event.target.value)}
                 placeholder="Didatico, objetivo"
-                className="w-full border border-black/15 bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-black focus:shadow-[0_0_0_4px_rgba(17,17,17,0.06)]"
+                className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
               />
             </label>
 
@@ -195,7 +192,7 @@ export function AutomationOverviewPanel({
                 value={expertiseLevel}
                 onChange={(event) => setExpertiseLevel(event.target.value)}
                 placeholder="Intermediario"
-                className="w-full border border-black/15 bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-black focus:shadow-[0_0_0_4px_rgba(17,17,17,0.06)]"
+                className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
               />
             </label>
           </div>
@@ -214,14 +211,14 @@ export function AutomationOverviewPanel({
           <button
             type="submit"
             disabled={isSavingSettings}
-            className="inline-flex h-12 items-center justify-center border border-black bg-black px-5 text-sm font-semibold uppercase tracking-[0.24em] text-white transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+            className="inline-flex h-12 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold uppercase tracking-[0.24em] text-primary-foreground transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
           >
             {isSavingSettings ? "Salvando..." : "Salvar configuracao"}
           </button>
         </div>
       </form>
 
-      <aside className="space-y-4 border border-black/12 bg-[#fbf7f1] p-6 sm:p-8">
+      <aside className="dashboard-surface rounded-lg p-6 sm:p-8">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
             Runtime

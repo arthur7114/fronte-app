@@ -39,7 +39,7 @@ export function AutomationBriefsPanel({ briefs }: AutomationBriefsPanelProps) {
   return (
     <section className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-[1.06fr_0.94fr]">
-        <article className="border border-black/12 bg-[rgba(255,255,255,0.84)] p-6 shadow-[0_24px_80px_rgba(17,17,17,0.08)] sm:p-8">
+        <article className="dashboard-surface rounded-lg p-6 sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
             Briefings
           </p>
@@ -52,13 +52,13 @@ export function AutomationBriefsPanel({ briefs }: AutomationBriefsPanelProps) {
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <div className="border border-black/10 bg-[#fbf7f1] p-4">
+            <div className="rounded-lg border border-border bg-secondary/35 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                 Briefings prontos
               </p>
               <p className="mt-2 text-2xl font-semibold text-black">{readyCount}</p>
             </div>
-            <div className="border border-black/10 bg-[#fbf7f1] p-4">
+            <div className="rounded-lg border border-border bg-secondary/35 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                 Saida esperada
               </p>
@@ -67,7 +67,7 @@ export function AutomationBriefsPanel({ briefs }: AutomationBriefsPanelProps) {
           </div>
         </article>
 
-        <aside className="space-y-4 border border-black/12 bg-[#fbf7f1] p-6 sm:p-8">
+        <aside className="dashboard-surface rounded-lg p-6 sm:p-8">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
               Leitura rapida
@@ -91,7 +91,7 @@ export function AutomationBriefsPanel({ briefs }: AutomationBriefsPanelProps) {
 
       <div className="space-y-4">
         {briefs.length === 0 ? (
-          <div className="border border-black/12 bg-[rgba(255,255,255,0.84)] p-6 text-sm leading-7 text-black/62 shadow-[0_24px_80px_rgba(17,17,17,0.08)]">
+          <div className="dashboard-surface rounded-lg p-6 text-sm leading-7 text-black/62">
             Nenhum briefing foi gerado ainda. Aprove um tema para liberar essa etapa.
           </div>
         ) : (
@@ -102,7 +102,7 @@ export function AutomationBriefsPanel({ briefs }: AutomationBriefsPanelProps) {
               <form
                 key={brief.id}
                 action={formAction}
-                className="border border-black/12 bg-[rgba(255,255,255,0.84)] p-6 shadow-[0_24px_80px_rgba(17,17,17,0.08)] sm:p-8"
+                className="dashboard-surface rounded-lg p-6 sm:p-8"
               >
                 <input type="hidden" name="brief_id" value={brief.id} />
 
@@ -121,7 +121,7 @@ export function AutomationBriefsPanel({ briefs }: AutomationBriefsPanelProps) {
                 </div>
 
                 <div className="mt-6 grid gap-3 md:grid-cols-2">
-                  <div className="border border-black/10 bg-[#fbf7f1] p-4">
+                  <div className="rounded-lg border border-border bg-secondary/35 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                       Angulo
                     </p>
@@ -129,7 +129,7 @@ export function AutomationBriefsPanel({ briefs }: AutomationBriefsPanelProps) {
                       {brief.angle ?? "Sem angulo definido"}
                     </p>
                   </div>
-                  <div className="border border-black/10 bg-[#fbf7f1] p-4">
+                  <div className="rounded-lg border border-border bg-secondary/35 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
                       Keywords
                     </p>
@@ -154,7 +154,7 @@ export function AutomationBriefsPanel({ briefs }: AutomationBriefsPanelProps) {
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="inline-flex h-11 items-center justify-center border border-black bg-black px-4 text-xs font-semibold uppercase tracking-[0.22em] text-white transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+                    className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-4 text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
                   >
                     Gerar draft
                   </button>

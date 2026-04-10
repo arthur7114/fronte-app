@@ -8,9 +8,9 @@ export default async function AutomationBriefsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Automacao"
+        eyebrow="Plano de conteudo"
         title="Briefings prontos para virar draft."
-        description="O painel mostra os briefings aprovados, com angulo e palavras-chave, antes da geracao do post no CMS."
+        description="Aqui o plano vira producao. Valide angulo e keywords antes de mandar para a geracao do artigo."
       />
       <AutomationBriefsPanel briefs={data.briefs} />
     </div>

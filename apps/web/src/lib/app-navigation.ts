@@ -2,99 +2,141 @@ export type AppNavItem = {
   href: string;
   label: string;
   description: string;
+  shortCode: string;
 };
 
 export const APP_NAV_ITEMS: AppNavItem[] = [
   {
     href: "/app/overview",
-    label: "Visao geral",
-    description: "Resumo do workspace e do fluxo atual.",
+    label: "Dashboard",
+    description: "Resumo do projeto, pipeline e proximos passos.",
+    shortCode: "DB",
   },
   {
-    href: "/app/posts",
-    label: "Posts",
-    description: "Editor, lista e operacao editorial.",
+    href: "/app/site",
+    label: "Meu blog",
+    description: "Identidade do site, rota publica e configuracao editorial.",
+    shortCode: "MB",
+  },
+  {
+    href: "/app/briefing",
+    label: "Estrategia",
+    description: "Briefing do negocio e contexto que guia o conteudo.",
+    shortCode: "ES",
   },
   {
     href: "/app/automation",
-    label: "Automacao",
-    description: "Configuracao operacional e gatilhos.",
+    label: "Plano de conteudo",
+    description: "Temas, briefings e configuracao do motor de geracao.",
+    shortCode: "PC",
   },
   {
-    href: "/app/automation/topics",
-    label: "Temas",
-    description: "Curadoria de temas gerados pelo worker.",
+    href: "/app/posts",
+    label: "Artigos",
+    description: "Lista editorial, novos rascunhos e edicao de posts.",
+    shortCode: "AR",
   },
   {
-    href: "/app/automation/briefs",
-    label: "Briefings",
-    description: "Briefings prontos para gerar draft.",
+    href: "/app/trends",
+    label: "Tendencias",
+    description: "Radar de sinais atuais com base nos temas pesquisados.",
+    shortCode: "TD",
   },
   {
-    href: "/app/jobs",
-    label: "Jobs",
-    description: "Fila e historico de processamento.",
+    href: "/app/analytics",
+    label: "Analytics",
+    description: "Leitura de saude operacional e impacto do conteudo.",
+    shortCode: "AN",
   },
   {
     href: "/app/settings/account",
     label: "Configuracoes",
-    description: "Conta, workspace, site e IA.",
+    description: "Conta, workspace, site e preferencias de IA.",
+    shortCode: "CF",
   },
 ];
 
 export function getAppRouteMeta(pathname: string) {
   if (pathname === "/app/overview") {
     return {
-      breadcrumb: "Visao geral",
-      label: "Visao geral",
+      breadcrumb: "Dashboard",
+      label: "Dashboard",
+    };
+  }
+
+  if (pathname.startsWith("/app/site")) {
+    return {
+      breadcrumb: "Meu blog",
+      label: "Meu blog",
     };
   }
 
   if (pathname.startsWith("/app/posts/new")) {
     return {
-      breadcrumb: "Conteudo / Novo post",
-      label: "Novo post",
+      breadcrumb: "Artigos / Novo artigo",
+      label: "Novo artigo",
     };
   }
 
   if (pathname.startsWith("/app/posts/")) {
     return {
-      breadcrumb: "Conteudo / Editor",
+      breadcrumb: "Artigos / Editor",
       label: "Editor",
     };
   }
 
   if (pathname.startsWith("/app/posts")) {
     return {
-      breadcrumb: "Conteudo / Posts",
-      label: "Posts",
+      breadcrumb: "Artigos",
+      label: "Artigos",
+    };
+  }
+
+  if (pathname.startsWith("/app/briefing")) {
+    return {
+      breadcrumb: "Estrategia",
+      label: "Estrategia",
     };
   }
 
   if (pathname.startsWith("/app/automation/topics")) {
     return {
-      breadcrumb: "Automacao / Temas",
+      breadcrumb: "Plano de conteudo / Temas",
       label: "Temas",
     };
   }
 
   if (pathname.startsWith("/app/automation/briefs")) {
     return {
-      breadcrumb: "Automacao / Briefings",
+      breadcrumb: "Plano de conteudo / Briefings",
       label: "Briefings",
     };
   }
 
   if (pathname.startsWith("/app/automation")) {
     return {
-      breadcrumb: "Automacao / Operacao",
-      label: "Automacao",
+      breadcrumb: "Plano de conteudo",
+      label: "Plano de conteudo",
+    };
+  }
+
+  if (pathname.startsWith("/app/trends")) {
+    return {
+      breadcrumb: "Tendencias",
+      label: "Tendencias",
+    };
+  }
+
+  if (pathname.startsWith("/app/analytics")) {
+    return {
+      breadcrumb: "Analytics",
+      label: "Analytics",
     };
   }
 
   if (pathname.startsWith("/app/jobs")) {
     return {
-      breadcrumb: "Automacao / Jobs",
+      breadcrumb: "Operacao / Jobs",
       label: "Jobs",
     };
   }
@@ -135,7 +177,7 @@ export function getAppRouteMeta(pathname: string) {
   }
 
   return {
-    breadcrumb: "Painel",
-    label: "Painel",
+    breadcrumb: "Workspace",
+    label: "Workspace",
   };
 }

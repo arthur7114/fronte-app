@@ -4,31 +4,31 @@
 
 ---
 
-## 📋 Overview
+## ðŸ“‹ Overview
 
 Antigravity Kit is a modular system consisting of:
 
 - **20 Specialist Agents** - Role-based AI personas
 - **36 Skills** - Domain-specific knowledge modules
-- **11 Workflows** - Slash command procedures
+- **13 Workflows** - Slash command procedures
 
 ---
 
-## 🏗️ Directory Structure
+## ðŸ—ï¸ Directory Structure
 
 ```plaintext
 .agent/
-├── ARCHITECTURE.md          # This file
-├── agents/                  # 20 Specialist Agents
-├── skills/                  # 36 Skills
-├── workflows/               # 11 Slash Commands
-├── rules/                   # Global Rules
-└── scripts/                 # Master Validation Scripts
+â”œâ”€â”€ ARCHITECTURE.md          # This file
+â”œâ”€â”€ agents/                  # 20 Specialist Agents
+â”œâ”€â”€ skills/                  # 36 Skills
+â”œâ”€â”€ workflows/               # 13 Slash Commands
+â”œâ”€â”€ rules/                   # Global Rules
+â””â”€â”€ scripts/                 # Master Validation Scripts
 ```
 
 ---
 
-## 🤖 Agents (20)
+## ðŸ¤– Agents (20)
 
 Specialist AI personas for different domains.
 
@@ -57,7 +57,7 @@ Specialist AI personas for different domains.
 
 ---
 
-## 🧩 Skills (36)
+## ðŸ§© Skills (36)
 
 Modular knowledge domains that agents can load on-demand. based on task context.
 
@@ -168,7 +168,7 @@ Modular knowledge domains that agents can load on-demand. based on task context.
 
 ---
 
-## 🔄 Workflows (11)
+## ðŸ”„ Workflows (13)
 
 Slash command procedures. Invoke with `/command`.
 
@@ -177,7 +177,9 @@ Slash command procedures. Invoke with `/command`.
 | `/brainstorm`    | Socratic discovery       |
 | `/create`        | Create new features      |
 | `/debug`         | Debug issues             |
+| `/docs-maintenance` | Keep docs synchronized |
 | `/deploy`        | Deploy application       |
+| `/execute-next` | Continue from roadmap |
 | `/enhance`       | Improve existing code    |
 | `/orchestrate`   | Multi-agent coordination |
 | `/plan`          | Task breakdown           |
@@ -188,13 +190,13 @@ Slash command procedures. Invoke with `/command`.
 
 ---
 
-## 🎯 Skill Loading Protocol
+## ðŸŽ¯ Skill Loading Protocol
 
 ```plaintext
-User Request → Skill Description Match → Load SKILL.md
-                                            ↓
+User Request â†’ Skill Description Match â†’ Load SKILL.md
+                                            â†“
                                     Read references/
-                                            ↓
+                                            â†“
                                     Read scripts/
 ```
 
@@ -202,10 +204,10 @@ User Request → Skill Description Match → Load SKILL.md
 
 ```plaintext
 skill-name/
-├── SKILL.md           # (Required) Metadata & instructions
-├── scripts/           # (Optional) Python/Bash scripts
-├── references/        # (Optional) Templates, docs
-└── assets/            # (Optional) Images, logos
+â”œâ”€â”€ SKILL.md           # (Required) Metadata & instructions
+â”œâ”€â”€ scripts/           # (Optional) Python/Bash scripts
+â”œâ”€â”€ references/        # (Optional) Templates, docs
+â””â”€â”€ assets/            # (Optional) Images, logos
 ```
 
 ### Enhanced Skills (with scripts/references)
@@ -217,7 +219,7 @@ skill-name/
 
 ---
 
-## � Scripts (2)
+## ï¿½ Scripts (2)
 
 Master validation scripts that orchestrate skill-level scripts.
 
@@ -262,19 +264,19 @@ For details, see [scripts/README.md](scripts/README.md)
 
 ---
 
-## 📊 Statistics
+## ðŸ“Š Statistics
 
 | Metric              | Value                         |
 | ------------------- | ----------------------------- |
 | **Total Agents**    | 20                            |
 | **Total Skills**    | 36                            |
-| **Total Workflows** | 11                            |
+| **Total Workflows** | 13                            |
 | **Total Scripts**   | 2 (master) + 18 (skill-level) |
 | **Coverage**        | ~90% web/mobile development   |
 
 ---
 
-## 🔗 Quick Reference
+## ðŸ”— Quick Reference
 
 | Need     | Agent                 | Skills                                |
 | -------- | --------------------- | ------------------------------------- |

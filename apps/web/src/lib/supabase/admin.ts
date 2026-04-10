@@ -76,3 +76,19 @@ export function getAdminSupabaseClient() {
     },
   });
 }
+
+export function getOptionalAdminSupabaseClient() {
+  const url = getServerEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const serviceRoleKey = getServerEnv("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!url || !serviceRoleKey) {
+    return null;
+  }
+
+  return createClient<Database>(url, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
