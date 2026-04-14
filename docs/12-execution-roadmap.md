@@ -130,7 +130,7 @@ para gerar um briefing consolidado e editavel.
 - [x] Criar entidade persistida para briefing do negocio
 - [x] Criar tela de edicao em `/app/briefing`
 - [x] Exibir status do briefing no overview
-- [ ] Alimentar estrategia de keywords com o briefing salvo
+- [x] Alimentar estrategia de keywords com o briefing salvo
 - [ ] Evoluir para onboarding conversacional com IA
 
 ---

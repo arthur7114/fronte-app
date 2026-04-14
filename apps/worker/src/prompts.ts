@@ -11,13 +11,28 @@ function formatRules(rules: Tables<"ai_rules">[]) {
   ].join("\n");
 }
 
-export function buildResearchPrompt(config: Tables<"automation_configs">, site: Tables<"sites">) {
-  return [
+export function buildResearchPrompt(
+  config: Tables<"automation_configs">,
+  site: Tables<"sites">,
+  briefing: Tables<"business_briefings"> | null | undefined
+) {
+  const lines = [
     `Tenant site: ${site.name}`,
     `Language: ${config.language}`,
-    `Seed keywords: ${(config.keywords_seed ?? []).join(", ") || "none"}`,
-    `Return 5 concise topic ideas in Portuguese BR.`,
-  ].join("\n");
+  ];
+
+  if (briefing) {
+    if (briefing.segment) lines.push(`Business Segment: ${briefing.segment}`);
+    if (briefing.customer_profile) lines.push(`Target Audience: ${briefing.customer_profile}`);
+    if (briefing.offerings) lines.push(`Products/Services: ${briefing.offerings}`);
+    if (Array.isArray(briefing.desired_keywords) && briefing.desired_keywords.length > 0) {
+      lines.push(`Desired Keywords: ${briefing.desired_keywords.join(", ")}`);
+    }
+  }
+
+  lines.push(`Seed keywords: ${(config.keywords_seed ?? []).join(", ") || "none"}`);
+  lines.push(`Return 5 concise topic ideas in Portuguese BR considering the business context.`);
+  return lines.join("\n");
 }
 
 export function buildBriefPrompt(

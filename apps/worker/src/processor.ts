@@ -47,7 +47,7 @@ async function loadAutomationContext(client: ReturnType<typeof createAdminClient
     configQuery = configQuery.eq("id", payload.automation_config_id);
   }
 
-  const [siteResult, configResult, preferencesResult, rulesResult] = await Promise.all([
+  const [siteResult, configResult, preferencesResult, rulesResult, briefingResult] = await Promise.all([
     client
       .from("sites")
       .select("*")
@@ -64,6 +64,11 @@ async function loadAutomationContext(client: ReturnType<typeof createAdminClient
       .from("ai_rules")
       .select("*")
       .eq("tenant_id", payload.tenant_id),
+    client
+      .from("business_briefings")
+      .select("*")
+      .eq("tenant_id", payload.tenant_id)
+      .maybeSingle(),
   ]);
 
   if (siteResult.error) {
@@ -82,12 +87,17 @@ async function loadAutomationContext(client: ReturnType<typeof createAdminClient
     throw new Error(rulesResult.error.message);
   }
 
+  if (briefingResult.error) {
+    throw new Error(briefingResult.error.message);
+  }
+
   return {
     payload,
     site: siteResult.data,
     config: configResult.data,
     preferences: preferencesResult.data,
     rules: rulesResult.data ?? [],
+    briefing: briefingResult.data,
   };
 }
 
@@ -184,7 +194,7 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
     messages: [
       {
         role: "user",
-        content: buildResearchPrompt(context.config, context.site),
+        content: buildResearchPrompt(context.config, context.site, context.briefing),
       },
     ],
     schemaHint:
