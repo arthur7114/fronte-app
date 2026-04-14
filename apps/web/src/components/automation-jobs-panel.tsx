@@ -1,72 +1,53 @@
 import Link from "next/link";
 import type { Tables } from "@super/db";
 import { JOB_STATUS_LABELS, JOB_TYPE_LABELS } from "@/lib/automation";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Activity,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  ArrowUpRight,
+  Ban,
+  Loader2,
+  Zap,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type AutomationJobsPanelProps = {
   jobs: Tables<"automation_jobs">[];
 };
 
 function formatDateTime(value: string | null | undefined) {
-  if (!value) {
-    return "-";
-  }
-
+  if (!value) return null;
   return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "medium",
+    dateStyle: "short",
     timeStyle: "short",
   }).format(new Date(value));
 }
 
-function getJobStatusClass(status: string) {
-  switch (status) {
-    case "completed":
-      return "border-success/20 bg-success/10 text-success";
-    case "failed":
-      return "border-danger/20 bg-danger/10 text-danger";
-    case "running":
-      return "border-warning/20 bg-warning/10 text-warning";
-    case "cancelled":
-      return "border-border bg-muted text-muted-foreground";
-    default:
-      return "border-primary/15 bg-primary/10 text-primary";
-  }
-}
-
 function asRecord(value: unknown): Record<string, unknown> | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
 }
 
 function getResultSummary(job: Tables<"automation_jobs">) {
   const result = asRecord(job.result_json);
-
-  if (!result) {
-    return "Sem resultado ainda.";
-  }
+  if (!result) return null;
 
   const topicIds = Array.isArray(result.topic_candidate_ids)
-    ? result.topic_candidate_ids.filter((item): item is string => typeof item === "string")
+    ? result.topic_candidate_ids.filter((i): i is string => typeof i === "string")
     : [];
   const contentBriefId =
     typeof result.content_brief_id === "string" ? result.content_brief_id : null;
   const postId = typeof result.post_id === "string" ? result.post_id : null;
 
-  if (topicIds.length > 0) {
-    return `Topics criados: ${topicIds.length}`;
-  }
-
-  if (contentBriefId) {
-    return `Brief criado: ${contentBriefId}`;
-  }
-
-  if (postId) {
-    return `Post relacionado: ${postId}`;
-  }
-
-  return "Resultado recebido.";
+  if (topicIds.length > 0) return `${topicIds.length} tópicos criados`;
+  if (contentBriefId) return `Brief criado`;
+  if (postId) return `Rascunho criado`;
+  return "Resultado registrado";
 }
 
 function getEntityLink(job: Tables<"automation_jobs">) {
@@ -74,7 +55,7 @@ function getEntityLink(job: Tables<"automation_jobs">) {
   const payload = asRecord(job.payload_json);
 
   const topicIds = Array.isArray(result?.topic_candidate_ids)
-    ? result?.topic_candidate_ids.filter((item): item is string => typeof item === "string")
+    ? result.topic_candidate_ids.filter((i): i is string => typeof i === "string")
     : [];
   const contentBriefId =
     typeof result?.content_brief_id === "string" ? result.content_brief_id : null;
@@ -85,165 +66,189 @@ function getEntityLink(job: Tables<"automation_jobs">) {
         ? payload.post_id
         : null;
 
-  if (topicIds.length > 0) {
-    return {
-      href: "/app/automation/topics",
-      label: `${topicIds.length} topics`,
-    };
-  }
-
-  if (contentBriefId) {
-    return {
-      href: "/app/automation/briefs",
-      label: contentBriefId,
-    };
-  }
-
-  if (postId) {
-    return {
-      href: `/app/posts/${postId}`,
-      label: postId,
-    };
-  }
-
+  if (topicIds.length > 0) return { href: "/app/automation/topics", label: "Ver tópicos" };
+  if (contentBriefId) return { href: "/app/automation/briefs", label: "Ver briefing" };
+  if (postId) return { href: `/app/posts/${postId}`, label: "Ver post" };
   return null;
 }
 
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; icon: React.ElementType; badgeClass: string; rowClass: string }
+> = {
+  running: {
+    label: "Em execução",
+    icon: Loader2,
+    badgeClass: "bg-amber-100 text-amber-700",
+    rowClass: "border-l-2 border-l-amber-400",
+  },
+  failed: {
+    label: "Falhou",
+    icon: XCircle,
+    badgeClass: "bg-red-100 text-red-700",
+    rowClass: "border-l-2 border-l-red-400",
+  },
+  completed: {
+    label: "Concluído",
+    icon: CheckCircle2,
+    badgeClass: "bg-green-100 text-green-700",
+    rowClass: "",
+  },
+  pending: {
+    label: "Pendente",
+    icon: Clock,
+    badgeClass: "bg-muted text-muted-foreground",
+    rowClass: "",
+  },
+  cancelled: {
+    label: "Cancelado",
+    icon: Ban,
+    badgeClass: "bg-muted text-muted-foreground",
+    rowClass: "",
+  },
+};
+
 export function AutomationJobsPanel({ jobs }: AutomationJobsPanelProps) {
-  const runningCount = jobs.filter((job) => job.status === "running").length;
-  const failedCount = jobs.filter((job) => job.status === "failed").length;
+  const runningCount = jobs.filter((j) => j.status === "running").length;
+  const failedCount = jobs.filter((j) => j.status === "failed").length;
   const scheduledPublishCount = jobs.filter(
-    (job) => job.type === "publish_post" && job.status === "pending",
+    (j) => j.type === "publish_post" && j.status === "pending",
   ).length;
 
   return (
-    <section className="space-y-6">
-      <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-        <article className="dashboard-surface rounded-lg p-6 sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
-            Jobs
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-black">
-            Acompanhe o pipeline real do worker por tenant.
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-black/62">
-            O painel agora cobre o ciclo inteiro do MVP, incluindo publicacao automatica por
-            job e leitura melhor dos horarios e falhas.
-          </p>
-
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border border-border bg-secondary/35 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
-                Rodando
+    <div className="space-y-6">
+      {/* KPI Cards */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardContent className="pt-5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Em execução
               </p>
-              <p className="mt-2 text-2xl font-semibold text-black">{runningCount}</p>
+              <Activity className="h-4 w-4 text-amber-500" />
             </div>
-            <div className="rounded-lg border border-border bg-secondary/35 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
+            <p className="mt-2 text-3xl font-semibold text-amber-600">{runningCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Falhos
               </p>
-              <p className="mt-2 text-2xl font-semibold text-black">{failedCount}</p>
+              <AlertCircle className="h-4 w-4 text-red-400" />
             </div>
-            <div className="rounded-lg border border-border bg-secondary/35 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
-                Publicacoes agendadas
+            <p className="mt-2 text-3xl font-semibold text-red-600">{failedCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Publicações agendadas
               </p>
-              <p className="mt-2 text-2xl font-semibold text-black">{scheduledPublishCount}</p>
+              <Zap className="h-4 w-4 text-muted-foreground" />
             </div>
-          </div>
-        </article>
-
-        <aside className="dashboard-surface rounded-lg p-6 sm:p-8">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
-              Leitura do painel
+            <p className="mt-2 text-3xl font-semibold text-muted-foreground">
+              {scheduledPublishCount}
             </p>
-            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-black">
-              Cada linha mostra tipo, janela e destino do processamento.
-            </h3>
-            <p className="mt-2 text-sm leading-7 text-black/62">
-              Use os horarios para entender o ciclo do worker e os detalhes para chegar em
-              temas, briefings ou posts relacionados.
-            </p>
-          </div>
-
-          <div className="space-y-3 border-t border-black/10 pt-4 text-sm leading-7 text-black/65">
-            <p>1. `research_topics` cria temas.</p>
-            <p>2. `generate_brief` cria briefings.</p>
-            <p>3. `generate_post` cria drafts.</p>
-            <p>4. `publish_post` fecha a publicacao agendada.</p>
-          </div>
-        </aside>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="dashboard-surface overflow-hidden rounded-lg">
-        <div className="grid grid-cols-[1fr_0.8fr_0.72fr_0.95fr_0.9fr_1.4fr] border-b border-border bg-secondary/35 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-black/45">
-          <span>Tipo</span>
-          <span>Status</span>
-          <span>Tentativas</span>
-          <span>Agendamento</span>
-          <span>Vinculo</span>
-          <span>Detalhe</span>
-        </div>
-
-        {jobs.length === 0 ? (
-          <div className="px-4 py-6 text-sm leading-7 text-black/62">
-            Nenhum job foi registrado ainda para este tenant.
-          </div>
-        ) : (
-          jobs.map((job) => {
+      {/* Job List */}
+      {jobs.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center">
+            <Activity className="mx-auto h-10 w-10 text-muted-foreground/40" />
+            <p className="mt-3 text-sm text-muted-foreground">
+              Nenhum job registrado ainda. O worker inicia os primeiros jobs após a configuração da automação.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {jobs.map((job) => {
+            const cfg = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.pending;
+            const StatusIcon = cfg.icon;
             const entityLink = getEntityLink(job);
+            const resultSummary = getResultSummary(job);
 
             return (
-              <article
-                key={job.id}
-                className="grid grid-cols-[1fr_0.8fr_0.72fr_0.95fr_0.9fr_1.4fr] border-b border-border px-4 py-4 text-sm last:border-b-0"
-              >
-                <div className="space-y-1 pr-3">
-                  <p className="font-semibold text-black">
-                    {JOB_TYPE_LABELS[job.type as keyof typeof JOB_TYPE_LABELS] ?? job.type}
-                  </p>
-                  <p className="text-black/54">Prioridade {job.priority}</p>
-                </div>
-                <div>
-                  <span
-                    className={`inline-flex border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] ${getJobStatusClass(
-                      job.status,
-                    )}`}
-                  >
-                    {JOB_STATUS_LABELS[job.status as keyof typeof JOB_STATUS_LABELS] ?? job.status}
-                  </span>
-                </div>
-                <div className="text-black/65">
-                  {job.attempts}/{job.max_attempts}
-                </div>
-                <div className="space-y-1 pr-2 text-black/60">
-                  <p>Programado: {formatDateTime(job.scheduled_for)}</p>
-                  <p>Inicio: {formatDateTime(job.started_at)}</p>
-                  <p>Fim: {formatDateTime(job.finished_at)}</p>
-                </div>
-                <div className="text-black/60">
-                  {entityLink ? (
-                    <Link
-                      href={entityLink.href}
-                      className="underline decoration-black/25 underline-offset-4"
-                    >
-                      {entityLink.label}
-                    </Link>
-                  ) : (
-                    "-"
+              <Card key={job.id} className={cn("overflow-hidden", cfg.rowClass)}>
+                <CardContent className="p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    {/* Left: type + badge */}
+                    <div className="flex items-center gap-3">
+                      <Badge className={cn("gap-1 shrink-0", cfg.badgeClass)}>
+                        <StatusIcon
+                          className={cn(
+                            "h-3 w-3",
+                            job.status === "running" && "animate-spin",
+                          )}
+                        />
+                        {cfg.label}
+                      </Badge>
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {JOB_TYPE_LABELS[job.type as keyof typeof JOB_TYPE_LABELS] ?? job.type}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Prioridade {job.priority} · Tentativas {job.attempts}/{job.max_attempts}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Right: entity link */}
+                    {entityLink && (
+                      <Link
+                        href={entityLink.href}
+                        className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                      >
+                        {entityLink.label}
+                        <ArrowUpRight className="h-3 w-3" />
+                      </Link>
+                    )}
+                  </div>
+
+                  {/* Timestamps + Result */}
+                  <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
+                    {formatDateTime(job.scheduled_for) && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Agendado: {formatDateTime(job.scheduled_for)}
+                      </span>
+                    )}
+                    {formatDateTime(job.started_at) && (
+                      <span className="flex items-center gap-1">
+                        <Activity className="h-3 w-3" />
+                        Iniciado: {formatDateTime(job.started_at)}
+                      </span>
+                    )}
+                    {formatDateTime(job.finished_at) && (
+                      <span className="flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Finalizado: {formatDateTime(job.finished_at)}
+                      </span>
+                    )}
+                    {resultSummary && (
+                      <span className="text-foreground">{resultSummary}</span>
+                    )}
+                  </div>
+
+                  {/* Error message */}
+                  {job.error_message && (
+                    <div className="mt-3 flex items-start gap-2 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">
+                      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <span>{job.error_message}</span>
+                    </div>
                   )}
-                </div>
-                <div className="space-y-1 pr-2 text-black/60">
-                  <p>{getResultSummary(job)}</p>
-                  <p>Atualizado: {formatDateTime(job.updated_at)}</p>
-                  {job.error_message ? <p className="text-[#b3422f]">{job.error_message}</p> : null}
-                </div>
-              </article>
+                </CardContent>
+              </Card>
             );
-          })
-        )}
-      </div>
-    </section>
+          })}
+        </div>
+      )}
+    </div>
   );
 }

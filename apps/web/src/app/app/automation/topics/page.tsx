@@ -8,9 +8,9 @@ export default async function AutomationTopicsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Plano de conteudo"
-        title="Curadoria dos temas sugeridos."
-        description="Use este quadro para filtrar sinais, refinar a linguagem e decidir o que realmente merece virar briefing."
+        eyebrow="Tópicos Sugeridos"
+        title="Curadoria dos temas gerados pela IA."
+        description="Revise, edite e aprove os tópicos para criar briefings de conteúdo. Cada aprovação dispara um job de geração automática."
       />
       <AutomationTopicsPanel topics={data.topics} />
     </div>

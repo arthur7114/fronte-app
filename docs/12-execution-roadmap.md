@@ -276,5 +276,16 @@ para decidir o proximo movimento e o plano certo.
 
 ### Proximo registro esperado
 
-- Conexao do briefing salvo com a configuracao de automacao ou estrategia de keywords
+- Conexao das Automações e Keywords geradas no design de "Estratégia e Automação" da UI (Fase 3 do plano Pixel Perfect).
 - Validacao do fluxo com banco Supabase atualizado
+
+### 2026-04-13
+
+- Refatoração total para adoção de sistema visual "pixel-perfect" com base no repositório do Protótipo (Tailwind V4, Fonts Inter, Radix UI).
+- `AppShell` migrado mantendo a estrutura de navegação Sidebar/Header.
+- `OverviewPage` recriada com dados interativos (`kpi-cards.tsx`, `this-week.tsx`, `ai-suggestions.tsx`, `performance-highlights.tsx`) extraindo dados das chamadas de banco já existentes e orientando o painel principal ao Job to Be Done de acompanhamento com call to action para Briefing pendente.
+- Fase 1 (Dashboard Top Down UX) do novo plano executivo finalizada e build TypeScript aprovado.
+- Fase 2 concluída com a migração do `BusinessBriefingPanel` para usar o design de settings/briefing do protótipo, integrando os Cards, ícones Lucide e badges para um formulário de preenchimento de metadados fluído, acoplado à tipagem de server actions original.
+- Fase 3 concluída: `AutomationTopicsPanel` e `AutomationBriefsPanel` refatorados para design card-based com badges de status, pills de keywords, KPI counters e integração com server actions `moderateTopicCandidate` / `enqueueDraftGeneration` preservada.
+- Fase 4 concluída: `PostsBoard` migrado de tabela server-rendered estática para client component com filter tabs por status, toggle lista/grid, 3 KPI cards, badges coloridos Lucide por status, dropdown de ações por card e empty state contextual.
+- Fase 5 concluída: `AutomationJobsPanel` refatorado como Torre de Controle visual com 3 KPI cards (Em execução/Falhos/Agendados), job cards com badge+ícone de status, ícone animado para jobs `running`, timestamps agrupados, highlight de erro com fundo vermelho contextual e links de entidades com `ArrowUpRight`.

@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import { Newsreader, Roboto } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const newsreader = Newsreader({
-  variable: "--font-newsreader",
+const inter = Inter({ 
   subsets: ["latin"],
-});
-
-const roboto = Roboto({
-  variable: "--font-roboto",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
+  variable: '--font-sans'
 });
 
 export const metadata: Metadata = {
@@ -26,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body
-        className={`${newsreader.variable} ${roboto.variable} antialiased`}
+        className={`${inter.variable} font-sans antialiased`}
       >
         {children}
       </body>

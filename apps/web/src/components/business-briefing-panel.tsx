@@ -7,6 +7,11 @@ import {
   type BusinessBriefingState,
 } from "@/app/app/briefing/actions";
 import { stringifyBriefingList } from "@/lib/business-briefing";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Building2, Search, Crosshair, HelpCircle, Check, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type BusinessBriefingPanelProps = {
   briefing: Tables<"business_briefings"> | null;
@@ -35,188 +40,208 @@ export function BusinessBriefingPanel({
   );
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
-      <form action={formAction} className="dashboard-surface rounded-lg p-6 sm:p-8">
-        <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
-            Briefing do negocio
-          </p>
-          <h2 className="text-3xl font-semibold tracking-[-0.04em] text-black">
-            Transforme contexto em direcao editorial.
-          </h2>
-          <p className="max-w-2xl text-sm leading-7 text-black/62">
-            Este briefing e o ponto de partida para keywords, temas, plano editorial e
-            artigos. Comece simples; a estrategia melhora quando o contexto fica claro.
-          </p>
-        </div>
+    <div className="grid gap-6 lg:grid-cols-3">
+      {/* Main Settings */}
+      <div className="space-y-6 lg:col-span-2">
+        <form action={formAction}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Building2 className="h-5 w-5 text-primary" />
+                Informações do Negócio
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">
+                    Nome da empresa
+                  </label>
+                  <input
+                    name="business_name"
+                    defaultValue={briefing?.business_name ?? tenantName}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">
+                    Segmento
+                  </label>
+                  <input
+                    name="segment"
+                    defaultValue={briefing?.segment ?? ""}
+                    placeholder="Clínica, E-commerce, SaaS..."
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-foreground">
+                    Localização e Abrangência
+                  </label>
+                  <input
+                    name="location"
+                    defaultValue={briefing?.location ?? ""}
+                    placeholder="Ex: São Paulo - SP, ou Atendimento Nacional"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+                  />
+                </div>
+              </div>
 
-        <div className="mt-6 grid gap-4">
-          <label className="block">
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-              Nome do negocio
-            </span>
-            <input
-              name="business_name"
-              defaultValue={briefing?.business_name ?? tenantName}
-              className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
-            />
-          </label>
+              <div>
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  Serviços ou produtos principais
+                </label>
+                <textarea
+                  name="offerings"
+                  rows={4}
+                  defaultValue={briefing?.offerings ?? ""}
+                  placeholder="Descreva o que a empresa vende e as ofertas de maior volume ou rentabilidade."
+                  className="w-full resize-none rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+                />
+              </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="block">
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-                Segmento
-              </span>
-              <input
-                name="segment"
-                defaultValue={briefing?.segment ?? ""}
-                placeholder="clinica estetica, contabilidade, escola de idiomas"
-                className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
-              />
-            </label>
+              <div>
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Crosshair className="h-4 w-4 text-muted-foreground" />
+                  Perfil do Cliente Ideal (ICP)
+                </label>
+                <textarea
+                  name="customer_profile"
+                  rows={4}
+                  defaultValue={briefing?.customer_profile ?? ""}
+                  placeholder="Explique quem compra de você, principais dores, problemas resolvidos e nível de maturidade."
+                  className="w-full resize-none rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+                />
+              </div>
 
-            <label className="block">
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-                Localizacao
-              </span>
-              <input
-                name="location"
-                defaultValue={briefing?.location ?? ""}
-                placeholder="Sao Paulo, Brasil ou atendimento nacional"
-                className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
-              />
-            </label>
-          </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">
+                    Palavras-chave Iniciais
+                  </label>
+                  <textarea
+                    name="desired_keywords"
+                    rows={4}
+                    defaultValue={desiredKeywords}
+                    placeholder="Ideias de palavras soltas. Separadas por vírgula."
+                    className="w-full resize-none rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">
+                    Principais Concorrentes
+                  </label>
+                  <textarea
+                    name="competitors"
+                    rows={4}
+                    defaultValue={competitors}
+                    placeholder="Sites concorrentes de SEO ou de mercado direto."
+                    className="w-full resize-none rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+                  />
+                </div>
+              </div>
 
-          <label className="block">
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-              Servicos ou produtos
-            </span>
-            <textarea
-              name="offerings"
-              rows={4}
-              defaultValue={briefing?.offerings ?? ""}
-              placeholder="Descreva o que a empresa vende, quais ofertas importam mais e o que precisa aparecer no conteudo."
-              className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base leading-7 outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
-            />
-          </label>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Por que essas palavras e concorrentes?
+                </label>
+                <textarea
+                  name="keyword_motivation"
+                  rows={3}
+                  defaultValue={briefing?.keyword_motivation ?? ""}
+                  placeholder="Deixe qualquer observação adicional sobre porque essa é a estratégia ideal..."
+                  className="w-full resize-none rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+                />
+              </div>
 
-          <label className="block">
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-              Perfil de clientes
-            </span>
-            <textarea
-              name="customer_profile"
-              rows={4}
-              defaultValue={briefing?.customer_profile ?? ""}
-              placeholder="Explique quem compra, principais dores, objecoes e nivel de maturidade."
-              className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base leading-7 outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
-            />
-          </label>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Observações de Tom e Estilo
+                </label>
+                <textarea
+                  name="notes"
+                  rows={2}
+                  defaultValue={briefing?.notes ?? ""}
+                  placeholder="Restrições, tom de voz (informal vs corporativo), assuntos a evitar."
+                  className="w-full resize-none rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+                />
+              </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="block">
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-                Palavras desejadas
-              </span>
-              <textarea
-                name="desired_keywords"
-                rows={4}
-                defaultValue={desiredKeywords}
-                placeholder="Separe por virgula ou linha"
-                className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base leading-7 outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
-              />
-            </label>
+              {state.error ? (
+                <div className="flex items-start gap-2 rounded-lg bg-red-50 p-4">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                  <p className="text-sm text-red-700">{state.error}</p>
+                </div>
+              ) : null}
+              {state.success ? (
+                <div className="flex items-start gap-2 rounded-lg bg-green-50 p-4">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                  <p className="text-sm text-green-700">{state.success}</p>
+                </div>
+              ) : null}
 
-            <label className="block">
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-                Concorrentes
-              </span>
-              <textarea
-                name="competitors"
-                rows={4}
-                defaultValue={competitors}
-                placeholder="Separe por virgula ou linha"
-                className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base leading-7 outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
-              />
-            </label>
-          </div>
+              <div className="flex justify-end border-t border-border pt-4">
+                <Button disabled={isPending} className="gap-2">
+                  {isPending ? "Salvando..." : "Salvar Briefing"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </form>
+      </div>
 
-          <label className="block">
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-              Por que essas palavras importam?
-            </span>
-            <textarea
-              name="keyword_motivation"
-              rows={3}
-              defaultValue={briefing?.keyword_motivation ?? ""}
-              placeholder="Conte se elas vieram de clientes, vendas, servicos prioritarios ou intuicao do time."
-              className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base leading-7 outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
-            />
-          </label>
+      {/* Sidebar Info */}
+      <div className="space-y-6">
+        <Card className={cn(briefing ? "border-primary/20" : "")}>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <HelpCircle className="h-5 w-5 text-primary" />
+              Status do Contexto
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 flex items-center justify-between">
+              <Badge 
+                className={cn(
+                  "text-sm px-3 py-1",
+                  briefing 
+                    ? "bg-primary/10 text-primary" 
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                {briefing ? "Briefing Validado" : "Nenhum contexto"}
+              </Badge>
+            </div>
 
-          <label className="block">
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-              Observacoes estrategicas
-            </span>
-            <textarea
-              name="notes"
-              rows={3}
-              defaultValue={briefing?.notes ?? ""}
-              placeholder="Inclua restricoes, tom desejado, temas sensiveis ou oportunidades."
-              className="w-full rounded-lg border border-border bg-white px-4 py-4 text-base leading-7 outline-none transition placeholder:text-black/30 focus:border-primary focus:shadow-[0_0_0_4px_rgba(18,179,166,0.12)]"
-            />
-          </label>
+            <div className="space-y-4 mb-6">
+              <p className="text-sm text-muted-foreground">
+                Sua IA não consegue sugerir palavras-chave ou pautas valiosas sem entender seu <strong className="text-foreground font-semibold">Cliente Ideal</strong>.
+              </p>
+              
+              <div className="rounded-lg bg-secondary/50 p-4">
+                <p className="text-xs font-medium text-foreground mb-1">Impactos diretos:</p>
+                <ul className="text-xs text-muted-foreground space-y-2 list-disc list-inside">
+                  <li>Sugestão das Core Keywords</li>
+                  <li>Adequação de tom de voz do blog</li>
+                  <li>Recomendação de Call-to-Actions</li>
+                </ul>
+              </div>
+            </div>
 
-          {state.error ? (
-            <p className="border border-[#b3422f]/20 bg-[#b3422f]/8 px-4 py-3 text-sm text-[#b3422f]">
-              {state.error}
-            </p>
-          ) : null}
-          {state.success ? (
-            <p className="border border-[#2f6b4f]/20 bg-[#edf7ef] px-4 py-3 text-sm text-[#2f6b4f]">
-              {state.success}
-            </p>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={isPending}
-            className="inline-flex h-12 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold uppercase tracking-[0.24em] text-primary-foreground transition duration-200 hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
-          >
-            {isPending ? "Salvando..." : "Salvar briefing"}
-          </button>
-        </div>
-      </form>
-
-      <aside className="dashboard-surface rounded-lg p-6 sm:p-8">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/45">
-            Status
-          </p>
-          <h3 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-black">
-            {briefing ? "Briefing salvo" : "Briefing pendente"}
-          </h3>
-          <p className="mt-2 text-sm leading-7 text-black/62">
-            Projeto atual: {siteName}
-          </p>
-        </div>
-
-        <div className="space-y-3 border-t border-black/10 pt-4 text-sm leading-7 text-black/65">
-          <p>1. O briefing concentra contexto do negocio.</p>
-          <p>2. As keywords continuam em automacao por enquanto.</p>
-          <p>3. A proxima etapa conecta este briefing a estrategia.</p>
-        </div>
-
-        {briefing?.summary ? (
-          <div className="border-t border-black/10 pt-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/42">
-              Resumo consolidado
-            </p>
-            <p className="mt-3 text-sm leading-7 text-black/68">{briefing.summary}</p>
-          </div>
-        ) : null}
-      </aside>
-    </section>
+            {briefing?.summary && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                  Como a IA lhe entende
+                </p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {briefing.summary}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
