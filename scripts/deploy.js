@@ -100,7 +100,22 @@ async function main() {
   run(`git tag ${newVersion}`);
   log(`Created git tag ${newVersion}`);
 
-  // 4. Webhooks
+  // 4. Push to origin
+  log('Pushing to origin...');
+  try {
+    run(`git push origin main`); // Assuming main branch
+    run(`git push origin --tags`);
+    log('✅ Pushed to origin successfully.');
+  } catch (err) {
+    log('⚠️ Failed to push to origin. You may need to push manually.');
+    // Don't exit here, maybe the user wants to trigger webhooks anyway?
+    // Actually, if pushing fails, deployment will likely fail on the server.
+    if (!process.argv.includes('--ignore-push-fail')) {
+       error('Push failed. Aborting webhooks. Use --ignore-push-fail to continue anyway.');
+    }
+  }
+
+  // 5. Webhooks
   await triggerWebhook('Web App', WEBHOOK_WEB, newVersion);
   await triggerWebhook('Worker App', WEBHOOK_WORKER, newVersion);
 
