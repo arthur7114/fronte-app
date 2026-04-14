@@ -18,9 +18,9 @@ export default async function SignupPage() {
   return (
     <AuthPageShell
       eyebrow="Criar acesso"
-      title="Abra seu primeiro espaco de trabalho."
-      description="O cadastro mantem a mesma linguagem do login, mas ja conduz para a criacao do workspace sem parecer um formulario generico."
-      note="Se o Supabase abrir sessao na hora, o proximo passo sera o onboarding. Se nao abrir, a confirmacao por email vira o fallback."
+      title="Comece sua jornada"
+      description="Crie sua conta em segundos e desbloqueie o poder da automação de conteúdo otimizado."
+      note="Sem cartão de crédito necessário. Teste todas as funcionalidades por 7 dias."
     >
       <AuthPanel mode="signup">
         <AuthForm mode="signup" />

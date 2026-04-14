@@ -8,6 +8,7 @@ import {
   getAutomationConfigForTenant,
   getContentBriefForTenant,
   getTopicCandidateForTenant,
+  getKeywordCandidateForTenant,
 } from "@/lib/automation-data";
 import {
   validateAiPreferencesInput,
@@ -36,6 +37,17 @@ export type BriefDraftState = {
   error?: string;
   success?: string;
   briefId?: string;
+};
+
+export type KeywordStrategyState = {
+  error?: string;
+  success?: string;
+};
+
+export type KeywordModerationState = {
+  error?: string;
+  success?: string;
+  keywordId?: string;
 };
 
 function mapAiPreferencesSaveError(error: { code?: string; message: string } | null | undefined) {
@@ -208,6 +220,41 @@ export async function enqueueTopicResearch(
   return { success: "Pesquisa de temas enfileirada. Acompanhe a execucao em Jobs." };
 }
 
+export async function enqueueKeywordStrategy(
+  _prevState: KeywordStrategyState,
+  _formData: FormData,
+): Promise<KeywordStrategyState> {
+  const workspace = await requireAutomationWorkspace();
+
+  const result = (await workspace.admin
+    .from("automation_jobs")
+    .insert({
+      tenant_id: workspace.tenant.id,
+      site_id: workspace.site.id,
+      type: "generate_keyword_strategy",
+      status: "pending",
+      max_attempts: APP_DEFAULTS.maxJobAttempts,
+      priority: 5, // Higher priority for strategy phase
+      payload_json: {
+        tenant_id: workspace.tenant.id,
+        site_id: workspace.site.id,
+      },
+    } satisfies TablesInsert<"automation_jobs">)
+    .select("id")
+    .single()) as {
+    data: { id: string } | null;
+    error: { message: string } | null;
+  };
+
+  if (result.error || !result.data) {
+    return { error: "Nao foi possivel enfileirar a geracao da estrategia agora." };
+  }
+
+  revalidateAutomationPaths(workspace.site.subdomain);
+
+  return { success: "Geracao de estrategia enfileirada. Acompanhe em Jobs." };
+}
+
 export async function moderateTopicCandidate(
   _prevState: TopicModerationState,
   formData: FormData,
@@ -313,6 +360,65 @@ export async function moderateTopicCandidate(
   }
 
   return { error: "Acao invalida para moderacao de tema.", topicId };
+}
+
+export async function moderateKeywordCandidate(
+  _prevState: KeywordModerationState,
+  formData: FormData,
+): Promise<KeywordModerationState> {
+  const workspace = await requireAutomationWorkspace();
+  const keywordId = String(formData.get("keyword_id") ?? "");
+  const intent = String(formData.get("intent") ?? "");
+
+  if (!keywordId) {
+    return { error: "ID de palavra-chave invalido.", keywordId };
+  }
+
+  const keywordCandidate = await getKeywordCandidateForTenant(workspace.tenant.id, keywordId);
+
+  if (!keywordCandidate) {
+    return { error: "A palavra-chave selecionada nao foi encontrada.", keywordId };
+  }
+
+  if (intent === "approve") {
+    const updateResult = await workspace.admin
+      .from("keyword_candidates")
+      .update({
+        status: "approved",
+      } satisfies TablesUpdate<"keyword_candidates">)
+      .eq("id", keywordId)
+      .eq("tenant_id", workspace.tenant.id)
+      .select("id")
+      .single();
+
+    if (updateResult.error) {
+      return { error: "Nao foi possivel aprovar essa palavra agora.", keywordId };
+    }
+
+    revalidateAutomationPaths(workspace.site.subdomain);
+    return { success: "Palavra-chave aprovada.", keywordId };
+  }
+
+  if (intent === "reject") {
+    const updateResult = await workspace.admin
+      .from("keyword_candidates")
+      .update({
+        status: "rejected",
+      } satisfies TablesUpdate<"keyword_candidates">)
+      .eq("id", keywordId)
+      .eq("tenant_id", workspace.tenant.id)
+      .select("id")
+      .single();
+
+    if (updateResult.error) {
+      return { error: "Nao foi possivel rejeitar essa palavra agora.", keywordId };
+    }
+
+    revalidateAutomationPaths(workspace.site.subdomain);
+    return { success: "Palavra-chave rejeitada.", keywordId };
+  }
+
+  return { error: "Acao invalida para moderacao de palavra.", keywordId };
 }
 
 export async function enqueueDraftGeneration(

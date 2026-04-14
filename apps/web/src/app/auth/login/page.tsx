@@ -18,9 +18,9 @@ export default async function LoginPage() {
   return (
     <AuthPageShell
       eyebrow="Acesso"
-      title="Volte para o seu espaco de trabalho."
-      description="Entrar continua direto: sem distracoes, sem bifurcacoes e com o caminho certo para retomar a operacao."
-      note="O acesso usa email e senha. Se a sessao for valida, o fluxo segue para a etapa correta do app."
+      title="Bem-vindo de volta"
+      description="Gerencie seu conteúdo, acompanhe seus rankings e escale sua presença digital com inteligência."
+      note="Sua segurança é nossa prioridade. Ao entrar, você concorda com nossos termos de serviço."
     >
       <AuthPanel mode="login">
         <AuthForm mode="login" />

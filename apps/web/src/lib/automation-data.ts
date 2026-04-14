@@ -148,3 +148,41 @@ export async function listAutomationJobsForTenant(tenantId: string) {
 
   return result.data ?? [];
 }
+
+export async function listKeywordCandidatesForTenant(tenantId: string) {
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
+    .from("keyword_candidates")
+    .select("*")
+    .eq("tenant_id", tenantId)
+    .order("journey_stage", { ascending: true })
+    .order("priority", { ascending: false })) as {
+    data: Tables<"keyword_candidates">[] | null;
+    error: { message: string } | null;
+  };
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  return result.data ?? [];
+}
+
+export async function getKeywordCandidateForTenant(tenantId: string, keywordId: string) {
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
+    .from("keyword_candidates")
+    .select("*")
+    .eq("tenant_id", tenantId)
+    .eq("id", keywordId)
+    .maybeSingle()) as {
+    data: Tables<"keyword_candidates"> | null;
+    error: { message: string } | null;
+  };
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  return result.data;
+}

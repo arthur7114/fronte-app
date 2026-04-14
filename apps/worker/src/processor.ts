@@ -11,6 +11,7 @@ import type {
   BriefGenerationResult,
   ClaimedJob,
   JobPayload,
+  KeywordStrategyResult,
   PostGenerationResult,
   PublishPostResult,
   TopicResearchResult,
@@ -18,6 +19,7 @@ import type {
 
 const JOB_TYPES = new Set([
   "research_topics",
+  "generate_keyword_strategy",
   "generate_brief",
   "generate_post",
   "publish_post",
@@ -239,6 +241,73 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
     status: "completed",
     finished_at: new Date().toISOString(),
     result_json: { topic_candidate_ids: topicCandidateIds },
+    error_message: null,
+  });
+}
+
+async function processKeywordStrategy(client: ReturnType<typeof createAdminClient>, job: ClaimedJob) {
+  const context = await loadAutomationContext(client, job);
+
+  if (!context.briefing) {
+    throw new Error("Missing business briefing for keyword strategy job.");
+  }
+
+  const model = resolveOpenAiModel(context.preferences);
+
+  const aiResult = await callOpenAiJson<KeywordStrategyResult>({
+    model,
+    messages: [
+      {
+        role: "user",
+        content: buildKeywordStrategyPrompt(context.briefing),
+      },
+    ],
+    schemaHint:
+      '{ "keywords": [{ "keyword": "string", "journey_stage": "top|middle|bottom", "priority": "high|medium|low", "tail_type": "short|long", "motivation": "string" }] }',
+  });
+
+  if (!Array.isArray(aiResult.keywords) || aiResult.keywords.length === 0) {
+    throw new Error("OpenAI did not return any keyword suggestions.");
+  }
+
+  const keywordCandidateIds: string[] = [];
+
+  for (const item of aiResult.keywords) {
+    if (!item.keyword?.trim()) {
+      continue;
+    }
+
+    const insertResult = await client
+      .from("keyword_candidates")
+      .upsert({
+        tenant_id: context.payload.tenant_id,
+        keyword: item.keyword.trim(),
+        journey_stage: item.journey_stage,
+        priority: item.priority,
+        tail_type: item.tail_type,
+        motivation: item.motivation,
+        status: "pending",
+        updated_at: new Date().toISOString(),
+      })
+      .select("*")
+      .single();
+
+    if (insertResult.error || !insertResult.data) {
+      console.error(`[Processor] Failed to insert keyword ${item.keyword}:`, insertResult.error);
+      continue;
+    }
+
+    keywordCandidateIds.push(insertResult.data.id);
+  }
+
+  if (keywordCandidateIds.length === 0) {
+    throw new Error("Failed to insert any keyword candidates.");
+  }
+
+  await finishJob(client, job.id, {
+    status: "completed",
+    finished_at: new Date().toISOString(),
+    result_json: { keyword_candidate_ids: keywordCandidateIds },
     error_message: null,
   });
 }
@@ -520,6 +589,9 @@ async function processJob(client: ReturnType<typeof createAdminClient>, job: Cla
     switch (job.type) {
       case "research_topics":
         await processResearchTopics(client, job);
+        return;
+      case "generate_keyword_strategy":
+        await processKeywordStrategy(client, job);
         return;
       case "generate_brief":
         await processGenerateBrief(client, job);

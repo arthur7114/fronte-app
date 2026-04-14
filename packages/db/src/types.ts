@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -615,6 +615,52 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "topic_candidates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      keyword_candidates: {
+        Row: {
+          id: string
+          tenant_id: string
+          keyword: string
+          priority: "high" | "medium" | "low"
+          journey_stage: "top" | "middle" | "bottom"
+          tail_type: "short" | "long"
+          motivation: string | null
+          status: "pending" | "approved" | "rejected"
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          keyword: string
+          priority: "high" | "medium" | "low"
+          journey_stage: "top" | "middle" | "bottom"
+          tail_type: "short" | "long"
+          motivation?: string | null
+          status?: "pending" | "approved" | "rejected"
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          keyword?: string
+          priority?: "high" | "medium" | "low"
+          journey_stage?: "top" | "middle" | "bottom"
+          tail_type?: "short" | "long"
+          motivation?: string | null
+          status?: "pending" | "approved" | "rejected"
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keyword_candidates_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"

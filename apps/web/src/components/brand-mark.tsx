@@ -1,12 +1,14 @@
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 type BrandMarkProps = {
   subtle?: boolean;
+  className?: string;
 };
 
-export function BrandMark({ subtle = false }: BrandMarkProps) {
+export function BrandMark({ subtle = false, className }: BrandMarkProps) {
   return (
-    <Link href="/" className="inline-flex items-center gap-3">
+    <Link href="/" className={cn("inline-flex items-center gap-3", className)}>
       <span
         className={[
           "flex h-11 w-11 items-center justify-center border text-sm font-semibold uppercase tracking-[0.2em]",

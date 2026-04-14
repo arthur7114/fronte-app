@@ -1,5 +1,6 @@
 {
     "name": "super",
+    "version": "0.1.0",
     "private": true,
     "workspaces": [
         "apps/*",
@@ -19,11 +20,15 @@
         "start:worker": "npm --workspace @super/worker run start"
     },
     "devDependencies": {
+        "dotenv": "^17.4.2",
         "turbo": "^2",
         "typescript": "^5.7"
     },
     "packageManager": "npm@10.9.2",
     "engines": {
         "node": ">=20"
+    },
+    "dependencies": {
+        "postgres": "^3.4.9"
     }
 }

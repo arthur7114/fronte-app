@@ -7,6 +7,7 @@ import {
   listAutomationJobsForTenant,
   listContentBriefsForTenant,
   listTopicCandidatesForTenant,
+  listKeywordCandidatesForTenant,
 } from "@/lib/automation-data";
 import { getAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -17,6 +18,7 @@ export type AutomationWorkspaceData = {
   automationConfig: Tables<"automation_configs"> | null;
   aiPreferences: Tables<"ai_preferences"> | null;
   topics: Tables<"topic_candidates">[];
+  keywords: Tables<"keyword_candidates">[];
   briefs: Tables<"content_briefs">[];
   jobs: Tables<"automation_jobs">[];
 };
@@ -46,10 +48,11 @@ export async function requireAutomationWorkspace() {
 
 export async function loadAutomationWorkspaceData(): Promise<AutomationWorkspaceData> {
   const workspace = await requireAutomationWorkspace();
-  const [automationConfig, aiPreferences, topics, briefs, jobs] = await Promise.all([
+  const [automationConfig, aiPreferences, topics, keywords, briefs, jobs] = await Promise.all([
     getAutomationConfigForTenant(workspace.tenant.id),
     getAiPreferencesForTenant(workspace.tenant.id),
     listTopicCandidatesForTenant(workspace.tenant.id),
+    listKeywordCandidatesForTenant(workspace.tenant.id),
     listContentBriefsForTenant(workspace.tenant.id),
     listAutomationJobsForTenant(workspace.tenant.id),
   ]);
@@ -61,6 +64,7 @@ export async function loadAutomationWorkspaceData(): Promise<AutomationWorkspace
     automationConfig,
     aiPreferences,
     topics,
+    keywords,
     briefs,
     jobs,
   };

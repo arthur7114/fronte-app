@@ -79,6 +79,30 @@ para comecar a transformar meu negocio em uma estrategia organica.
 
 ---
 
+## Fase 1.5 - Auth Premium Polish
+
+### Job
+
+Quando estou entrando no sistema,
+eu quero sentir que estou usando uma ferramenta de elite,
+para que a primeira impressao transmita confianca e autoridade tecnica.
+
+### Entregas
+
+- refatoracao visual radical do login e signup
+- abandono de cores padrao (blue trap)
+- micro-animacoes de entrada e feedback fisico
+- layout assimetrico ou experimental (anti-cliche)
+
+### Criterio de aceite
+
+- design memoravel e autoral
+- performance de carregamento instantaneo
+- responsividade perfeita e acessibilidade garantida
+
+
+---
+
 ## Fase 2 - Blog minimo publicavel
 
 ### Job

@@ -20,22 +20,34 @@ export default async function AutomationPage() {
         actions={
           <>
             <Link
+              href="/app/automation/strategy"
+              className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-white/85 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-foreground transition duration-200 hover:-translate-y-0.5"
+            >
+              Estratégia
+            </Link>
+            <Link
               href="/app/automation/topics"
               className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-white/85 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-foreground transition duration-200 hover:-translate-y-0.5"
             >
-              Abrir temas
+              Temas
             </Link>
             <Link
               href="/app/automation/briefs"
               className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-4 text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground transition duration-200 hover:-translate-y-0.5"
             >
-              Abrir briefings
+              Briefings
             </Link>
           </>
         }
       />
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-4">
+        <article className="dashboard-surface rounded-lg p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+            Keywords
+          </p>
+          <p className="mt-3 text-4xl font-semibold text-foreground">{data.keywords.length}</p>
+        </article>
         <article className="dashboard-surface rounded-lg p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             Temas aguardando

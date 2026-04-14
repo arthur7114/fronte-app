@@ -66,3 +66,39 @@ export function buildPostPrompt(
     `Return title, slug suggestion and content paragraphs in JSON.`,
   ].join("\n");
 }
+
+export function buildKeywordStrategyPrompt(briefing: Tables<"business_briefings">) {
+  const lines = [
+    "VOCÊ É UM ESPECIALISTA EM SEO E ESTRATÉGIA DE CONTEÚDO.",
+    "GERAR ESTRATÉGIA DE PALAVRAS-CHAVE PARA O SEGUINTE NEGÓCIO:",
+    `Nome: ${briefing.business_name}`,
+    `Segmento: ${briefing.segment}`,
+    `Ofertas/Produtos: ${briefing.offerings}`,
+    `Público-alvo: ${briefing.customer_profile}`,
+  ];
+
+  if (briefing.location) lines.push(`Localização: ${briefing.location}`);
+  if (Array.isArray(briefing.desired_keywords) && briefing.desired_keywords.length > 0) {
+    lines.push(`Keywords desejadas (sementes): ${briefing.desired_keywords.join(", ")}`);
+  }
+  if (briefing.keyword_motivation) lines.push(`Motivação: ${briefing.keyword_motivation}`);
+  if (Array.isArray(briefing.competitors) && briefing.competitors.length > 0) {
+    lines.push(`Concorrentes: ${briefing.competitors.join(", ")}`);
+  }
+
+  lines.push(
+    "",
+    "INSTRUÇÕES:",
+    "1. Gere entre 30 e 50 palavras-chave relevantes.",
+    "2. Cubra tanto 'Short Tail' (termos genéricos) quanto 'Long Tail' (termos específicos e variações).",
+    "3. Classifique cada palavra por:",
+    "   - journey_stage: 'top' (consciência), 'middle' (consideração/solução), 'bottom' (decisão de compra).",
+    "   - priority: 'high', 'medium', 'low' baseado no potencial de conversão para este negócio.",
+    "   - tail_type: 'short' ou 'long'.",
+    "4. Forneça uma 'motivation' curta explicando por que essa palavra é estratégica.",
+    "5. Retorne APENAS um JSON válido seguindo este formato:",
+    '{ "keywords": [{ "keyword": "exemplo", "journey_stage": "top", "priority": "high", "tail_type": "long", "motivation": "explicação" }] }'
+  );
+
+  return lines.join("\n");
+}

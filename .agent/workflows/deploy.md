@@ -1,176 +1,52 @@
 ---
-description: Deployment command for production releases. Pre-flight checks and deployment execution.
+description: Deployment workflow using automated webhooks and versioning.
 ---
 
-# /deploy - Production Deployment
+# /deploy - Automated Deployment
 
-$ARGUMENTS
+This workflow handles versioning (root + apps), Git tagging, and triggers webhooks for `app-web` and `app-worker`.
 
----
+## 📜 Workflow Summary
 
-## Purpose
-
-This command handles production deployment with pre-flight checks, deployment execution, and verification.
-
----
-
-## Sub-commands
-
-```
-/deploy            - Interactive deployment wizard
-/deploy check      - Run pre-deployment checks only
-/deploy preview    - Deploy to preview/staging
-/deploy production - Deploy to production
-/deploy rollback   - Rollback to previous version
-```
+1. **Pre-flight**: Check git status and build.
+2. **Versioning**: `npm version patch` (Root) + Sync `apps/web` and `apps/worker`.
+3. **Commit & Tag**: Automatic `chore: bump version` commit and Git tag creation.
+4. **Triggers**: POST requests to the deployment webhooks.
 
 ---
 
-## Pre-Deployment Checklist
+## 🚀 Execution
 
-Before any deployment:
+To trigger a deployment, run:
 
-```markdown
-## 🚀 Pre-Deploy Checklist
-
-### Code Quality
-- [ ] No TypeScript errors (`npx tsc --noEmit`)
-- [ ] ESLint passing (`npx eslint .`)
-- [ ] All tests passing (`npm test`)
-
-### Security
-- [ ] No hardcoded secrets
-- [ ] Environment variables documented
-- [ ] Dependencies audited (`npm audit`)
-
-### Performance
-- [ ] Bundle size acceptable
-- [ ] No console.log statements
-- [ ] Images optimized
-
-### Documentation
-- [ ] README updated
-- [ ] CHANGELOG updated
-- [ ] API docs current
-
-### Ready to deploy? (y/n)
+```powershell
+node scripts/deploy.js
 ```
+
+### Options
+- `--force`: Ignore dirty git state.
 
 ---
 
-## Deployment Flow
+## 📋 Pre-Deployment Checklist
 
-```
-┌─────────────────┐
-│  /deploy        │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Pre-flight     │
-│  checks         │
-└────────┬────────┘
-         │
-    Pass? ──No──► Fix issues
-         │
-        Yes
-         │
-         ▼
-┌─────────────────┐
-│  Build          │
-│  application    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Deploy to      │
-│  platform       │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Health check   │
-│  & verify       │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  ✅ Complete    │
-└─────────────────┘
-```
+Before running the command, ensure:
+- [ ] All features for this release are merged into the main branch.
+- [ ] You have the latest changes from remote.
+- [ ] `.env` contains `DEPLOY_WEBHOOK_WEB` and `DEPLOY_WEBHOOK_WORKER`.
 
 ---
 
-## Output Format
+## 🛠️ Post-Deployment Verification
 
-### Successful Deploy
-
-```markdown
-## 🚀 Deployment Complete
-
-### Summary
-- **Version:** v1.2.3
-- **Environment:** production
-- **Duration:** 47 seconds
-- **Platform:** Vercel
-
-### URLs
-- 🌐 Production: https://app.example.com
-- 📊 Dashboard: https://vercel.com/project
-
-### What Changed
-- Added user profile feature
-- Fixed login bug
-- Updated dependencies
-
-### Health Check
-✅ API responding (200 OK)
-✅ Database connected
-✅ All services healthy
-```
-
-### Failed Deploy
-
-```markdown
-## ❌ Deployment Failed
-
-### Error
-Build failed at step: TypeScript compilation
-
-### Details
-```
-error TS2345: Argument of type 'string' is not assignable...
-```
-
-### Resolution
-1. Fix TypeScript error in `src/services/user.ts:45`
-2. Run `npm run build` locally to verify
-3. Try `/deploy` again
-
-### Rollback Available
-Previous version (v1.2.2) is still active.
-Run `/deploy rollback` if needed.
-```
+1. **Versioning**: Check `package.json` and `git tag`.
+2. **Webhooks**: Verify logs for `✅ webhook triggered successfully`.
+3. **Environment**: Ensure the target server received the trigger.
 
 ---
 
-## Platform Support
+## 🔧 Troubleshooting
 
-| Platform | Command | Notes |
-|----------|---------|-------|
-| Vercel | `vercel --prod` | Auto-detected for Next.js |
-| Railway | `railway up` | Needs Railway CLI |
-| Fly.io | `fly deploy` | Needs flyctl |
-| Docker | `docker compose up -d` | For self-hosted |
-
----
-
-## Examples
-
-```
-/deploy
-/deploy check
-/deploy preview
-/deploy production --skip-tests
-/deploy rollback
-```
+- **Webhook Fail**: Check connectivity and URL validity in `.env`.
+- **Git Error**: Ensure no uncommitted changes (or use `--force`).
+- **Permission**: Ensure you have rights to push tags if auto-push is enabled.
