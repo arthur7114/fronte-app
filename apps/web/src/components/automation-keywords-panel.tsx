@@ -21,7 +21,6 @@ import {
   Target,
   Filter,
   ArrowRight,
-  Tooltip,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
