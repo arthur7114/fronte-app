@@ -4,6 +4,7 @@ import { resolveAiModel, WORKER_DEFAULTS } from "./config.js";
 import { callOpenAiJson } from "./openai.js";
 import {
   buildBriefPrompt,
+  buildKeywordStrategyPrompt,
   buildPostPrompt,
   buildResearchPrompt,
 } from "./prompts.js";
