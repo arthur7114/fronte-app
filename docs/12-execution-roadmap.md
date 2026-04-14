@@ -289,3 +289,13 @@ para decidir o proximo movimento e o plano certo.
 - Fase 3 concluída: `AutomationTopicsPanel` e `AutomationBriefsPanel` refatorados para design card-based com badges de status, pills de keywords, KPI counters e integração com server actions `moderateTopicCandidate` / `enqueueDraftGeneration` preservada.
 - Fase 4 concluída: `PostsBoard` migrado de tabela server-rendered estática para client component com filter tabs por status, toggle lista/grid, 3 KPI cards, badges coloridos Lucide por status, dropdown de ações por card e empty state contextual.
 - Fase 5 concluída: `AutomationJobsPanel` refatorado como Torre de Controle visual com 3 KPI cards (Em execução/Falhos/Agendados), job cards com badge+ícone de status, ícone animado para jobs `running`, timestamps agrupados, highlight de erro com fundo vermelho contextual e links de entidades com `ArrowUpRight`.
+
+### 2026-04-14
+
+- Build Typescript do pacote `@super/web` rodado e validado com sucesso.
+- Todas as refatorações da UI Pixel Perfect (`Fase 1` a `Fase 5` do escopo de modernização) committadas na branch principal.
+
+### Próximo passo esperado (Roadmap JTBD Principal)
+
+- Fase 3: Alimentar estratégia de keywords com o briefing salvo.
+- Evoluir para onboarding conversacional com IA.
