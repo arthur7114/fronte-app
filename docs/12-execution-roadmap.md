@@ -2,9 +2,9 @@
 
 ## Status atual
 
-- Fase atual: `3 - Briefing com IA`
-- Proximo passo recomendado: conectar briefing do negocio a estrategia inicial de keywords
-- Ultima atualizacao: 2026-04-10
+- Fase atual: `4 - Estrategia de palavras e jornada`
+- Proximo passo recomendado: classificacao de keywords por prioridade, jornada e tail
+- Ultima atualizacao: 2026-04-14
 - Fonte de verdade de progresso: este arquivo
 
 ---
@@ -131,7 +131,7 @@ para gerar um briefing consolidado e editavel.
 - [x] Criar tela de edicao em `/app/briefing`
 - [x] Exibir status do briefing no overview
 - [x] Alimentar estrategia de keywords com o briefing salvo
-- [ ] Evoluir para onboarding conversacional com IA
+- [x] Evoluir para onboarding conversacional unificado com IA (Chat)
 
 ---
 

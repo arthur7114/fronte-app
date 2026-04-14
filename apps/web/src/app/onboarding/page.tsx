@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/logout-button";
 import { OnboardingForm } from "@/components/onboarding-form";
+import { ConversationalOnboarding } from "@/components/conversational-onboarding";
 import { PageFrame } from "@/components/page-frame";
 import { getAuthContext } from "@/lib/auth-context";
 
@@ -34,7 +35,7 @@ export default async function OnboardingPage() {
         </div>
       }
     >
-      <OnboardingForm />
+      <ConversationalOnboarding />
     </PageFrame>
   );
 }
