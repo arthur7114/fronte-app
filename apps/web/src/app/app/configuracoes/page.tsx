@@ -1,6 +1,5 @@
-﻿import { redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
-export default function SettingsIndexPage() {
-  redirect("/app/configuracoes/account");
+export default function LegacySettingsPage() {
+  redirect("/dashboard/configuracoes");
 }
-

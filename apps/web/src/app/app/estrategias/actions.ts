@@ -82,6 +82,10 @@ function revalidateAutomationPaths(subdomain: string) {
   revalidatePath("/app/estrategias/topics");
   revalidatePath("/app/estrategias/briefs");
   revalidatePath("/app/jobs");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/estrategia");
+  revalidatePath("/dashboard/plano");
+  revalidatePath("/dashboard/artigos");
   revalidatePath(`/blog/${subdomain}`);
 }
 

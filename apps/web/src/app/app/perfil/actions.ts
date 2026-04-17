@@ -89,6 +89,8 @@ export async function saveBusinessBriefing(
   revalidatePath("/app/dashboard");
   revalidatePath("/app/perfil");
   revalidatePath("/app/estrategias");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/estrategia");
 
   return { success: "Briefing do negocio salvo com sucesso." };
 }

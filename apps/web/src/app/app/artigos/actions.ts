@@ -290,6 +290,9 @@ async function mutatePost(
   revalidatePath("/app/artigos");
   revalidatePath("/app/jobs");
   revalidatePath(`/app/artigos/${postResult.data.id}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/artigos");
+  revalidatePath(`/dashboard/artigos/${postResult.data.id}`);
   revalidatePath(`/blog/${context.site.subdomain}`);
   revalidatePath(`/blog/${context.site.subdomain}/${postResult.data.slug}`);
 
@@ -297,7 +300,7 @@ async function mutatePost(
     revalidatePath(`/blog/${context.site.subdomain}/${existingPost.slug}`);
   }
 
-  redirect(`/app/artigos/${postResult.data.id}`);
+  redirect(`/dashboard/artigos/${postResult.data.id}`);
 }
 
 export async function createPost(

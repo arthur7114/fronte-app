@@ -2,8 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@super/db/types";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = ["/", "/auth/login", "/auth/signup"];
-const PROTECTED_PREFIXES = ["/app", "/onboarding"];
+const PUBLIC_ROUTES = ["/", "/login", "/cadastro", "/auth/login", "/auth/signup"];
+const PROTECTED_PREFIXES = ["/app", "/dashboard", "/onboarding"];
 type CookieBatch = {
   name: string;
   value: string;
@@ -62,7 +62,7 @@ export async function proxy(request: NextRequest) {
 
   if (!user) {
     if (isProtectedRoute) {
-      return NextResponse.redirect(new URL("/auth/login", request.url));
+      return NextResponse.redirect(new URL("/login", request.url));
     }
 
     return response;
@@ -78,16 +78,22 @@ export async function proxy(request: NextRequest) {
   const hasMembership = Boolean(membershipResult.data);
 
   if (pathname === "/onboarding" && hasMembership) {
-    return NextResponse.redirect(new URL("/app", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  if (pathname.startsWith("/app") && !hasMembership) {
+  if ((pathname.startsWith("/app") || pathname.startsWith("/dashboard")) && !hasMembership) {
     return NextResponse.redirect(new URL("/onboarding", request.url));
   }
 
-  if (pathname === "/" || pathname === "/auth/login" || pathname === "/auth/signup") {
+  if (
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/cadastro" ||
+    pathname === "/auth/login" ||
+    pathname === "/auth/signup"
+  ) {
     return NextResponse.redirect(
-      new URL(hasMembership ? "/app" : "/onboarding", request.url),
+      new URL(hasMembership ? "/dashboard" : "/onboarding", request.url),
     );
   }
 
@@ -95,5 +101,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/auth/:path*", "/app/:path*", "/onboarding/:path*"],
+  matcher: ["/", "/login", "/cadastro", "/auth/:path*", "/app/:path*", "/dashboard/:path*", "/onboarding/:path*"],
 };

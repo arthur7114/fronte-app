@@ -1,57 +1,89 @@
 ---
 name: web-design-guidelines
-description: Review UI code for Web Interface Guidelines compliance. Use when asked to "review my UI", "check accessibility", "audit design", "review UX", or "check my site against best practices".
+description: Review web UI code for accessibility, interaction, responsive behavior, motion, and performance. Use after implementation or before release.
 metadata:
-  author: vercel
-  version: "1.0.0"
-  argument-hint: <file-or-pattern>
+  author: codex-local
+  source: vercel-labs/agent-skills
+  version: "2.0"
 ---
 
 # Web Interface Guidelines
 
-Review files for compliance with Web Interface Guidelines.
+Audit web UI code against the workspace's local interface standards. This skill is the Codex-first, workspace-local adaptation of Vercel's web interface guidance.
+
+## When to Use
+
+- Review UI code
+- Check accessibility
+- Audit design quality
+- Review UX and interaction behavior
+- Validate a page before release
+
+## When Not to Use
+
+- Backend-only changes
+- Database-only changes
+- Non-visual refactors with no UI surface
+- Pure copy changes with no layout or interaction impact
 
 ## How It Works
 
-1. Fetch the latest guidelines from the source URL below
-2. Read the specified files (or prompt user for files/pattern)
-3. Check against all rules in the fetched guidelines
-4. Output findings in the terse `file:line` format
+1. Read the target files or ask for the file set.
+2. Read `frontend-design` for design intent and `ui-ux-pro-max` for the design-system context.
+3. Apply the checklist below.
+4. Report only concrete findings in `file:line` format.
 
-## Guidelines Source
+## Audit Checklist
 
-Fetch fresh guidelines before each review:
+### Accessibility
 
-```
-https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md
-```
+- Semantic landmarks are present.
+- Headings are in order.
+- Images have meaningful alt text.
+- Icon-only controls have labels.
+- Keyboard navigation works.
+- Focus states are visible.
+- Color is not the only signal.
 
-Use WebFetch to retrieve the latest rules. The fetched content contains all the rules and output format instructions.
+### Interaction
 
-## Usage
+- Clickable elements look interactive.
+- Hover and press states are distinct.
+- Loading and error states exist for async actions.
+- Form fields have visible labels and useful errors.
+- Destructive actions are separated from primary actions.
 
-When a user provides a file or pattern argument:
-1. Fetch guidelines from the source URL above
-2. Read the specified files
-3. Apply all rules from the fetched guidelines
-4. Output findings using the format specified in the guidelines
+### Responsive
 
-If no files specified, ask the user which files to review.
+- Layout scales from mobile to desktop.
+- No horizontal scrolling on mobile.
+- Text remains readable at all breakpoints.
+- Fixed headers, footers, and drawers do not hide content.
 
----
+### Motion
+
+- Motion stays on transform and opacity where possible.
+- Reduced-motion is respected.
+- Animations communicate state change instead of decoration.
+
+### Performance
+
+- Heavy media is sized and optimized.
+- Layout shifts are minimized.
+- Third-party scripts are justified.
+- Long lists are virtualized when needed.
+
+## Output
+
+- Use terse `file:line` findings.
+- Prefer concrete issues over broad style opinions.
+- If nothing is wrong, say so explicitly.
 
 ## Related Skills
 
-| Skill | When to Use |
+| Skill | When To Use |
 |-------|-------------|
-| **[frontend-design](../frontend-design/SKILL.md)** | Before coding - Learn design principles (color, typography, UX psychology) |
-| **web-design-guidelines** (this) | After coding - Audit for accessibility, performance, and best practices |
+| `frontend-design` | Before coding, to choose the visual direction |
+| `ui-ux-pro-max` | When generating or refining the design system |
+| `nextjs-react-expert` | When the audit points to React or performance issues |
 
-## Design Workflow
-
-```
-1. DESIGN   → Read frontend-design principles
-2. CODE     → Implement the design
-3. AUDIT    → Run web-design-guidelines review ← YOU ARE HERE
-4. FIX      → Address findings from audit
-```

@@ -24,9 +24,10 @@ import {
 type ArticleEditorProps = {
   articleId: string
   onBack: () => void
+  isNew?: boolean
 }
 
-const articleData = {
+const existingArticleData = {
   title: "Clareamento Dental: Caseiro ou no Consultório?",
   metaDescription: "Descubra qual método de clareamento dental é melhor para você: tratamento caseiro ou no consultório do dentista. Comparamos prós, contras e resultados.",
   content: `O clareamento dental é um dos procedimentos estéticos mais procurados nas clínicas odontológicas. Mas com tantas opções disponíveis, surge a dúvida: qual método escolher?
@@ -54,7 +55,39 @@ O clareamento caseiro é feito com moldeiras personalizadas e gel de menor conce
 A escolha depende de diversos fatores como orçamento, disponibilidade de tempo e expectativas de resultado. O ideal é consultar seu dentista para uma avaliação personalizada.`,
 }
 
-export function ArticleEditor({ onBack }: ArticleEditorProps) {
+const generatedArticleData = {
+  title: "Benefícios do Clareamento Dental Profissional",
+  metaDescription: "Saiba por que o clareamento dental profissional é a melhor escolha para um sorriso branco e saudável. Veja vantagens, cuidados e resultados reais.",
+  content: `Ter dentes brancos deixou de ser apenas uma questão estética e passou a representar saúde, autocuidado e autoestima. O clareamento dental profissional é, hoje, um dos procedimentos mais procurados em consultórios odontológicos no Brasil.
+
+## Por que escolher o clareamento profissional?
+
+Diferente das opções caseiras feitas sem acompanhamento, o clareamento profissional é realizado por um dentista qualificado, que avalia suas condições bucais antes de começar o tratamento. Isso traz mais segurança e resultados previsíveis.
+
+### Principais vantagens:
+- Resultado visível já nas primeiras sessões
+- Procedimento seguro e personalizado
+- Menor risco de sensibilidade
+- Acompanhamento profissional em cada etapa
+
+## Como funciona o procedimento?
+
+O dentista aplica um gel clareador de alta concentração diretamente nos dentes, muitas vezes ativado por luz ou laser. Cada sessão dura entre 45 minutos e 1 hora, e o tratamento completo geralmente requer de 2 a 4 sessões.
+
+## Cuidados pós-clareamento
+
+Para manter os resultados por mais tempo, é importante:
+- Evitar alimentos e bebidas com corantes nas primeiras 48 horas
+- Escovar os dentes com pasta específica para dentes sensíveis
+- Fazer retoques periódicos conforme orientação do dentista
+
+## Conclusão
+
+Se você busca um sorriso mais branco com segurança, o clareamento profissional é a melhor escolha. Agende uma avaliação e descubra o plano ideal para você.`,
+}
+
+export function ArticleEditor({ onBack, isNew = false }: ArticleEditorProps) {
+  const articleData = isNew ? generatedArticleData : existingArticleData
   const [title, setTitle] = useState(articleData.title)
   const [metaDescription, setMetaDescription] = useState(articleData.metaDescription)
   const [content, setContent] = useState(articleData.content)
@@ -93,6 +126,26 @@ export function ArticleEditor({ onBack }: ArticleEditorProps) {
           </Button>
         </div>
       </div>
+
+      {/* AI Generated Banner */}
+      {isNew && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="flex items-start gap-3 p-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <Sparkles className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">
+                Artigo gerado pela IA com sucesso
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Revise, edite e ajuste o conteúdo conforme necessário antes de publicar.
+                Você pode usar o botão de regenerar para refazer seções específicas.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Editor */}

@@ -98,6 +98,10 @@ export async function upsertSite(
   revalidatePath("/app/blog");
   revalidatePath("/app/configuracoes/site");
   revalidatePath("/app/artigos");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/blog");
+  revalidatePath("/dashboard/configuracoes");
+  revalidatePath("/dashboard/artigos");
   revalidatePath(`/blog/${siteResult.data.subdomain}`);
 
   if (previousSubdomain && previousSubdomain !== siteResult.data.subdomain) {
@@ -105,7 +109,7 @@ export async function upsertSite(
   }
 
   if (flow === "onboarding") {
-    redirect("/app/dashboard");
+    redirect("/dashboard");
   }
 
   return { success: "Site salvo com sucesso." };

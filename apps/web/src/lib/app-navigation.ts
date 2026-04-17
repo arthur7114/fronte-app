@@ -7,171 +7,157 @@ export type AppNavItem = {
 
 export const APP_NAV_ITEMS: AppNavItem[] = [
   {
-    href: "/app/dashboard",
+    href: "/dashboard",
     label: "Dashboard",
-    description: "Resumo do projeto, pipeline e próximos passos.",
+    description: "Resumo do projeto, pipeline e proximos passos.",
     shortCode: "DB",
   },
   {
-    href: "/app/aprovacoes",
-    label: "Aprovações",
-    description: "Operação pendente: revise e destrave a produção.",
-    shortCode: "AP",
-  },
-  {
-    href: "/app/estrategias",
-    label: "Estratégias",
-    description: "Gestor de conteúdo, temas e motor de inteligência.",
-    shortCode: "ES",
-  },
-  {
-    href: "/app/artigos",
-    label: "Artigos",
-    description: "Lista editorial, novos rascunhos e edição de posts.",
-    shortCode: "AR",
-  },
-  {
-    href: "/app/blog",
-    label: "Blog",
-    description: "Identidade do site, rota pública e configuração editorial.",
+    href: "/dashboard/blog",
+    label: "Meu Blog",
+    description: "Preview, identidade do site e configuracao editorial.",
     shortCode: "BL",
   },
   {
-    href: "/app/perfil",
-    label: "Perfil do Negócio",
-    description: "Contexto global que guia toda a operação de conteúdo.",
-    shortCode: "PN",
+    href: "/dashboard/estrategia",
+    label: "Estrategia",
+    description: "Direcao editorial, contexto do negocio e foco por estrategia.",
+    shortCode: "ES",
   },
   {
-    href: "/app/tendencias",
-    label: "Tendências",
-    description: "Radar de sinais atuais com base nos temas pesquisados.",
+    href: "/dashboard/plano",
+    label: "Plano de Conteudo",
+    description: "Keywords, temas e calendario no mesmo fluxo.",
+    shortCode: "PL",
+  },
+  {
+    href: "/dashboard/artigos",
+    label: "Artigos",
+    description: "Lista editorial, criacao, revisao e edicao de posts.",
+    shortCode: "AR",
+  },
+  {
+    href: "/dashboard/tendencias",
+    label: "Tendencias",
+    description: "Radar dos sinais atuais com base nos temas pesquisados.",
     shortCode: "TD",
   },
   {
-    href: "/app/analytics",
-    label: "Resultados",
-    description: "Leitura de saúde operacional e impacto do conteúdo.",
-    shortCode: "RE",
+    href: "/dashboard/analytics",
+    label: "Analytics",
+    description: "Leitura operacional e sinais de performance do conteudo.",
+    shortCode: "AN",
   },
   {
-    href: "/app/configuracoes/account",
-    label: "Configurações",
-    description: "Conta, workspace, site e preferências de IA.",
+    href: "/dashboard/configuracoes",
+    label: "Configuracoes",
+    description: "Conta, workspace, site, automacao e preferencias de IA.",
     shortCode: "CF",
   },
 ];
 
+function isPath(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function getAppRouteMeta(pathname: string) {
-  if (pathname === "/app/dashboard") {
+  if (pathname === "/dashboard" || pathname === "/app/dashboard") {
     return {
       breadcrumb: "Dashboard",
       label: "Dashboard",
     };
   }
 
-  if (pathname.startsWith("/app/aprovacoes")) {
-    return {
-      breadcrumb: "Centro de Aprovação",
-      label: "Aprovações",
-    };
-  }
-
-  if (pathname.startsWith("/app/blog")) {
+  if (isPath(pathname, "/dashboard/blog") || isPath(pathname, "/app/blog")) {
     return {
       breadcrumb: "Blog",
       label: "Meu Blog",
     };
   }
 
-  if (pathname.startsWith("/app/artigos/new")) {
+  if (isPath(pathname, "/dashboard/artigos/novo") || isPath(pathname, "/app/artigos/new")) {
     return {
       breadcrumb: "Artigos / Novo artigo",
       label: "Novo artigo",
     };
   }
 
-  if (pathname.startsWith("/app/artigos/")) {
+  if (
+    (isPath(pathname, "/dashboard/artigos") && pathname !== "/dashboard/artigos") ||
+    (isPath(pathname, "/app/artigos") && pathname !== "/app/artigos")
+  ) {
     return {
       breadcrumb: "Artigos / Editor",
       label: "Editor",
     };
   }
 
-  if (pathname.startsWith("/app/artigos")) {
+  if (isPath(pathname, "/dashboard/artigos") || isPath(pathname, "/app/artigos")) {
     return {
       breadcrumb: "Artigos",
       label: "Artigos",
     };
   }
 
-  if (pathname.startsWith("/app/perfil")) {
+  if (
+    (isPath(pathname, "/dashboard/estrategia") && pathname !== "/dashboard/estrategia") ||
+    (isPath(pathname, "/app/estrategias") && pathname !== "/app/estrategias")
+  ) {
     return {
-      breadcrumb: "Perfil do Negócio",
-      label: "Perfil do Negócio",
+      breadcrumb: "Estrategia / Detalhe",
+      label: "Estrategia",
     };
   }
 
-  if (pathname.startsWith("/app/estrategias/")) {
+  if (isPath(pathname, "/dashboard/estrategia") || isPath(pathname, "/app/estrategias")) {
     return {
-      breadcrumb: "Estratégias / Detalhe",
-      label: "Estratégia",
+      breadcrumb: "Estrategia",
+      label: "Estrategia",
     };
   }
 
-  if (pathname.startsWith("/app/estrategias")) {
+  if (isPath(pathname, "/dashboard/plano")) {
     return {
-      breadcrumb: "Estratégias",
-      label: "Estratégias de Conteúdo",
+      breadcrumb: "Plano de Conteudo",
+      label: "Plano",
     };
   }
 
-  if (pathname.startsWith("/app/tendencias")) {
+  if (isPath(pathname, "/dashboard/tendencias") || isPath(pathname, "/app/tendencias")) {
     return {
-      breadcrumb: "Tendências",
-      label: "Tendências",
+      breadcrumb: "Tendencias",
+      label: "Tendencias",
     };
   }
 
-  if (pathname.startsWith("/app/analytics")) {
+  if (isPath(pathname, "/dashboard/analytics") || isPath(pathname, "/app/analytics")) {
     return {
-      breadcrumb: "Resultados",
-      label: "Resultados",
+      breadcrumb: "Analytics",
+      label: "Analytics",
     };
   }
 
-  if (pathname.startsWith("/app/configuracoes/account")) {
+  if (
+    isPath(pathname, "/dashboard/configuracoes") ||
+    isPath(pathname, "/app/configuracoes")
+  ) {
     return {
-      breadcrumb: "Configurações / Conta",
-      label: "Conta",
+      breadcrumb: "Configuracoes",
+      label: "Configuracoes",
     };
   }
 
-  if (pathname.startsWith("/app/configuracoes/workspace")) {
+  if (isPath(pathname, "/app/aprovacoes")) {
     return {
-      breadcrumb: "Configurações / Workspace",
-      label: "Workspace",
+      breadcrumb: "Centro de Aprovacao",
+      label: "Aprovacoes",
     };
   }
 
-  if (pathname.startsWith("/app/configuracoes/site")) {
+  if (isPath(pathname, "/app/jobs")) {
     return {
-      breadcrumb: "Configurações / Blog",
-      label: "Configurações do Blog",
-    };
-  }
-
-  if (pathname.startsWith("/app/configuracoes/ai")) {
-    return {
-      breadcrumb: "Configurações / IA",
-      label: "Preferências de IA",
-    };
-  }
-
-  if (pathname.startsWith("/app/configuracoes/automation")) {
-    return {
-      breadcrumb: "Configurações / Automação",
-      label: "Regras de Automação",
+      breadcrumb: "Jobs",
+      label: "Jobs",
     };
   }
 
@@ -180,4 +166,3 @@ export function getAppRouteMeta(pathname: string) {
     label: "Fronte",
   };
 }
-

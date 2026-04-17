@@ -33,7 +33,7 @@ export async function requireAutomationWorkspace() {
   const { user, membership, tenant, site } = await getAuthContext();
 
   if (!user) {
-    redirect("/auth/login");
+    redirect("/login");
   }
 
   if (!membership || !tenant) {
@@ -79,4 +79,3 @@ export async function loadAutomationWorkspaceData(): Promise<AutomationWorkspace
     strategies,
   };
 }
-

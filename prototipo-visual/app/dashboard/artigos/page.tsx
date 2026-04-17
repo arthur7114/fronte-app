@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ArticlesList } from "@/components/articles/articles-list"
 import { ArticleEditor } from "@/components/articles/article-editor"
+import { GenerateArticleDialog } from "@/components/articles/generate-article-dialog"
 import { Button } from "@/components/ui/button"
 import { Sparkles, LayoutList, Grid3X3 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -10,15 +11,24 @@ import { cn } from "@/lib/utils"
 export default function ArtigosPage() {
   const [selectedArticle, setSelectedArticle] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<"list" | "grid">("list")
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false)
+
+  if (selectedArticle) {
+    return (
+      <ArticleEditor
+        articleId={selectedArticle}
+        isNew={selectedArticle === "new"}
+        onBack={() => setSelectedArticle(null)}
+      />
+    )
+  }
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">
-            Artigos
-          </h1>
+          <h1 className="text-2xl font-semibold text-foreground">Artigos</h1>
           <p className="mt-1 text-muted-foreground">
             Gerencie e edite seus artigos em todas as etapas.
           </p>
@@ -58,25 +68,28 @@ export default function ArtigosPage() {
             </button>
           </div>
 
-          <Button className="gap-2">
+          <Button
+            className="gap-2"
+            onClick={() => setShowGenerateDialog(true)}
+          >
             <Sparkles className="h-4 w-4" />
             Gerar Artigo
           </Button>
         </div>
       </div>
 
-      {/* Main Content */}
-      {selectedArticle ? (
-        <ArticleEditor
-          articleId={selectedArticle}
-          onBack={() => setSelectedArticle(null)}
-        />
-      ) : (
-        <ArticlesList
-          viewMode={viewMode}
-          onSelectArticle={setSelectedArticle}
-        />
-      )}
+      {/* Articles List */}
+      <ArticlesList viewMode={viewMode} onSelectArticle={setSelectedArticle} />
+
+      {/* Generate Article Dialog */}
+      <GenerateArticleDialog
+        open={showGenerateDialog}
+        onOpenChange={setShowGenerateDialog}
+        onGenerated={(id) => {
+          setShowGenerateDialog(false)
+          setSelectedArticle(id)
+        }}
+      />
     </div>
   )
 }

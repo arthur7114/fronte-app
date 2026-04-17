@@ -19,7 +19,7 @@ export async function requireSettingsWorkspace() {
   const { user, membership, tenant, site } = await getAuthContext();
 
   if (!user) {
-    redirect("/auth/login");
+    redirect("/login");
   }
 
   if (!membership || !tenant) {

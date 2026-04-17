@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Tables } from "@super/db";
-import { POST_STATUS_LABELS } from "@/lib/post";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -194,7 +193,7 @@ export function PostsBoard({ posts, site }: PostsBoardProps) {
           </div>
 
           <Button asChild className="gap-2">
-            <Link href="/app/artigos/new">
+            <Link href="/dashboard/artigos/novo">
               <Sparkles className="h-4 w-4" />
               Novo artigo
             </Link>
@@ -240,7 +239,7 @@ export function PostsBoard({ posts, site }: PostsBoardProps) {
                           <StatusIcon className="h-3 w-3" />
                           {statusCfg.label}
                         </Badge>
-                        <Link href={`/app/artigos/${post.id}`}>
+                        <Link href={`/dashboard/artigos/${post.id}`}>
                           <h3 className="font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors">
                             {post.title}
                           </h3>
@@ -260,7 +259,7 @@ export function PostsBoard({ posts, site }: PostsBoardProps) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/app/artigos/${post.id}`} className="flex items-center gap-2">
+                            <Link href={`/dashboard/artigos/${post.id}`} className="flex items-center gap-2">
                               <Edit2 className="h-4 w-4" />
                               Editar
                             </Link>
@@ -268,7 +267,7 @@ export function PostsBoard({ posts, site }: PostsBoardProps) {
                           {post.published_at && (
                             <DropdownMenuItem asChild>
                               <a
-                                href={`https://${site.subdomain}.super.blog/${post.slug}`}
+                                href={`/blog/${site.subdomain}/${post.slug}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-2"

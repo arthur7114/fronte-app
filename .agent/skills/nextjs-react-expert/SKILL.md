@@ -1,6 +1,6 @@
 ---
 name: react-best-practices
-description: React and Next.js performance optimization from Vercel Engineering. Use when building React components, optimizing performance, eliminating waterfalls, reducing bundle size, reviewing code for performance issues, or implementing server/client-side optimizations.
+description: React and Next.js performance optimization from Vercel Engineering. Use when building React components, optimizing performance, eliminating waterfalls, reducing bundle size, reviewing code for performance issues, or implementing server/client-side optimizations. This is the local Codex-first home for the imported react-best-practices rules.
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 
@@ -102,6 +102,8 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 | Need                    | Skill                             |
 | ----------------------- | --------------------------------- |
+| UI design direction     | `@[skills/ui-ux-pro-max]`         |
+| Component composition   | `@[skills/react-composition-patterns]` |
 | API design patterns     | `@[skills/api-patterns]`          |
 | Database optimization   | `@[skills/database-design]`       |
 | Testing strategies      | `@[skills/testing-patterns]`      |
@@ -277,6 +279,12 @@ Before shipping to production:
 - Every re-render = wasted computation (if unnecessary)
 - Server components = less JavaScript to ship
 - Measure, don't guess
+
+## Workspace Integration
+
+- Use `ui-ux-pro-max` before design work so the visual direction is settled before implementation.
+- Use `react-composition-patterns` when component APIs start accumulating boolean flags or render-prop complexity.
+- Use `web-design-guidelines` after implementation to catch accessibility and interaction regressions.
 
 ---
 

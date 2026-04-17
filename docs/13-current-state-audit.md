@@ -2,272 +2,237 @@
 
 ## Objetivo
 
-Registrar o que o codigo atual ja entrega contra o MVP descrito nos docs canonicos.
+Registrar o estado implementado apos a convergencia ao `prototipo-visual/`.
 
-Este arquivo existe para orientar a proxima implementacao pelo metodo `JTBD + GSD`, sem depender da memoria da conversa.
+Neste ciclo, o prototipo visual deixou de ser referencia aproximada e passou a ser a fonte de verdade para:
+
+- fluxo do usuario
+- organizacao das telas
+- hierarquia de elementos
+- arquitetura da experiencia
+- navegacao principal
+- intencao de uso de cada etapa
+
+Este documento compara a base real com essa verdade de produto e registra o que foi mantido, adaptado, refeito e retirado da UX principal.
 
 ---
 
 ## Resumo executivo
 
-O app ja tem uma base funcional relevante:
+O app agora converge estruturalmente para o fluxo do prototipo:
 
-- autenticacao por Supabase no cliente
-- onboarding de workspace
-- criacao e edicao do primeiro site
-- painel autenticado
-- CMS basico de posts
-- blog publico por subdominio em rota interna
-- configuracao de automacao editorial
-- fila de jobs por tenant
-- worker para `research_topics`, `generate_brief`, `generate_post` e `publish_post`
+1. autenticacao em `/login` e `/cadastro`
+2. onboarding em 3 passos: `/onboarding`, `/onboarding/site`, `/onboarding/briefing`
+3. area autenticada unificada em `/dashboard/*`
+4. modulos principais do produto dentro de uma unica shell:
+   - Dashboard
+   - Meu Blog
+   - Estrategia
+   - Plano de Conteudo
+   - Artigos
+   - Tendencias
+   - Analytics
+   - Configuracoes
 
-O principal gap de produto nao e infraestrutura. O gap e a camada de ativacao estrategica:
-
-- ainda nao existe briefing guiado do negocio
-- ainda nao existe entidade explicita para briefing de negocio/projeto
-- a estrategia comeca por `keywords_seed`, nao por contexto completo do usuario leigo
-- nao ha plano editorial estruturado separado de topics/briefs/posts
-- analytics, tendencias, planos e integracoes ainda nao aparecem como produto implementado
+O principal ganho deste ciclo nao foi backend novo. Foi reorganizacao de UX, rotas e arquitetura de experiencia em cima da base real ja existente.
 
 ---
 
-## Mapa por fase
+## Fluxo principal identificado e implementado
 
-## Fase 1 - Ativacao inicial
+### Fluxo canonico atual
 
-Status: parcialmente implementada.
+```text
+/login ou /cadastro
+  -> /onboarding
+  -> /onboarding/site
+  -> /onboarding/briefing
+  -> /dashboard
+  -> modulos recorrentes do produto em /dashboard/*
+```
 
-Ja existe:
+### Intencao de cada etapa
 
-- tela de signup/login em `apps/web/src/components/auth-form.tsx`
-- criacao de tenant/workspace em `apps/web/src/app/onboarding/actions.ts`
-- criacao do primeiro site em `apps/web/src/app/app/site/actions.ts`
-- redirecionamento por estado de usuario, membership e site
+| Etapa | Intencao |
+|------|----------|
+| `/login` | acesso rapido para quem ja tem conta |
+| `/cadastro` | ativacao inicial |
+| `/onboarding` | criar workspace (`tenant` + `membership`) |
+| `/onboarding/site` | criar o primeiro site real |
+| `/onboarding/briefing` | capturar contexto do negocio |
+| `/dashboard` | mostrar saude do ciclo e proxima acao |
+| `/dashboard/estrategia` | listar estrategias existentes |
+| `/dashboard/estrategia/[id]` | operar uma estrategia especifica |
+| `/dashboard/plano` | unificar keywords, topics e calendario |
+| `/dashboard/artigos` | operar producao editorial global |
+| `/dashboard/blog` | ver e configurar o canal de publicacao |
+| `/dashboard/tendencias` | explorar oportunidades externas |
+| `/dashboard/analytics` | ler resultado agregado |
+| `/dashboard/configuracoes` | centralizar configuracoes do workspace |
 
-Falta ou precisa validar:
+### Regras implicitas preservadas
 
-- validacao real ponta a ponta com Supabase configurado
-- experiencia de ativacao orientada ao job do usuario, nao so workspace/site
-- captura de contexto do negocio no onboarding
-
-Conclusao:
-
-Fase 1 tem fundacao tecnica, mas ainda nao entrega o primeiro valor estrategico do produto.
-
----
-
-## Fase 2 - Blog minimo publicavel
-
-Status: parcialmente implementada.
-
-Ja existe:
-
-- entidade `sites` com nome, idioma, subdominio e tema
-- CMS basico de posts em `/app/posts`
-- editor com rascunho, revisao, aprovacao, rejeicao, agendamento e publicacao
-- blog publico em `/blog/[subdomain]`
-- pagina publica de post em `/blog/[subdomain]/[postSlug]`
-- job `publish_post` para publicacao agendada
-
-Falta ou precisa validar:
-
-- selecao real de template pelo usuario
-- personalizacao visual alem do tema padrao
-- custom domain ou subdominio externo como fluxo completo
-- meta description no post, exigida pelos docs de conteudo
-
-Conclusao:
-
-Fase 2 ja tem uma base usavel para CMS e blog publico, mas ainda nao cobre template como decisao de produto.
+- existe uma navegacao principal unica
+- configuracao e operacao vivem dentro do dashboard
+- o app apresenta o produto por fluxo, nao por arquitetura interna antiga
+- dados reais sao priorizados; quando algo ainda nao existe, a UX mostra estado vazio ou indisponivel
 
 ---
 
-## Fase 3 - Briefing com IA
+## Matriz explicita de reaproveitamento
 
-Status: **Implementada**.
+### Reaproveitado sem alteracao estrutural
 
-Ja existe:
+- autenticacao e sessao via Supabase
+- entidades `tenants`, `sites`, `business_briefings`, `keyword_candidates`, `topic_candidates`, `strategies`, `posts`
+- loaders e actions de briefing, site, estrategia e posts
+- primitives de UI e tokens globais
+- componentes dinamicos do dashboard que ja operavam com dados reais
 
-- configuracao editorial com `keywords_seed`, idioma, frequencia e aprovacao obrigatoria
-- preferências de IA com tom, estilo, expertise e modelo
-- prompts para gerar temas, briefings de conteudo e posts
-- fluxo conversacional de briefing do negocio (Onboarding Chat)
-- entidade persistida para briefing consolidado (`business_briefings`)
-- edicao e revisão do briefing no painel dedicado
-- uso do briefing de negocio como insumo real para geração de estratégia
+### Reaproveitado com adaptacao
 
-Conclusao:
+- `AuthForm` e shells de auth para as rotas canonicas `/login` e `/cadastro`
+- onboarding antigo para o fluxo em 3 passos reais
+- `AppShell` para se tornar a shell canonica de `/dashboard`
+- `StrategySelector` como landing de cards de estrategia
+- `PostsBoard` e editor como base de `Artigos`
+- paines de configuracao existentes como secoes internas da pagina unica de `Configuracoes`
+- paginas de `Analytics` e `Tendencias` com hierarquia do prototipo e dados atuais
 
-O produto agora captura o contexto do negócio de forma fluída e utiliza esse conhecimento para alimentar as camadas seguintes.
+### Refeito
 
----
+- topologia principal de rotas
+- navegacao principal do produto
+- pagina detalhada de estrategia em `/dashboard/estrategia/[id]`
+- pagina unificada de plano em `/dashboard/plano`
+- pagina de blog em `/dashboard/blog`
+- pagina unica de configuracoes em `/dashboard/configuracoes`
 
-## Fase 4 - Estrategia de palavras e jornada
+### Retirado da UX principal
 
-Status: **Implementada**.
-
-Ja existe:
-
-- entidade de keyword strategy (`keyword_candidates`) integrada ao briefing
-- métricas de SEO: Dificuldade (0-100), Volume de busca e Potencial estimado
-- classificacao por prioridade: High, Medium, Low
-- classificacao por jornada: awareness, consideration, evaluation e decision
-- classificacao short tail e long tail
-- interface de aprovação modernizada com visualização de métricas
-
-Conclusao:
-
-O sistema agora entrega uma estratégia didática e técnica ao mesmo tempo, permitindo que o usuário aprove temas baseados em dados reais de ROI.
-
----
-
-## Fase 5 - Plano editorial
-
-Status: nao implementada como modulo separado.
-
-Ja existe:
-
-- topics
-- content briefs
-- drafts gerados a partir de briefs
-
-Falta:
-
-- plano editorial semanal
-- plano editorial mensal
-- pauta como entidade editavel antes do artigo
-- justificativa por pauta
-- aprovacao do plano antes da producao
-
-Conclusao:
-
-O app pula de topic para brief/post. Ainda falta a camada de planejamento editorial.
+- `Aprovacoes` na sidebar
+- `Jobs` na sidebar
+- `Perfil do Negocio` como item principal de navegacao
+- subrotas de configuracoes como experiencia principal
+- `/auth/*` e `/app/*` como caminhos canonicos de produto
 
 ---
 
-## Fase 6 - Producao e publicacao de artigos
+## Compatibilidade de rotas
 
-Status: parcialmente implementada.
+### Rotas canonicas
 
-Ja existe:
+```text
+/login
+/cadastro
+/onboarding
+/onboarding/site
+/onboarding/briefing
+/dashboard
+/dashboard/blog
+/dashboard/estrategia
+/dashboard/estrategia/[id]
+/dashboard/plano
+/dashboard/artigos
+/dashboard/artigos/novo
+/dashboard/artigos/[id]
+/dashboard/tendencias
+/dashboard/analytics
+/dashboard/configuracoes
+```
 
-- worker gera posts em draft a partir de content briefs
-- editor permite salvar, revisar, aprovar, rejeitar, agendar e publicar
-- posts publicados aparecem no blog
+### Redirects de compatibilidade
 
-Falta:
+| Rota legada | Destino canonico |
+|------------|------------------|
+| `/auth/login` | `/login` |
+| `/auth/signup` | `/cadastro` |
+| `/app` | `/dashboard` |
+| `/app/dashboard` | `/dashboard` |
+| `/app/blog` | `/dashboard/blog` |
+| `/app/estrategias` | `/dashboard/estrategia` |
+| `/app/estrategias/[id]` | `/dashboard/estrategia/[id]` |
+| `/app/estrategias/[id]/overview` | `/dashboard/estrategia/[id]` |
+| `/app/estrategias/[id]/keywords` | `/dashboard/plano?strategy=<id>&tab=keywords` |
+| `/app/estrategias/[id]/temas` | `/dashboard/plano?strategy=<id>&tab=topics` |
+| `/app/estrategias/[id]/artigos` | `/dashboard/artigos?strategy=<id>` |
+| `/app/configuracoes` | `/dashboard/configuracoes` |
+| `/app/configuracoes/account` | `/dashboard/configuracoes?section=account` |
+| `/app/configuracoes/workspace` | `/dashboard/configuracoes?section=workspace` |
+| `/app/configuracoes/site` | `/dashboard/configuracoes?section=site` |
+| `/app/configuracoes/automation` | `/dashboard/configuracoes?section=automation` |
+| `/app/configuracoes/ai` | `/dashboard/configuracoes?section=ai` |
+| `/app/artigos` | `/dashboard/artigos` |
+| `/app/artigos/new` | `/dashboard/artigos/novo` |
+| `/app/artigos/[id]` | `/dashboard/artigos/[id]` |
+| `/app/analytics` | `/dashboard/analytics` |
+| `/app/tendencias` | `/dashboard/tendencias` |
+| `/app/perfil` | `/dashboard/estrategia` |
 
-- meta description
-- faixa de tamanho de artigo
-- upload de referencias em texto e PDF
-- modo automatico como preferencia completa de produto
-- revisao mais rica de artigo gerado
+### Rotas legadas mantidas sem destaque na navegacao
 
-Conclusao:
+- `/app/aprovacoes`
+- `/app/jobs`
 
-A espinha dorsal existe, mas ainda falta completar campos editoriais importantes do MVP.
-
----
-
-## Fase 7 - Tendencias
-
-Status: nao implementada.
-
-Falta:
-
-- analise semanal
-- sinais gerais
-- sinais por nicho
-- sinais por localizacao
-- conversao de tendencia em pauta
-
----
-
-## Fase 8 - Analytics e planos
-
-Status: nao implementada como produto.
-
-Ja existe:
-
-- campo `plan` em `tenants`
-
-Falta:
-
-- tracking basico
-- CTR
-- ranking medio
-- cliques em CTA
-- SEO vs GEO
-- limites por plano
-- integracoes GA, GTM, Meta Pixel e CAPI
-
----
-
-## Proxima entrega recomendada
-
-Conectar o briefing do negocio a estrategia inicial de keywords.
-
-### JTBD
-
-Quando meu briefing do negocio ja esta salvo,
-eu quero que a plataforma use esse contexto para sugerir keywords e temas,
-para nao depender apenas das palavras que eu souber informar manualmente.
-
-### Menor entrega util
-
-Usar o briefing salvo como insumo da configuracao de automacao e da pesquisa inicial de temas.
-
-### Escopo da proxima entrega
-
-- preencher keywords seed a partir do briefing quando fizer sentido
-- exibir contexto do briefing na tela de automacao
-- preparar o worker para considerar o resumo do briefing nos prompts
-- manter edicao manual de keywords
-
-### Fora desta entrega
-
-- classificar jornada
-- gerar plano editorial
-- upload de PDFs
-- analytics
+Estas rotas continuam acessiveis por URL direta enquanto suas acoes sao redistribuidas entre Dashboard, Plano e Artigos.
 
 ---
 
-## Implementacao registrada apos a auditoria
+## Mapeamento entre prototipo e base atual
 
-O briefing do negocio foi implementado como primeira entrega de ativacao estrategica.
-
-Arquivos principais:
-
-- `supabase/migrations/20260410_create_business_briefings.sql`
-- `apps/web/src/app/app/briefing/page.tsx`
-- `apps/web/src/app/app/briefing/actions.ts`
-- `apps/web/src/components/business-briefing-panel.tsx`
-- `apps/web/src/lib/business-briefing.ts`
-- `apps/web/src/lib/business-briefing-data.ts`
-
-Resultado:
-
-- briefing persistido por tenant
-- campos essenciais do MVP capturados
-- resumo simples consolidado
-- edicao manual no app
-- status visivel no overview
-
-Validacao:
-
-- `npm run build` passou
-- `npm run lint` nao passou por problemas preexistentes: worker sem `eslint.config.*`, usos antigos de `any`, efeitos com `setState` sincrono em componentes ja existentes e ajustes menores de lint
+| Tela do prototipo | Estado atual na base |
+|-------------------|----------------------|
+| Login | implementado em rota canonica |
+| Cadastro | implementado em rota canonica |
+| Onboarding workspace | implementado |
+| Onboarding site | implementado |
+| Onboarding briefing | implementado |
+| Dashboard | implementado com dados reais |
+| Estrategia lista | implementado com cards |
+| Estrategia detalhe | implementado em formato detalhado com resumo lateral |
+| Plano | implementado como unificacao de keywords, topics e calendario |
+| Artigos | implementado com board e editor reais |
+| Blog | implementado com preview + configuracao real do site |
+| Tendencias | implementado com dados atuais e estados vazios quando necessario |
+| Analytics | implementado com dados atuais e estados vazios quando necessario |
+| Configuracoes | implementado como pagina unica com secoes internas |
 
 ---
 
-## Validacao feita nesta auditoria
+## Gaps tecnicos ainda existentes
 
-- leitura de rotas do app web
-- leitura de actions de onboarding, site, posts e automacao
-- leitura do worker de jobs
-- leitura dos tipos Supabase gerados
-- busca por entidades e termos de produto relevantes
+Os gaps remanescentes agora sao de profundidade funcional, nao de alinhamento estrutural.
 
-Nao foram executados testes automatizados porque esta etapa produziu auditoria e atualizacao de docs, sem mudar comportamento do app.
+### UX e produto
+
+- a pagina detalhada de estrategia ainda nao reproduz toda a densidade do prototipo em formato conversacional
+- `Aprovacoes` e `Jobs` ainda existem como legado acessivel por URL
+- `Blog` ainda nao cobre toda a camada de template/customizacao desenhada no prototipo
+
+### Dados e modelo
+
+- `posts` continuam globais nesta fase; o filtro por estrategia e apenas de UX quando aplicavel
+- nao foi introduzido vinculo obrigatorio de banco entre `posts` e `strategy_id` neste ciclo
+- metricas avancadas de analytics continuam dependentes de integracoes futuras
+
+### Qualidade tecnica
+
+- `npx tsc -p apps/web/tsconfig.json --noEmit` passa
+- `npm --workspace @super/web run lint` continua falhando por problemas preexistentes fora do escopo desta migracao
+
+---
+
+## Validacao registrada
+
+- leitura completa do `prototipo-visual/` como fonte de verdade de fluxo e navegacao
+- migracao de rotas principais para o espaco canonico `/dashboard/*`
+- reestruturacao do onboarding em 3 passos persistidos
+- reaproveitamento de backend, actions e loaders compativeis
+- sincronizacao da documentacao canonica com a nova verdade de produto
+
+### Checks executados
+
+- `npx tsc -p apps/web/tsconfig.json --noEmit` -> passou
+- `npm --workspace @super/web run lint` -> falha por baseline legado de lint
+
+Nao houve mudanca de schema ou migracao de banco neste ciclo.

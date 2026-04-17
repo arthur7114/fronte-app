@@ -1,70 +1,88 @@
 # Requisitos Funcionais
 
-## 1. Blog
-- o sistema deve permitir criação de blog por template
-- o usuário deve poder editar o blog
-- o sistema deve permitir CMS próprio
-- o sistema deve permitir integração com CMS externo
-- o sistema deve publicar direto no blog
+## 1. Autenticacao e acesso
 
-## 2. Briefing
-- o sistema deve oferecer onboarding conversacional com IA
-- o sistema deve consolidar o briefing automaticamente
-- o usuário deve poder revisar e editar o briefing
-- o briefing deve alimentar a estratégia do projeto
+- o sistema deve oferecer rotas canonicas `/login` e `/cadastro`
+- o sistema deve redirecionar usuarios autenticados para `/dashboard` ou `/onboarding`, conforme o estado do workspace
+- o sistema deve manter compatibilidade temporaria com rotas legadas via redirect
 
-### Estado atual
+## 2. Onboarding
 
-- implementado: formulário persistido de briefing do negócio em `/app/briefing`
-- implementado: revisão e edição manual do briefing
-- implementado: resumo consolidado gerado a partir dos campos preenchidos
-- implementado: onboarding conversacional com IA (Chat) no `/onboarding`
-- implementado: uso automático do briefing como contexto real para gerar estratégia de palavras-chave
+- o sistema deve executar onboarding em 3 passos reais:
+  - `/onboarding` cria `tenant` e `membership`
+  - `/onboarding/site` cria o primeiro `site`
+  - `/onboarding/briefing` cria ou completa `business_briefings`
+- o sistema deve persistir progresso entre as etapas
+- o sistema deve impedir acesso ao dashboard principal antes da conclusao minima do onboarding
 
-## 3. Estratégia de palavras-chave
-- o sistema deve aceitar palavras informadas pelo usuário
-- o sistema deve sugerir palavras adicionais
-- o sistema deve mostrar dificuldade relativa
-- o sistema deve mostrar potencial estimado
-- o sistema deve priorizar oportunidades
+## 3. Dashboard
 
-## 4. Jornada de compra
-- o sistema deve classificar palavras e temas por estágio: **Awareness** (Consciência), **Consideration** (Consideração), **Evaluation** (Avaliação/Comparação) e **Decision** (Decisão)
-- o sistema deve identificar short tail e long tail
-- o sistema deve explicar o papel estratégico e o potencial de ROI de cada tema
+- o sistema deve exibir uma visao inicial de saude do workspace
+- o sistema deve destacar proximas acoes do fluxo de conteudo
+- o sistema deve oferecer atalhos para `Plano de Conteudo` e `Artigos`
 
-## 5. Plano editorial
-- o sistema deve gerar temáticas com base nas palavras aprovadas
-- o sistema deve justificar cada sugestão
-- o sistema deve gerar calendário semanal e mensal
-- o usuário deve poder ajustar o plano
+## 4. Estrategia
 
-## 6. Referências e configuração editorial
-- o usuário deve poder subir PDFs e textos
-- o sistema deve usar esse material como contexto
-- o usuário deve poder escolher faixa de tamanho do artigo
-- se não houver referência, o sistema deve sugerir um padrão
+- o sistema deve manter suporte a multiplas estrategias por projeto
+- o sistema deve listar estrategias em `/dashboard/estrategia`
+- o sistema deve abrir o detalhe de cada estrategia em `/dashboard/estrategia/[id]`
+- o sistema deve permitir criar estrategia nova sem sair do contexto do dashboard
 
-## 7. Produção
-- o sistema deve gerar título, meta description e artigo
-- o sistema deve ter modo automático e modo com aprovação
-- o sistema deve permitir regeneração
-- o sistema deve permitir edição antes e depois da publicação
+## 5. Plano de Conteudo
 
-## 8. Tendências
-- o sistema deve disponibilizar insights semanais
-- o sistema deve considerar tendências gerais, nicho e localização
-- o sistema deve permitir transformar insights em pauta
+- o sistema deve unificar keywords, topics e calendario em `/dashboard/plano`
+- o sistema deve aceitar visao global e filtro opcional por `strategy`
+- o sistema deve expor as abas canonicas `keywords`, `topics` e `calendar`
+
+## 6. Artigos
+
+- o sistema deve centralizar producao editorial em `/dashboard/artigos`
+- o sistema deve permitir criar artigo em `/dashboard/artigos/novo`
+- o sistema deve permitir editar artigo em `/dashboard/artigos/[id]`
+- o sistema deve manter a lista de artigos baseada em dados reais
+
+## 7. Meu Blog
+
+- o sistema deve concentrar preview e configuracao do site em `/dashboard/blog`
+- o sistema deve reutilizar a configuracao real do `site`
+- o sistema nao deve introduzir CMS ficticio ou dados mockados como verdade funcional
+
+## 8. Tendencias
+
+- o sistema deve disponibilizar a tela de tendencias em `/dashboard/tendencias`
+- quando dados ainda nao existirem, a tela deve usar estado vazio ou indisponivel coerente
 
 ## 9. Analytics
-- o sistema deve exibir tráfego, CTR e ranking
-- o sistema deve exibir performance por palavra e por página
-- o sistema deve destacar melhores e piores conteúdos
-- o sistema deve exibir cliques e conversões atribuídas
-- o sistema deve agrupar desempenho por estágio da jornada
-- o sistema deve oferecer visão SEO e GEO
 
-## 10. Limites por plano
-- o sistema deve aplicar limites por plano
-- o sistema deve restringir quantidade de artigos
-- o sistema deve restringir funcionalidades conforme o plano
+- o sistema deve disponibilizar a tela de analytics em `/dashboard/analytics`
+- o sistema deve priorizar leitura de dados reais
+- metricas nao integradas devem aparecer como indisponiveis, nao simuladas
+
+## 10. Configuracoes
+
+- o sistema deve oferecer uma unica pagina de configuracoes em `/dashboard/configuracoes`
+- a pagina deve organizar as secoes:
+  - `account`
+  - `workspace`
+  - `site`
+  - `automation`
+  - `ai`
+- as subrotas antigas de configuracao devem redirecionar para a pagina unica com `query param`
+
+## 11. Politica de dados
+
+- o sistema deve priorizar reutilizacao de contratos e APIs existentes quando compativeis com o prototipo
+- o sistema deve preferir dados reais a mocks
+- na ausencia de dados ou integracoes, o sistema deve usar empty states ou estados de indisponibilidade explicitos
+
+## 12. Politica de compatibilidade de rotas
+
+- rotas `/auth/*` e `/app/*` com equivalente funcional devem existir apenas como compatibilidade
+- as rotas canonicas do produto passam a ser `/login`, `/cadastro`, `/onboarding/*` e `/dashboard/*`
+- `Aprovacoes` e `Jobs` nao devem aparecer na navegacao principal
+
+## 13. Briefing e estrategia
+
+- o briefing de negocio deve continuar alimentando a camada estrategica
+- a estrategia deve usar o contexto do briefing sempre que isso nao contradizer o prototipo
+- a pagina de estrategia detalhada deve manter coerencia com a intencao visual do prototipo, mesmo quando o comportamento interno exigir adaptacao

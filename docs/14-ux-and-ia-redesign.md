@@ -1,334 +1,271 @@
-# UX e Arquitetura de Informação — Redesign v1.1
+# UX e Arquitetura de Informacao - Redesign v2.0
 
-> Doc canônico de IA/UX do produto.
-> Versão: 1.1 · Abril 2026
-> Origem: revisão completa de produto baseada em PRD + auditoria do estado atual + refinamento do Product Owner.
-
----
-
-## Propósito deste documento
-
-Este documento é a **fonte de verdade de UX e arquitetura de informação** do produto.
-
-Deve ser consultado sempre que:
-- um novo componente ou tela for implementado
-- uma rota for adicionada ou removida
-- um estado ou status for alterado
-- uma nomenclatura for usada na interface
-- o fluxo de aprovação for tocado
+> Doc canonico de UX e IA.
+> Versao: 2.0 - Abril 2026
+> Fonte primaria visual: `prototipo-visual/`
 
 ---
 
-## 1. Entidades Principais e Hierarquia
+## Proposito deste documento
 
-### 1.1 Hierarquia de Domínio
+Este documento define a arquitetura de experiencia do produto.
 
+`prototipo-visual/` deve ser tratado como a fonte de verdade para:
+
+- fluxo do usuario
+- organizacao das telas
+- prioridade de elementos
+- arquitetura da experiencia
+- navegacao principal
+- intencao de uso de cada etapa
+
+Quando houver conflito entre codigo existente, UX antiga, componentes antigos e o prototipo visual, o prototipo prevalece.
+
+---
+
+## Fluxo principal do produto
+
+```text
+Login ou Cadastro
+  -> Onboarding / workspace
+  -> Onboarding / site
+  -> Onboarding / briefing
+  -> Dashboard
+  -> uso recorrente em blog, estrategia, plano, artigos, tendencias, analytics e configuracoes
 ```
+
+### Etapas e intencao
+
+| Etapa | Intencao |
+|------|----------|
+| `login` | recuperar acesso rapidamente |
+| `cadastro` | ativar a primeira experiencia |
+| `onboarding` | criar o workspace |
+| `onboarding/site` | criar o primeiro site e canal de publicacao |
+| `onboarding/briefing` | capturar o contexto do negocio |
+| `dashboard` | mostrar saude do funil e proxima acao |
+| `dashboard/estrategia` | listar linhas editoriais do projeto |
+| `dashboard/estrategia/[id]` | operar uma estrategia especifica |
+| `dashboard/plano` | organizar keywords, topics e calendario no mesmo contexto |
+| `dashboard/artigos` | operar producao e revisao editorial |
+| `dashboard/blog` | ver preview e configurar o canal |
+| `dashboard/tendencias` | explorar novas oportunidades |
+| `dashboard/analytics` | ler resultado agregado |
+| `dashboard/configuracoes` | concentrar preferencias e infraestrutura do workspace |
+
+---
+
+## Entidades e hierarquia de experiencia
+
+```text
 CONTA
-  └── PROJETO (ex: "Super SEO" — o negócio e o blog)
-        ├── BLOG (canal de publicação)
-        └── ESTRATÉGIA (pode ter várias)
-              ├── BRIEFING de estratégia (contexto específico)
-              ├── KEYWORDS (palavras aprovadas)
-              ├── TEMAS (pautas geradas e aprovadas)
-              │     └── ARTIGO (gerado a partir de um tema)
-              └── RESULTADOS (métricas desta estratégia)
+  -> WORKSPACE / PROJETO
+    -> SITE / BLOG
+    -> BRIEFING DE NEGOCIO
+    -> ESTRATEGIAS
+      -> KEYWORDS
+      -> TOPICS
+      -> ARTIGOS
+      -> RESULTADOS
 
-TENDÊNCIAS (global — pode virar Tema em qualquer estratégia)
-ANALYTICS (global — filtrável por estratégia, período, SEO vs GEO)
+TENDENCIAS e ANALYTICS aparecem como visoes globais do workspace
 ```
 
-### 1.2 Separação Crítica: Projeto ≠ Estratégia
+### Regra critica
 
-Esta distinção deve ser preservada em todo o build.
+Projeto e estrategia continuam separados.
 
-| Entidade | Papel | Exemplo |
-|----------|-------|---------|
-| **Projeto** | O negócio, o blog, o contexto. Uma instância por empresa. | "Clínica Saúde Total" |
-| **Estratégia** | Uma linha editorial ou hipótese operacional. Múltiplas por projeto. | "SEO Local", "Captação via Blog", "Social" |
+| Entidade | Papel |
+|----------|------|
+| Projeto / workspace | contexto do negocio, site e configuracoes |
+| Estrategia | foco editorial especifico dentro do projeto |
 
-**Regra**: Projeto agrega (blog, configurações, conta). Estratégia foca (keywords, temas, artigos, resultados).
+`Estrategia` continua multi-strategy no modelo e na UX:
 
-### 1.3 Modelo de Entidades Simplificado (para o usuário)
-
-| Entidade | O que é para o usuário leigo |
-|----------|------------------------------|
-| Projeto | Seu negócio no sistema |
-| Blog | Onde seus artigos são publicados |
-| Estratégia | Um foco específico de conteúdo |
-| Briefing | O contexto que você deu à IA para esta estratégia |
-| Keyword | Uma palavra que seus clientes usam para te encontrar |
-| Tema | Uma ideia de artigo gerada a partir de uma keyword |
-| Artigo | O texto completo gerado, pronto para revisar |
-| Tendência | Uma oportunidade de conteúdo do seu mercado esta semana |
-| Resultado | Dados de desempenho dos seus artigos |
-
-### 1.4 Regra de Progressão
-
-```
-Briefing → alimenta → Keywords
-Keywords (aprovadas) → geram → Temas
-Temas (aprovados) → geram → Artigos
-Artigos (publicados) → geram → Resultados
-```
-
-Esta progressão nunca anda para trás. Cada etapa requer ação humana.
+- `/dashboard/estrategia` mostra cards de estrategias
+- `/dashboard/estrategia/[id]` abre a experiencia detalhada da estrategia selecionada
 
 ---
 
-## 2. Navegação Principal
+## Navegacao principal canonica
 
-### 2.1 Itens de Nav (7 — máximo para usuário leigo)
-
+```text
+Dashboard
+Meu Blog
+Estrategia
+Plano de Conteudo
+Artigos
+Tendencias
+Analytics
+Configuracoes
 ```
-Dashboard          → central de ação e status
-Estratégias        → lista e detalhe de estratégias (entidade primária)
-Artigos            → visão global cross-estratégia
-Tendências         → oportunidades externas semanais
-Analytics          → resultados aprofundados e comparativos
-Meu Blog           → configuração do canal
-Configurações      → sistema, conta, integrações
-```
 
-### 2.2 O que NÃO aparece na nav
+### O que sai da navegacao principal
 
-| Removido | Motivo |
-|----------|--------|
-| "Plano de Conteúdo" | Absorvido pela Estratégia (keywords + temas) |
-| "Automação" | Conceito técnico — invisível para o usuário |
-| "Jobs" | Técnico — movido para Configurações > Avançado |
-
-### 2.3 Subnav Contextual da Estratégia
-
-Aparece apenas dentro do detalhe de uma estratégia:
-
-```
-← Estratégias / [Nome da Estratégia]
-
-[ Visão Geral ]  [ Briefing ]  [ Keywords ]  [ Temas ]  [ Artigos ]  [ Resultados ]
-```
+| Item | Decisao |
+|------|---------|
+| Aprovacoes | sai da nav principal |
+| Jobs | sai da nav principal |
+| Perfil do Negocio | deixa de existir como item principal isolado |
+| Configuracoes fragmentadas | substituidas por pagina unica com secoes |
 
 ---
 
-## 3. Sistema de Estados
+## Estrutura das telas
 
-### 3.1 Keywords
+### Dashboard
 
-| Status | Significado para o usuário |
-|--------|--------------------------|
-| `suggested` | A IA sugeriu — você ainda não viu |
-| `pending_review` | Aguardando sua aprovação |
-| `approved` | Aprovada — vai gerar temas |
-| `rejected` | Descartada |
-| `paused` | Aprovada, mas pausada |
+Objetivo: responder "o que precisa acontecer agora?".
 
-### 3.2 Temas
+Deve priorizar:
 
-| Status | Significado para o usuário |
-|--------|--------------------------|
-| `suggested` | A IA sugeriu um tema |
-| `pending_review` | Aguardando sua aprovação |
-| `approved` | Aprovado — pronto para gerar artigo |
-| `in_production` | Artigo sendo gerado agora |
-| `rejected` | Descartado |
+- estado atual do pipeline
+- indicadores rapidos
+- proximas acoes
+- atalhos para plano e artigos
 
-### 3.3 Artigos
+### Meu Blog
 
-| Status | Significado para o usuário |
-|--------|--------------------------|
-| `draft` | Rascunho gerado, aguardando revisão |
-| `pending_review` | Você precisa ler e aprovar |
-| `approved` | Aprovado — pronto para publicar |
-| `scheduled` | Vai publicar em [data] |
-| `published` | Publicado no blog |
-| `rejected` | Rejeitado |
-| `updating` | Sendo atualizado |
-| `archived` | Arquivado |
+Objetivo: concentrar canal de publicacao e ajustes do site.
 
-### 3.4 Estratégias
+Deve combinar:
 
-| Status | Significado |
-|--------|------------|
-| `configuring` | Em setup inicial |
-| `active` | Operando |
-| `paused` | Pausada |
-| `archived` | Encerrada |
+- preview do blog
+- contexto de template/tema
+- configuracao do site
+- acessos rapidos para publicar ou ajustar estrutura
 
-### 3.5 Regra de Clareza de Estado
+### Estrategia
 
-Sempre que houver `pending_review`, mostrar:
-1. **O que está esperando** — "3 artigos aguardando aprovação"
-2. **Onde** — "Estratégia: SEO Local"
-3. **O que fazer** — botão de ação direta
+Objetivo: mostrar todas as estrategias do workspace e facilitar a entrada em uma delas.
 
----
+Elementos esperados:
 
-## 4. Modos de Operação da IA
+- cards por estrategia
+- nome
+- foco
+- status
+- modo operacional
+- acesso direto ao detalhe
 
-Esta convenção deve ser visível em: Configurações da Estratégia, cards de status e Dashboard.
+### Estrategia detalhe
 
-| Modo | Como funciona | Padrão |
-|------|--------------|--------|
-| **Manual** | Tudo exige aprovação humana. IA sugere, humano decide. | ✅ Padrão inicial |
-| **Assistido** | IA avança keywords → temas automaticamente. Artigos ainda requerem aprovação. | Opt-in |
-| **Automático** | IA pode gerar e publicar conforme regras definidas. | Opt-in com dupla confirmação |
+Objetivo: operar a estrategia escolhida sem sair do contexto dela.
 
-**Regra de design**: Nunca publicar sem aprovação no modo Manual ou Assistido. Modo Automático exige confirmação explícita. O modo ativo deve estar visível no card da estratégia.
+Elementos esperados:
 
----
+- contexto e resumo lateral
+- proxima acao estrategica
+- acesso ao aprofundamento em keywords, topics e artigos
+- leitura de progresso da estrategia
 
-## 5. Camadas SEO e GEO
+### Plano de Conteudo
 
-### 5.1 Definição para o usuário leigo
+Objetivo: unificar planejamento editorial.
 
-| Camada | O que é |
-|--------|---------|
-| **SEO** | Quando alguém busca no Google e encontra você |
-| **GEO (Presença em IAs)** | Quando uma IA como ChatGPT, Perplexity ou Gemini responde sobre um tema e te menciona |
+Abas canonicas:
 
-### 5.2 Onde GEO aparece
+- `keywords`
+- `topics`
+- `calendar`
 
-| Tela | Como aparece |
-|------|-------------|
-| Estratégia > Resultados | Toggle SEO / GEO / Ambos |
-| Analytics | Toggle SEO / GEO + comparativo |
-| Artigos | Badge de indexação em IA (quando disponível) |
-| Analytics (KPIs) | "Menções em respostas de IA" |
+Comportamento:
 
-### 5.3 Linguagem GEO
+- aceita visao global
+- aceita filtro opcional por `strategy`
 
-- ❌ "GEO score" (técnico)
-- ✅ "Presença em IAs" (descritivo)
-- ✅ "Como IAs falam sobre você" (contextual)
+### Artigos
 
----
+Objetivo: operar a producao editorial real.
 
-## 6. Centro de Aprovação (Feature Core)
+Deve concentrar:
 
-Esta tela consolida tudo com `pending_review` em um único lugar, cross-estratégia.
+- lista global de artigos
+- filtros por status
+- criacao
+- edicao
+- revisao
 
-**Acesso**: Link no Dashboard (badge com contagem) + atalho permanente.
+### Tendencias
 
-**Estrutura**:
-```
-Artigos prontos para publicar (N)
-Temas aguardando aprovação (N)
-Keywords sugeridas pela IA (N)
-  → por estratégia, ordenado por urgência
-```
+Objetivo: transformar sinal externo em oportunidade editorial.
 
-**Empty state**: "Tudo em dia! A IA está trabalhando nos próximos temas."
+### Analytics
+
+Objetivo: mostrar leitura consolidada de performance.
+
+Quando metricas nao estiverem disponiveis, a interface deve usar estados vazios ou indisponiveis, nunca dados ficticios como fonte canonica.
+
+### Configuracoes
+
+Objetivo: unificar preferencias do workspace em um unico lugar.
+
+Secoes canonicas:
+
+- `account`
+- `workspace`
+- `site`
+- `automation`
+- `ai`
 
 ---
 
-## 7. Regra: Resultados vs Analytics
+## Regras de UX obrigatorias
 
-| Tela | Escopo | Profundidade |
-|------|--------|-------------|
-| **Estratégia > Resultados** | Apenas esta estratégia | Resumido — responde "como está performando?" |
-| **Analytics (global)** | Todas as estratégias | Aprofundado — compara estratégias, períodos, SEO vs GEO |
-
-Mesmos dados, profundidade diferente. Não são duplicações.
-
----
-
-## 8. Terminologia Padrão de Interface
-
-| ❌ Não usar | ✅ Usar | Contexto |
-|------------|---------|----------|
-| Pauta (misturado com Tema) | **Tema** | Único termo na UI |
-| Brief / Topics | **Tema** (para o usuário) | Interno pode manter |
-| Keywords Seed | **Palavras-chave** | Leigo |
-| Jobs / Automação | (invisível ou "Produção automática") | Interno |
-| GEO (sigla) | **Presença em IAs** | Mais descritivo |
-| Plano de Conteúdo | (removido) | Absorvido por Estratégia |
-| Esteira Editorial | (removido) | Absorvido pelo fluxo da Estratégia |
+- uma unica shell autenticada para a experiencia principal
+- o backend atual so pode ser reaproveitado quando nao contradiz o prototipo
+- componentes existentes devem ser adaptados ao fluxo novo, nao o fluxo novo aos componentes antigos
+- quando faltar detalhamento comportamental no prototipo, completar com boas praticas coerentes com a intencao visual
+- dados reais sao prioritarios
+- estado vazio e melhor do que mock enganoso
 
 ---
 
-## 9. Fluxo de Ativação
+## Terminologia padrao
 
-```
-1. Signup
-2. Onboarding: nome do negócio + blog (template ou CMS externo)
-3. Criar primeira estratégia (nome + foco + briefing guiado por IA)
-4. IA gera keywords → usuário aprova
-5. IA gera temas → usuário aprova
-6. IA gera artigos → usuário revisa e publica
-   → Primeiro valor percebido ✅
-```
+| Evitar | Usar |
+|--------|------|
+| `/auth/*` e `/app/*` como linguagem principal do produto | rotas canonicas `/login`, `/cadastro` e `/dashboard/*` |
+| Modulos tecnicos como `Jobs` e `Automação` na navegacao | linguagem orientada a produto |
+| Configuracoes espalhadas | `Configuracoes` com secoes |
+| Navegacao por arquitetura | navegacao por tarefa e fluxo |
 
 ---
 
-## 10. Fluxo Recorrente
+## Sitemap canonico
 
-```
-1. Dashboard → ver pendências
-2. Centro de Aprovação → agir sobre pendentes
-3. Tendências → adicionar oportunidade como tema
-4. Analytics → avaliar resultados
-5. Estratégias → criar nova estratégia se necessário
-```
-
----
-
-## 11. Sitemap Completo
-
-```
-/auth/login
-/auth/signup
+```text
+/login
+/cadastro
 /onboarding
+/onboarding/site
+/onboarding/briefing
 
-/app
-  /dashboard
-  /aprovacoes                    ← Centro de Aprovação (feature core)
-
-  /estrategias
-    /new                         ← Onboarding de nova estratégia (3 steps)
-    /[id]
-      /overview
-      /briefing
-      /keywords
-      /temas
-      /artigos
-      /resultados
-
-  /artigos                       ← visão global cross-estratégia
-    /[id]                        ← editor de artigo
-
-  /tendencias
-
-  /analytics
-
+/dashboard
   /blog
-    /configurar
-    /personalizar
-
+  /estrategia
+    /[id]
+  /plano
+  /artigos
+    /novo
+    /[id]
+  /tendencias
+  /analytics
   /configuracoes
-    /conta
-    /integracoes
-    /producao
-    /plano
-    /equipe
-    /avancado                    ← jobs técnicos (invisível na nav principal)
 ```
 
----
+### Compatibilidade
 
-## 12. Decisões Técnicas com Impacto em UX
+Rotas legadas com equivalente continuam existindo apenas como redirect.
 
-| Decisão | Impacto |
-|---------|---------|
-| `strategy_id` em todas as entidades (keywords, temas, artigos) | Habilita filtros por estratégia e comparações |
-| Briefing de negócio (global) + briefing de estratégia (específico) | Dois níveis de contexto para a IA |
-| Modo de operação configurável por estratégia | Diferentes estratégias podem ter automações diferentes |
-| `pending_review` como estado unificado | Feed do Centro de Aprovação |
+`/app/aprovacoes` e `/app/jobs` permanecem temporariamente fora da navegacao principal.
 
 ---
 
-## Histórico de Versões
+## Historico de versoes
 
-| Versão | Data | Mudança |
+| Versao | Data | Mudanca |
 |--------|------|---------|
-| 1.0 | 2026-04-14 | Redesign inicial — Estratégia como entidade central |
-| 1.1 | 2026-04-14 | Refinamentos do PO: separação Projeto/Estratégia, Resultados vs Analytics, término Tema unificado, modos de operação da IA, Centro de Aprovação como core, camada GEO explícita |
+| 1.0 | 2026-04-14 | redesign inicial |
+| 1.1 | 2026-04-14 | refinamentos de UX e IA |
+| 2.0 | 2026-04-16 | `prototipo-visual/` promovido a fonte de verdade e migracao da experiencia principal para rotas canonicas `/dashboard/*` |

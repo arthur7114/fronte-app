@@ -48,6 +48,10 @@ function revalidateSettingsPaths(subdomain?: string | null) {
   revalidatePath("/app/configuracoes/ai");
   revalidatePath("/app/configuracoes/automation");
   revalidatePath("/app/estrategias");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/blog");
+  revalidatePath("/dashboard/estrategia");
+  revalidatePath("/dashboard/configuracoes");
   if (subdomain) {
     revalidatePath(`/blog/${subdomain}`);
   }
@@ -57,7 +61,7 @@ async function requireSettingsContext(): Promise<SettingsContext> {
   const context = await getAuthContext();
 
   if (!context.user) {
-    redirect("/auth/login");
+    redirect("/login");
   }
 
   if (!context.membership || !context.tenant) {

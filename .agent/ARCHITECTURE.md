@@ -9,7 +9,7 @@
 Antigravity Kit is a modular system consisting of:
 
 - **20 Specialist Agents** - Role-based AI personas
-- **36 Skills** - Domain-specific knowledge modules
+- **37 Skills** - Domain-specific knowledge modules
 - **13 Workflows** - Slash command procedures
 
 ---
@@ -20,7 +20,7 @@ Antigravity Kit is a modular system consisting of:
 .agent/
 â”œâ”€â”€ ARCHITECTURE.md          # This file
 â”œâ”€â”€ agents/                  # 20 Specialist Agents
-â”œâ”€â”€ skills/                  # 36 Skills
+â”œâ”€â”€ skills/                  # 37 Skills
 â”œâ”€â”€ workflows/               # 13 Slash Commands
 â”œâ”€â”€ rules/                   # Global Rules
 â””â”€â”€ scripts/                 # Master Validation Scripts
@@ -36,7 +36,7 @@ Specialist AI personas for different domains.
 | ------------------------ | -------------------------- | -------------------------------------------------------- |
 | `orchestrator`           | Multi-agent coordination   | parallel-agents, behavioral-modes                        |
 | `project-planner`        | Discovery, task planning   | brainstorming, plan-writing, architecture                |
-| `frontend-specialist`    | Web UI/UX                  | frontend-design, react-best-practices, tailwind-patterns |
+| `frontend-specialist`    | Web UI/UX                  | frontend-design, react-best-practices, tailwind-patterns, ui-ux-pro-max, react-composition-patterns |
 | `backend-specialist`     | API, business logic        | api-patterns, nodejs-best-practices, database-design     |
 | `database-architect`     | Schema, SQL                | database-design, prisma-expert                           |
 | `mobile-developer`       | iOS, Android, RN           | mobile-design                                            |
@@ -57,7 +57,7 @@ Specialist AI personas for different domains.
 
 ---
 
-## ðŸ§© Skills (36)
+## ðŸ§© Skills (37)
 
 Modular knowledge domains that agents can load on-demand. based on task context.
 
@@ -70,6 +70,7 @@ Modular knowledge domains that agents can load on-demand. based on task context.
 | `tailwind-patterns`     | Tailwind CSS v4 utilities                                             |
 | `frontend-design`       | UI/UX patterns, design systems                                        |
 | `ui-ux-pro-max`         | 50 styles, 21 palettes, 50 fonts                                      |
+| `react-composition-patterns` | React composition patterns for scalable APIs                      |
 
 ### Backend & API
 
@@ -269,7 +270,7 @@ For details, see [scripts/README.md](scripts/README.md)
 | Metric              | Value                         |
 | ------------------- | ----------------------------- |
 | **Total Agents**    | 20                            |
-| **Total Skills**    | 36                            |
+| **Total Skills**    | 37                            |
 | **Total Workflows** | 13                            |
 | **Total Scripts**   | 2 (master) + 18 (skill-level) |
 | **Coverage**        | ~90% web/mobile development   |
@@ -280,7 +281,7 @@ For details, see [scripts/README.md](scripts/README.md)
 
 | Need     | Agent                 | Skills                                |
 | -------- | --------------------- | ------------------------------------- |
-| Web App  | `frontend-specialist` | react-best-practices, frontend-design |
+| Web App  | `frontend-specialist` | react-best-practices, frontend-design, ui-ux-pro-max, react-composition-patterns |
 | API      | `backend-specialist`  | api-patterns, nodejs-best-practices   |
 | Mobile   | `mobile-developer`    | mobile-design                         |
 | Database | `database-architect`  | database-design, prisma-expert        |

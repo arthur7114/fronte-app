@@ -106,9 +106,9 @@ export function AuthForm({ mode }: AuthFormProps) {
         return;
       }
 
-      router.push(isSignup ? "/onboarding" : "/app");
+      router.push(isSignup ? "/onboarding" : "/dashboard");
       router.refresh();
-    } catch (err) {
+    } catch {
       setError("Erro inesperado no servidor.");
     } finally {
       setIsPending(false);
@@ -371,7 +371,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       <p className="text-center text-sm font-medium text-slate-500">
         {isSignup ? "Já tem conta?" : "Ainda não tem conta?"}{" "}
         <Link 
-          href={isSignup ? "/auth/login" : "/auth/signup"} 
+          href={isSignup ? "/login" : "/cadastro"} 
           className="text-teal-600 hover:text-teal-700 font-bold transition-colors"
         >
           {isSignup ? "Entrar na operação" : "Criar conta grátis"}
