@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useState } from "react";
 import type { Tables } from "@super/db";
-import { saveAccountSettings, type SettingsState } from "@/app/app/settings/actions";
+import { saveAccountSettings, type SettingsState } from "@/app/app/configuracoes/actions";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsLogoutButton } from "@/components/settings-logout-button";
 import { SettingsSectionCard } from "@/components/settings-section-card";
@@ -93,3 +93,4 @@ export function SettingsAccountPanel({ email, profile }: SettingsAccountPanelPro
     </section>
   );
 }
+

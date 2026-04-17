@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 import { BrandMark } from "@/components/brand-mark";
 import { TrendingUp, FileText, BarChart3 } from "lucide-react";
 
@@ -64,7 +64,7 @@ export function AuthPageShell({ eyebrow, title, description, note, children }: A
                 <div>
                   <h3 className="font-bold text-slate-950 tracking-tight">+300% em tráfego orgânico</h3>
                   <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-                    Aumente suas visitas com conteúdo otimizado para SEO e GEO de última geração.
+                    Aumente suas visitas com conteúdo otimizado para SEO e Presença em IAs de última geração.
                   </p>
                 </div>
               </div>
@@ -123,3 +123,4 @@ export function AuthPageShell({ eyebrow, title, description, note, children }: A
     </main>
   );
 }
+

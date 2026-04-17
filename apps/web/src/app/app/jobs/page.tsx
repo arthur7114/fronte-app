@@ -1,6 +1,6 @@
-import { PageHeader } from "@/components/page-header";
+﻿import { PageHeader } from "@/components/page-header";
 import { AutomationJobsPanel } from "@/components/automation-jobs-panel";
-import { loadAutomationWorkspaceData } from "@/app/app/automation/data";
+import { loadAutomationWorkspaceData } from "@/app/app/estrategias/data";
 
 export default async function JobsPage() {
   const data = await loadAutomationWorkspaceData();
@@ -16,3 +16,4 @@ export default async function JobsPage() {
     </div>
   );
 }
+

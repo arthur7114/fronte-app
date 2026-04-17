@@ -316,6 +316,10 @@ export type Database = {
           status: string
           tenant_id: string
           topic: string
+          justification: string | null
+          journey_stage: string | null
+          topic_id: string | null
+          strategy_id: string | null
         }
         Insert: {
           angle?: string | null
@@ -325,6 +329,10 @@ export type Database = {
           status?: string
           tenant_id: string
           topic: string
+          justification?: string | null
+          journey_stage?: string | null
+          topic_id?: string | null
+          strategy_id?: string | null
         }
         Update: {
           angle?: string | null
@@ -334,13 +342,25 @@ export type Database = {
           status?: string
           tenant_id?: string
           topic?: string
+          justification?: string | null
+          journey_stage?: string | null
+          topic_id?: string | null
+          strategy_id?: string | null
         }
+
         Relationships: [
           {
             foreignKeyName: "content_briefs_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_briefs_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "strategies"
             referencedColumns: ["id"]
           },
         ]
@@ -593,6 +613,11 @@ export type Database = {
           status: string
           tenant_id: string
           topic: string
+          justification: string | null
+          journey_stage: string | null
+          keyword_id: string | null
+          scheduled_date: string | null
+          strategy_id: string | null
         }
         Insert: {
           created_at?: string
@@ -602,6 +627,11 @@ export type Database = {
           status?: string
           tenant_id: string
           topic: string
+          justification?: string | null
+          journey_stage?: string | null
+          keyword_id?: string | null
+          scheduled_date?: string | null
+          strategy_id?: string | null
         }
         Update: {
           created_at?: string
@@ -611,13 +641,26 @@ export type Database = {
           status?: string
           tenant_id?: string
           topic?: string
+          justification?: string | null
+          journey_stage?: string | null
+          keyword_id?: string | null
+          scheduled_date?: string | null
+          strategy_id?: string | null
         }
+
         Relationships: [
           {
             foreignKeyName: "topic_candidates_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topic_candidates_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "strategies"
             referencedColumns: ["id"]
           },
         ]
@@ -628,39 +671,100 @@ export type Database = {
           tenant_id: string
           keyword: string
           priority: "high" | "medium" | "low"
-          journey_stage: "top" | "middle" | "bottom"
+          journey_stage: string
           tail_type: "short" | "long"
           motivation: string | null
+          estimated_potential: string | null
+          difficulty: number | null
+          search_volume: string | null
           status: "pending" | "approved" | "rejected"
           created_at: string
           updated_at: string
+          strategy_id: string | null
         }
         Insert: {
           id?: string
           tenant_id: string
           keyword: string
           priority: "high" | "medium" | "low"
-          journey_stage: "top" | "middle" | "bottom"
+          journey_stage: string
           tail_type: "short" | "long"
           motivation?: string | null
+          estimated_potential?: string | null
+          difficulty?: number | null
+          search_volume?: string | null
           status?: "pending" | "approved" | "rejected"
           created_at?: string
           updated_at?: string
+          strategy_id?: string | null
         }
         Update: {
           id?: string
           tenant_id?: string
           keyword?: string
           priority?: "high" | "medium" | "low"
-          journey_stage?: "top" | "middle" | "bottom"
+          journey_stage?: string
           tail_type?: "short" | "long"
           motivation?: string | null
+          estimated_potential?: string | null
+          difficulty?: number | null
+          search_volume?: string | null
           status?: "pending" | "approved" | "rejected"
+          updated_at?: string
+          strategy_id?: string | null
+        }
+
+        Relationships: [
+          {
+            foreignKeyName: "keyword_candidates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "keyword_candidates_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strategies: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          focus: string | null
+          status: "configuring" | "active" | "paused" | "archived"
+          operation_mode: "manual" | "assisted" | "automatic"
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          name: string
+          focus?: string | null
+          status?: "configuring" | "active" | "paused" | "archived"
+          operation_mode?: "manual" | "assisted" | "automatic"
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          name?: string
+          focus?: string | null
+          status?: "configuring" | "active" | "paused" | "archived"
+          operation_mode?: "manual" | "assisted" | "automatic"
+          created_at?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "keyword_candidates_tenant_id_fkey"
+            foreignKeyName: "strategies_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"

@@ -2,9 +2,9 @@
 
 ## Status atual
 
-- Fase atual: `4 - Estrategia de palavras e jornada`
-- Proximo passo recomendado: classificacao de keywords por prioridade, jornada e tail
-- Ultima atualizacao: 2026-04-14
+- Fase atual: `5 - Plano editorial`
+- Proximo passo recomendado: Gerar temas de conteúdo (pautas) baseados nas keywords aprovadas
+- Ultima atualizacao: 2026-04-14 (Refined)
 - Fonte de verdade de progresso: este arquivo
 
 ---
@@ -181,6 +181,13 @@ para saber onde focar sem entender SEO tecnicamente.
 - palavras aprovadas viram insumo para plano editorial
 - estrategia e simples o bastante para usuario leigo
 
+### Progresso
+
+- [x] Migração de banco: Adicionar `difficulty`, `search_volume` e `estimated_potential`
+- [x] Implementar 4 estágios da jornada (Awareness, Consideration, Evaluation, Decision)
+- [x] Atualizar worker para gerar métricas SEO refinadas
+- [x] Modernizar UI do painel de keywords com visualização de métricas e tabs de jornada
+
 ---
 
 ## Fase 5 - Plano editorial
@@ -319,7 +326,162 @@ para decidir o proximo movimento e o plano certo.
 - Build Typescript do pacote `@super/web` rodado e validado com sucesso.
 - Todas as refatorações da UI Pixel Perfect (`Fase 1` a `Fase 5` do escopo de modernização) committadas na branch principal.
 
+### 2026-04-14 (Refinement)
+
+- **Fase 4 (Keyword Strategy) Refinada**: Implementada a camada de inteligência SEO profunda.
+- **Banco de Dados**: Tabela `keyword_candidates` expandida com `difficulty` (0-100), `search_volume` e `estimated_potential`.
+- **Worker/IA**: Prompt de estratégia reconstruído para usar o modelo de 4 estágios da jornada do cliente e fornecer justificativas de ROI detalhadas.
+- **UI/UX**: `AutomationKeywordsPanel` modernizado com barras de dificuldade coloridas, pills de volume e sistema de abas por estágio da jornada.
+- **Onboarding/Root**: Eliminação da landing page legada e redirecionamento automático da raíz `/` para `/auth/login` para usuários não autenticados.
+
+### 2026-04-14 (Dashboard & UX)
+
+- **Redesign do Dashboard**: `AutomationOverviewPanel` refatorado para foco em ação guiada (Job to Be Done).
+- **Pipeline Operacional**: Implementada visualização do fluxo Keywords -> Temas -> Briefings -> Posts com contadores em tempo real.
+- **Decision Center**: Criado o card "Sugestão da IA" (Ação Prioritária) que detecta o gargalo atual da esteira e oferece o botão de ação imediata.
+- **Interatividade**: Resumo do Plano Editorial agora permite acesso rápido às configurações via cliques diretos nos metadados.
+- **Correção de Enfileiramento**: Resolvido erro de banco que impedia a geração de estratégias (job type constraint).
+
 ### Próximo passo esperado (Roadmap JTBD Principal)
 
-- Fase 3: Alimentar estratégia de keywords com o briefing salvo.
-- Evoluir para onboarding conversacional com IA.
+- Fase 5: Implementação do calendário editorial visual (Calendário de Pautas).
+- Integração de agendamento automático baseado na frequência configurada.
+
+### 2026-04-14 (UX/IA Redesign — Decisão Arquitetural)
+
+Revisão completa de UX e Arquitetura de Informação executada e aprovada pelo Product Owner.
+
+**Decisões registradas (binding para todos os ciclos seguintes)**:
+
+1. **Estratégia como entidade primária**: toda operação editorial pertence a uma Estratégia, não diretamente ao Projeto.
+2. **Múltiplas estratégias por projeto**: o banco deve suportar 1:N entre projetos e estratégias.
+3. **Separação Projeto ≠ Estratégia**: Projeto agrega (blog, conta, briefing global). Estratégia foca (keywords, temas, artigos).
+4. **Dois níveis de briefing**: `business_briefings` (global, por projeto, já implementado) + `strategy_briefings` (específico, por estratégia, a implementar).
+5. **strategy_id como FK obrigatório** em `keyword_candidates`, `content_topics`, `content_briefs`, `posts`.
+6. **Modos de operação da IA**: Manual (padrão) / Assistido (opt-in) / Automático (opt-in explícito).
+7. **Centro de Aprovação como feature core**: view cross-estratégia de tudo com `pending_review`.
+8. **Terminologia padronizada na UI**: Tema (não Pauta/Topics/Briefs), Palavras-chave (não Keywords Seed), Presença em IAs (não GEO).
+9. **Resultados ≠ Analytics**: Resultados = resumo por estratégia. Analytics = visão global comparativa.
+10. **GEO explícito em Resultados e Analytics**: toggle SEO / GEO / Ambos.
+
+**Docs atualizados**:
+- `docs/03-information-architecture.md` — reescrito como v2.0
+- `docs/06-data-model-and-entities.md` — atualizado com entidade Estratégia e strategy_id
+- `docs/14-ux-and-ia-redesign.md` — criado como fonte de verdade de UX/IA (v1.1)
+
+**Validação**: sem alteração de código neste ciclo. Ciclo foi de decisão e documentação.
+
+---
+
+### 2026-04-14 (Fase 5 — Entidade Estratégia — Primeiro ciclo)
+
+**JTBD entregue**:
+> Quando tenho keywords aprovadas e quero organizar diferentes focos, eu quero criar estratégias dentro do meu projeto, para não misturar linhas editoriais diferentes.
+
+**Entregas deste ciclo**:
+- `supabase/migrations/20260414_create_strategies.sql` — tabela `strategies` com RLS + `strategy_id` nullable em `keyword_candidates`, `topic_candidates`, `content_briefs`
+- `packages/db/src/types.ts` — tipos sincronizados manualmente (tabela `strategies` + `strategy_id` nas 3 tabelas)
+- `apps/web/src/lib/automation-data.ts` — `listStrategiesForTenant` e `getStrategyForTenant`
+- `apps/web/src/app/app/automation/data.ts` — `strategies` incluído no `AutomationWorkspaceData`
+- `apps/web/src/app/app/automation/actions.ts` — `createStrategy` server action
+- `apps/web/src/components/strategy-selector.tsx` — componente client com criação inline de estratégia e cards de status
+- `apps/web/src/app/app/automation/strategy/page.tsx` — `StrategySelector` exibido acima do painel de keywords
+
+**Validação**: `npm run build` → Exit code 0. Zero erros TypeScript.
+
+**Princípio preservado**: `strategy_id` é nullable — dados existentes continuam funcionando sem alteração.
+
+---
+
+### 2026-04-14 (Fase 5 — Ciclo 2: keywords vinculadas à estratégia)
+
+**JTBD entregue**:
+> Quando clico em "Gerar keywords" em uma estratégia específica, eu quero que as keywords geradas fiquem vinculadas àquela estratégia, para poder ver apenas as keywords da minha estratégia "SEO Local" separadas das de "Captação".
+
+**Entregas**:
+- `apps/worker/src/types.ts` — `strategy_id` adicionado ao `JobPayload`
+- `apps/worker/src/processor.ts` — `processKeywordStrategy` lê `strategy_id` do payload e salva em cada `keyword_candidate`; inclui `strategy_id` no `result_json`
+- `apps/web/src/lib/automation-data.ts` — `listKeywordCandidatesForTenant` aceita `strategyId?` opcional; quando presente filtra por estratégia
+- `apps/web/src/app/app/automation/actions.ts` — `enqueueKeywordStrategy` lê `strategy_id` do `formData` e passa no `payload_json`
+- `apps/web/src/components/strategy-selector.tsx` — refatorado com `GenerateKeywordsButton` (sub-componente com `useActionState` independente por estratégia) e `CreateStrategyForm` isolado; botão "Gerar keywords" com ícone ⚡ aparece em cada card ativo
+
+**Validação**:
+- `npm run build` (web) → Exit code 0 ✅
+- `npx tsc --noEmit` (worker) → 0 erros ✅
+
+**Retrocompatibilidade**: jobs sem `strategy_id` continuam funcionando (worker trata `null` graciosamente).
+
+---
+
+### 2026-04-14 (Fase 5 — Ciclo 3: filtro de keywords por estratégia na UI)
+
+**JTBD entregue**:
+> Quando estou na aba de keywords e tenho múltiplas estratégias, eu quero ver um filtro por estratégia no topo da lista, para não ver todas as keywords misturadas.
+
+**Entregas**:
+- `apps/web/src/components/automation-keywords-panel.tsx` — refatorado:
+  - Removido botão "Gerar Nova Estratégia" (agora vive no `StrategySelector`)
+  - Novo sub-componente `StrategyChips`: chips horizontais com contagem por estratégia + chip "Sem estratégia" para keywords sem vínculo
+  - Novo sub-componente `KeywordCard`: card isolado com badge de estratégia no rodapé
+  - Filtro composto: `activeStrategy × activeStage` — ambos independentes
+  - Contador de keywords por journey stage visível nos chips de filtro
+  - Empty state contextual quando filtros não retornam resultados
+- `apps/web/src/app/app/automation/strategy/page.tsx` — passa `data.strategies` para `AutomationKeywordsPanel`
+
+**Validação**: `npm run build` → Exit code 0 ✅
+
+---
+
+### 2026-04-14 (Fase 5 — Ciclo 4: `strategy_id` nos workers de tópicos e briefs)
+
+**JTBD entregue**:
+> Quando gero tópicos ou briefs a partir de uma estratégia, eu quero que essas entidades fiquem vinculadas à mesma estratégia, para manter a rastreabilidade de "essa estratégia produziu esses tópicos e esses artigos".
+
+**Entregas** — `apps/worker/src/processor.ts`:
+- `processResearchTopics`:
+  - lê `strategy_id` do `payload` (null = legado)
+  - escopo de keywords aprovadas filtrado por `strategy_id` quando presente → prompt mais focado
+  - cada `topic_candidate` inserido recebe `strategy_id`
+  - `result_json` inclui `strategy_id`
+  - removido `as any` → insert usa `satisfies TablesInsert<"topic_candidates">` ✅
+- `processGenerateBrief`:
+  - propaga `strategy_id` do `topic_candidate` (já na DB) para o `content_brief` sem query extra
+  - `result_json` inclui `strategy_id`
+
+**Rastreabilidade completa**:
+```
+Estratégia → keyword_candidate.strategy_id
+          → topic_candidate.strategy_id
+          → content_brief.strategy_id
+```
+
+**Validação**:
+- `npx tsc --noEmit` (worker, ciclo 4.1, antes do satisfies) → 0 erros ✅
+- `npx tsc --noEmit` (worker, ciclo 4.2, após satisfies) → 0 erros ✅
+
+---
+
+### Próximo passo recomendado
+
+**Fase 5 — Ciclo 5: action `enqueueResearchTopics` passa `strategy_id`**
+
+JTBD:
+```
+Quando o usuário clica em "Gerar tópicos" dentro de uma estratégia,
+eu quero que o job de tópicos seja criado com o strategy_id correto,
+para que os tópicos gerados já saiam vinculados.
+```
+
+Menor entrega útil:
+1. Verificar action `enqueueResearchTopics` em `actions.ts`
+2. Adicionar leitura de `strategy_id` do `formData` (mesmo padrão do `enqueueKeywordStrategy`)
+3. Atualizar o componente de tópicos para ter hidden input com `strategy_id` quando operando de dentro de uma estratégia
+
+Fora deste ciclo:
+- Filtro de tópicos e briefs por estratégia na UI (próxima iteração de UX)
+- Centro de Aprovação multi-estratégia
+- Analytics por estratégia
+
+
+
+

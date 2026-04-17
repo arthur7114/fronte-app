@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -86,7 +86,7 @@ export function SiteSetupPanel({ tenantName, site, publishedPosts = 0, flow }: S
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
-            <Link href="/app/settings/site">
+            <Link href="/app/configuracoes/site">
               <Settings className="mr-2 h-4 w-4" />
               Configurações
             </Link>
@@ -100,14 +100,14 @@ export function SiteSetupPanel({ tenantName, site, publishedPosts = 0, flow }: S
           <CardDescription>O que você deseja fazer agora?</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Link href="/app/posts/new" className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted transition">
+          <Link href="/app/artigos/new" className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted transition">
             <div className="flex flex-col">
               <span className="text-sm font-semibold">Criar Novo Artigo</span>
               <span className="text-xs text-muted-foreground">Escreva ou gere um novo post para seu blog.</span>
             </div>
             <Plus className="h-5 w-5 text-muted-foreground" />
           </Link>
-          <Link href="/app/automation" className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted transition">
+          <Link href="/app/estrategias" className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted transition">
             <div className="flex flex-col">
               <span className="text-sm font-semibold">Configurar Automação</span>
               <span className="text-xs text-muted-foreground">Ajuste os temas e calendário de publicação.</span>
@@ -119,3 +119,4 @@ export function SiteSetupPanel({ tenantName, site, publishedPosts = 0, flow }: S
     </div>
   );
 }
+

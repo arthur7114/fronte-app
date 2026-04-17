@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/logout-button";
 import { OnboardingForm } from "@/components/onboarding-form";
 import { ConversationalOnboarding } from "@/components/conversational-onboarding";
@@ -13,7 +13,7 @@ export default async function OnboardingPage() {
   }
 
   if (membership) {
-    redirect(site ? "/app/overview" : "/onboarding/site");
+    redirect(site ? "/app/dashboard" : "/onboarding/site");
   }
 
   return (
@@ -39,3 +39,4 @@ export default async function OnboardingPage() {
     </PageFrame>
   );
 }
+

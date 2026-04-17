@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useActionState } from "react";
 import type { Tables } from "@super/db";
 import {
   enqueueDraftGeneration,
   type BriefDraftState,
-} from "@/app/app/automation/actions";
+} from "@/app/app/estrategias/actions";
 import { BRIEF_STATUS_LABELS } from "@/lib/automation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,12 +17,19 @@ import {
   Zap,
   AlertCircle,
   Check,
+  Target,
+  Compass,
+  Layout,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type AutomationBriefsPanelProps = {
-  briefs: Tables<"content_briefs">[];
+  briefs: (Tables<"content_briefs"> & {
+    justification?: string | null;
+    journey_stage?: string | null;
+  })[];
 };
+
 
 const initialState: BriefDraftState = {};
 
@@ -30,6 +37,22 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(
     new Date(value),
   );
+}
+
+function stageBadge(stage?: string | null) {
+  const s = stage?.toLowerCase() || "awareness";
+  switch (s) {
+    case "awareness":
+      return <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">Consciência</Badge>;
+    case "consideration":
+      return <Badge variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700">Consideração</Badge>;
+    case "evaluation":
+      return <Badge variant="outline" className="border-purple-200 bg-purple-50 text-purple-700">Avaliação</Badge>;
+    case "decision":
+      return <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">Decisão</Badge>;
+    default:
+      return <Badge variant="outline">{s}</Badge>;
+  }
 }
 
 function statusBadge(status: string) {
@@ -43,20 +66,21 @@ function statusBadge(status: string) {
       );
     case "draft_generated":
       return (
-        <Badge className="gap-1.5 bg-blue-100 text-blue-700 hover:bg-blue-100">
+        <Badge className="gap-1.5 bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
           <Zap className="h-3.5 w-3.5" />
-          Draft gerado
+          Rascunho Criado
         </Badge>
       );
     default:
       return (
-        <Badge className="gap-1.5 bg-amber-100 text-amber-700 hover:bg-amber-100">
+        <Badge className="gap-1.5 bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">
           <Clock className="h-3.5 w-3.5" />
           {BRIEF_STATUS_LABELS[status as keyof typeof BRIEF_STATUS_LABELS] ?? status}
         </Badge>
       );
   }
 }
+
 
 export function AutomationBriefsPanel({ briefs }: AutomationBriefsPanelProps) {
   const [state, formAction, isPending] = useActionState(
@@ -123,85 +147,101 @@ export function AutomationBriefsPanel({ briefs }: AutomationBriefsPanelProps) {
 
                     <div
                       className={cn(
-                        "rounded-xl border border-border p-5 transition-all hover:shadow-sm",
-                        isReady && "border-green-200 bg-green-50/30",
+                        "group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/20 hover:shadow-md",
+                        isReady && "border-green-100/50 bg-green-50/10",
                       )}
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-2 flex items-center gap-2">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 flex-1 space-y-3">
+                          <div className="flex flex-wrap items-center gap-2">
                             {statusBadge(brief.status)}
-                            <span className="text-xs text-muted-foreground">
+                            {stageBadge(brief.journey_stage)}
+                            <Badge variant="secondary" className="bg-muted/50 text-xs font-normal">
                               {formatDate(brief.created_at)}
-                            </span>
+                            </Badge>
                           </div>
-                          <h3 className="text-base font-semibold text-foreground">
+                          
+                          <h3 className="text-xl font-bold tracking-tight text-foreground">
                             {brief.topic}
                           </h3>
+
+                          {brief.justification && (
+                            <div className="flex items-start gap-2 rounded-xl bg-primary/5 p-4 text-sm text-primary/80 ring-1 ring-primary/10">
+                              <Compass className="mt-0.5 h-4 w-4 shrink-0" />
+                              <p className="leading-relaxed">
+                                <span className="font-semibold text-primary">Diretriz de Produção:</span> {brief.justification}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {/* Angle + Keywords */}
-                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                        <div className="rounded-lg bg-muted/50 p-3">
-                          <p className="mb-1 text-xs font-medium text-muted-foreground">
-                            Ângulo editorial
-                          </p>
-                          <p className="text-sm text-foreground">
+                      {/* Content Details */}
+                      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2 rounded-xl border border-border/50 bg-muted/20 p-4 transition-colors group-hover:bg-muted/30">
+                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            <Layout className="h-3.5 w-3.5" />
+                            Ã‚ngulo Editorial
+                          </div>
+                          <p className="text-sm leading-relaxed text-foreground/90">
                             {brief.angle ?? (
-                              <span className="italic text-muted-foreground">
-                                Sem ângulo definido
-                              </span>
+                              <span className="italic text-muted-foreground">AGUARDANDO ORIENTAÃ‡ÒO...</span>
                             )}
                           </p>
                         </div>
-                        <div className="rounded-lg bg-muted/50 p-3">
-                          <p className="mb-2 text-xs font-medium text-muted-foreground">
-                            Palavras-chave
-                          </p>
-                          {brief.keywords && brief.keywords.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {brief.keywords.map((kw) => (
-                                <span
+
+                        <div className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4 transition-colors group-hover:bg-muted/30">
+                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            <Target className="h-3.5 w-3.5" />
+                            Foco de Palavras-chave
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {brief.keywords && brief.keywords.length > 0 ? (
+                              brief.keywords.map((kw) => (
+                                <Badge
                                   key={kw}
-                                  className="rounded-full bg-background px-2.5 py-0.5 text-xs text-foreground ring-1 ring-border"
+                                  variant="secondary"
+                                  className="bg-background/80 text-[10px] font-medium ring-1 ring-border/50"
                                 >
                                   {kw}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm italic text-muted-foreground">
-                              Sem keywords
-                            </p>
-                          )}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-sm italic text-muted-foreground">Nenhuma palavra-chave especificada</span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
                       {/* Feedback */}
                       {feedbackMsg?.error && (
-                        <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-50 px-4 py-2">
-                          <AlertCircle className="h-4 w-4 text-red-500" />
-                          <p className="text-sm text-red-700">{feedbackMsg.error}</p>
+                        <div className="mt-4 flex items-center gap-2 rounded-xl bg-red-50 p-4 text-sm text-red-700 ring-1 ring-red-100">
+                          <AlertCircle className="h-4 w-4 shrink-0" />
+                          {feedbackMsg.error}
                         </div>
                       )}
                       {feedbackMsg?.success && (
-                        <div className="mt-3 flex items-center gap-2 rounded-lg bg-green-50 px-4 py-2">
-                          <Check className="h-4 w-4 text-green-600" />
-                          <p className="text-sm text-green-700">{feedbackMsg.success}</p>
+                        <div className="mt-4 flex items-center gap-2 rounded-xl bg-green-50 p-4 text-sm text-green-700 ring-1 ring-green-100">
+                          <Check className="h-4 w-4 shrink-0" />
+                          {feedbackMsg.success}
                         </div>
                       )}
 
                       {/* Action */}
                       {isReady && (
-                        <div className="mt-4 border-t border-border pt-4">
-                          <Button type="submit" disabled={isPending} className="gap-2">
-                            <Zap className="h-4 w-4" />
-                            Gerar draft
+                        <div className="mt-6 flex items-center justify-end border-t border-border/50 pt-6">
+                          <Button 
+                            type="submit" 
+                            disabled={isPending} 
+                            className="bg-primary px-8 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                          >
+                            <Zap className="mr-2 h-4 w-4 fill-current" />
+                            Gerar Primeiro Rascunho
                           </Button>
                         </div>
                       )}
                     </div>
+
                   </form>
                 );
               })}
@@ -212,3 +252,4 @@ export function AutomationBriefsPanel({ briefs }: AutomationBriefsPanelProps) {
     </div>
   );
 }
+

@@ -17,9 +17,9 @@
 
 - implementado: formulário persistido de briefing do negócio em `/app/briefing`
 - implementado: revisão e edição manual do briefing
-- parcialmente implementado: resumo consolidado simples gerado a partir dos campos preenchidos
-- pendente: onboarding conversacional com IA
-- pendente: uso automático do briefing para gerar estratégia de palavras-chave
+- implementado: resumo consolidado gerado a partir dos campos preenchidos
+- implementado: onboarding conversacional com IA (Chat) no `/onboarding`
+- implementado: uso automático do briefing como contexto real para gerar estratégia de palavras-chave
 
 ## 3. Estratégia de palavras-chave
 - o sistema deve aceitar palavras informadas pelo usuário
@@ -29,9 +29,9 @@
 - o sistema deve priorizar oportunidades
 
 ## 4. Jornada de compra
-- o sistema deve classificar palavras e temas por estágio
+- o sistema deve classificar palavras e temas por estágio: **Awareness** (Consciência), **Consideration** (Consideração), **Evaluation** (Avaliação/Comparação) e **Decision** (Decisão)
 - o sistema deve identificar short tail e long tail
-- o sistema deve explicar o papel estratégico de cada tema
+- o sistema deve explicar o papel estratégico e o potencial de ROI de cada tema
 
 ## 5. Plano editorial
 - o sistema deve gerar temáticas com base nas palavras aprovadas

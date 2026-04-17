@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import type { Tables } from "@super/db";
 import { JOB_STATUS_LABELS, JOB_TYPE_LABELS } from "@/lib/automation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,9 +66,9 @@ function getEntityLink(job: Tables<"automation_jobs">) {
         ? payload.post_id
         : null;
 
-  if (topicIds.length > 0) return { href: "/app/automation/topics", label: "Ver tópicos" };
-  if (contentBriefId) return { href: "/app/automation/briefs", label: "Ver briefing" };
-  if (postId) return { href: `/app/posts/${postId}`, label: "Ver post" };
+  if (topicIds.length > 0) return { href: "/app/estrategias/topics", label: "Ver tópicos" };
+  if (contentBriefId) return { href: "/app/estrategias/briefs", label: "Ver briefing" };
+  if (postId) return { href: `/app/artigos/${postId}`, label: "Ver post" };
   return null;
 }
 
@@ -194,7 +194,7 @@ export function AutomationJobsPanel({ jobs }: AutomationJobsPanelProps) {
                           {JOB_TYPE_LABELS[job.type as keyof typeof JOB_TYPE_LABELS] ?? job.type}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Prioridade {job.priority} · Tentativas {job.attempts}/{job.max_attempts}
+                          Prioridade {job.priority} Â· Tentativas {job.attempts}/{job.max_attempts}
                         </p>
                       </div>
                     </div>
@@ -252,3 +252,4 @@ export function AutomationJobsPanel({ jobs }: AutomationJobsPanelProps) {
     </div>
   );
 }
+

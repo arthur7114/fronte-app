@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -37,7 +37,7 @@ export async function createTenant(
   }
 
   if (context.membership) {
-    redirect(context.site ? "/app/overview" : "/onboarding/site");
+    redirect(context.site ? "/app/dashboard" : "/onboarding/site");
   }
 
   const validation = validateTenantInput(
@@ -182,3 +182,4 @@ export async function completeOnboarding(
   revalidatePath("/", "layout");
   return { success: true };
 }
+

@@ -1,3 +1,4 @@
+require("dotenv").config();
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -13,7 +14,7 @@ async function main() {
     process.cwd(),
     "supabase",
     "migrations",
-    "20260414_create_keyword_candidates.sql",
+    "20260414_refine_keyword_metrics.sql",
   );
   
   if (!fs.existsSync(migrationPath)) {

@@ -1,12 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useState } from "react";
 import type { Tables } from "@super/db";
 import {
   saveWorkspaceSettings,
   type SettingsState,
-} from "@/app/app/settings/actions";
-import { normalizeWorkspaceSlug } from "@/app/app/settings/validation";
+} from "@/app/app/configuracoes/actions";
+import { normalizeWorkspaceSlug } from "@/app/app/configuracoes/validation";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsSectionCard } from "@/components/settings-section-card";
 import { SettingsSubmitButton } from "@/components/settings-submit-button";
@@ -96,3 +96,4 @@ export function SettingsWorkspacePanel({ tenant }: SettingsWorkspacePanelProps) 
     </section>
   );
 }
+

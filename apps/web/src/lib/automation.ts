@@ -26,6 +26,7 @@ export const BRIEF_STATUS_LABELS: Record<ContentBriefStatus, string> = {
 
 export const JOB_TYPE_LABELS: Record<JobType, string> = {
   research_topics: "Pesquisa de temas",
+  generate_keyword_strategy: "Geracao de estrategia",
   generate_brief: "Geracao de briefing",
   generate_post: "Geracao de rascunho",
   review_post: "Revisao de post",

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
 import { AuthPageShell } from "@/components/auth-page-shell";
 import { AuthPanel } from "@/components/auth-panel";
@@ -12,7 +12,7 @@ export default async function SignupPage() {
       redirect("/onboarding");
     }
 
-    redirect(site ? "/app/overview" : "/onboarding/site");
+    redirect(site ? "/app/dashboard" : "/onboarding/site");
   }
 
   return (
@@ -28,3 +28,4 @@ export default async function SignupPage() {
     </AuthPageShell>
   );
 }
+

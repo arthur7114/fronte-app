@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useEffect, useState } from "react";
 import type { Tables } from "@super/db";
@@ -8,7 +8,7 @@ import {
   deleteAiRuleFormAction,
   saveAiRuleAction,
   saveAiSettings,
-} from "@/app/app/settings/actions";
+} from "@/app/app/configuracoes/actions";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsSectionCard } from "@/components/settings-section-card";
 import { SettingsSubmitButton } from "@/components/settings-submit-button";
@@ -342,3 +342,4 @@ export function SettingsAiPanel({
     </section>
   );
 }
+

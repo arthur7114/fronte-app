@@ -15,24 +15,33 @@ export type TopicResearchResult = {
     topic: string;
     score?: number;
     source?: string;
+    justification?: string;
+    journey_stage?: "awareness" | "consideration" | "evaluation" | "decision";
   }>;
 };
 
 export type KeywordStrategyResult = {
   keywords: Array<{
     keyword: string;
-    journey_stage: "top" | "middle" | "bottom";
+    journey_stage: "awareness" | "consideration" | "evaluation" | "decision";
     priority: "high" | "medium" | "low";
     tail_type: "short" | "long";
+    difficulty: number;
+    search_volume: string;
     motivation: string;
+    estimated_potential: string;
   }>;
 };
+
 
 export type BriefGenerationResult = {
   title: string;
   angle: string;
   keywords: string[];
+  justification?: string;
+  journey_stage?: string;
 };
+
 
 export type PostGenerationResult = {
   title: string;
@@ -52,6 +61,7 @@ export type JobPayload = {
   content_brief_id?: string | null;
   post_id?: string | null;
   business_briefing_id?: string | null;
+  strategy_id?: string | null;
 };
 
 export type JobResultJson = Json;

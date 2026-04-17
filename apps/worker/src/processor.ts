@@ -190,6 +190,24 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
     throw new Error("Missing site or automation config for research job.");
   }
 
+  // strategy_id is optional — null means legacy / no strategy
+  const strategyId = context.payload.strategy_id ?? null;
+
+  // Fetch approved keywords — scoped to strategy when present for more focused topic generation
+  let keywordsQuery = client
+    .from("keyword_candidates")
+    .select("*")
+    .eq("tenant_id", context.payload.tenant_id)
+    .eq("status", "approved")
+    .order("priority", { ascending: false });
+
+  if (strategyId) {
+    keywordsQuery = keywordsQuery.eq("strategy_id", strategyId);
+  }
+
+  const approvedKeywordsResult = await keywordsQuery;
+  const approvedKeywords = approvedKeywordsResult.data ?? [];
+
   const model = resolveOpenAiModel(context.preferences);
 
   const aiResult = await callOpenAiJson<TopicResearchResult>({
@@ -197,11 +215,11 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
     messages: [
       {
         role: "user",
-        content: buildResearchPrompt(context.config, context.site, context.briefing),
+        content: buildResearchPrompt(context.config, context.site, context.briefing, approvedKeywords),
       },
     ],
     schemaHint:
-      '{ "topics": [{ "topic": "string", "score": 0, "source": "string" }] }',
+      '{ "topics": [{ "topic": "string", "score": 0, "source": "string", "justification": "string", "journey_stage": "string" }] }',
   });
 
   if (!Array.isArray(aiResult.topics) || aiResult.topics.length === 0) {
@@ -209,6 +227,12 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
   }
 
   const topicCandidateIds: string[] = [];
+  const frequency = context.config.frequency || "weekly";
+  const daysToAdd = frequency === "daily" ? 1 : frequency === "biweekly" ? 3.5 : frequency === "monthly" ? 30 : 7;
+
+  // Starting date is tomorrow
+  let currentDate = new Date();
+  currentDate.setDate(currentDate.getDate() + 1);
 
   for (const topic of aiResult.topics.slice(0, 10)) {
     if (!topic.topic?.trim()) {
@@ -223,6 +247,10 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
         score: topic.score ?? null,
         source: topic.source ?? "openai",
         status: "pending",
+        justification: topic.justification ?? null,
+        journey_stage: topic.journey_stage ?? null,
+        scheduled_date: currentDate.toISOString(),
+        strategy_id: strategyId,
       } satisfies TablesInsert<"topic_candidates">)
       .select("*")
       .single();
@@ -232,6 +260,9 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
     }
 
     topicCandidateIds.push(insertResult.data.id);
+
+    // Increment date for the next topic in the batch
+    currentDate.setDate(currentDate.getDate() + Math.ceil(daysToAdd));
   }
 
   if (topicCandidateIds.length === 0) {
@@ -241,7 +272,7 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
   await finishJob(client, job.id, {
     status: "completed",
     finished_at: new Date().toISOString(),
-    result_json: { topic_candidate_ids: topicCandidateIds },
+    result_json: { topic_candidate_ids: topicCandidateIds, strategy_id: strategyId },
     error_message: null,
   });
 }
@@ -252,6 +283,9 @@ async function processKeywordStrategy(client: ReturnType<typeof createAdminClien
   if (!context.briefing) {
     throw new Error("Missing business briefing for keyword strategy job.");
   }
+
+  // strategy_id is optional — null means "legacy / no strategy"
+  const strategyId = context.payload.strategy_id ?? null;
 
   const model = resolveOpenAiModel(context.preferences);
 
@@ -264,7 +298,7 @@ async function processKeywordStrategy(client: ReturnType<typeof createAdminClien
       },
     ],
     schemaHint:
-      '{ "keywords": [{ "keyword": "string", "journey_stage": "top|middle|bottom", "priority": "high|medium|low", "tail_type": "short|long", "motivation": "string" }] }',
+      '{ "keywords": [{ "keyword": "string", "journey_stage": "awareness|consideration|evaluation|decision", "priority": "high|medium|low", "tail_type": "short|long", "difficulty": number, "search_volume": "string", "motivation": "string", "estimated_potential": "string" }] }',
   });
 
   if (!Array.isArray(aiResult.keywords) || aiResult.keywords.length === 0) {
@@ -286,9 +320,13 @@ async function processKeywordStrategy(client: ReturnType<typeof createAdminClien
         journey_stage: item.journey_stage,
         priority: item.priority,
         tail_type: item.tail_type,
+        difficulty: item.difficulty,
+        search_volume: item.search_volume,
         motivation: item.motivation,
+        estimated_potential: item.estimated_potential,
         status: "pending",
         updated_at: new Date().toISOString(),
+        strategy_id: strategyId,
       })
       .select("*")
       .single();
@@ -308,7 +346,7 @@ async function processKeywordStrategy(client: ReturnType<typeof createAdminClien
   await finishJob(client, job.id, {
     status: "completed",
     finished_at: new Date().toISOString(),
-    result_json: { keyword_candidate_ids: keywordCandidateIds },
+    result_json: { keyword_candidate_ids: keywordCandidateIds, strategy_id: strategyId },
     error_message: null,
   });
 }
@@ -357,6 +395,9 @@ async function processGenerateBrief(client: ReturnType<typeof createAdminClient>
     throw new Error("OpenAI returned an invalid brief payload.");
   }
 
+  // Propagate strategy_id from the topic candidate to the brief for full traceability
+  const strategyId = (topicResult.data as any).strategy_id ?? null;
+
   const briefResult = await client
     .from("content_briefs")
     .insert({
@@ -364,7 +405,11 @@ async function processGenerateBrief(client: ReturnType<typeof createAdminClient>
       topic: topicResult.data.topic,
       keywords: aiResult.keywords,
       angle: aiResult.angle,
+      justification: aiResult.justification || topicResult.data.justification,
+      journey_stage: aiResult.journey_stage || topicResult.data.journey_stage,
+      topic_id: topicResult.data.id,
       status: "approved",
+      strategy_id: strategyId,
     } satisfies TablesInsert<"content_briefs">)
     .select("*")
     .single();
@@ -376,7 +421,7 @@ async function processGenerateBrief(client: ReturnType<typeof createAdminClient>
   await finishJob(client, job.id, {
     status: "completed",
     finished_at: new Date().toISOString(),
-    result_json: { content_brief_id: briefResult.data.id },
+    result_json: { content_brief_id: briefResult.data.id, strategy_id: strategyId },
     error_message: null,
   });
 }
@@ -491,6 +536,16 @@ async function processGeneratePost(client: ReturnType<typeof createAdminClient>,
 
   if (revisionInsert.error) {
     throw new Error(revisionInsert.error.message);
+  }
+
+  // Update brief status to draft_generated
+  const statusUpdate = await client
+    .from("content_briefs")
+    .update({ status: "draft_generated" })
+    .eq("id", payload.content_brief_id);
+
+  if (statusUpdate.error) {
+    console.error(`[Processor] Failed to update brief status for ${payload.content_brief_id}:`, statusUpdate.error);
   }
 
   await finishJob(client, job.id, {

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/logout-button";
 import { SiteSetupPanel } from "@/components/site-setup-panel";
 import { PageFrame } from "@/components/page-frame";
@@ -16,7 +16,7 @@ export default async function OnboardingSitePage() {
   }
 
   if (site) {
-    redirect("/app/overview");
+    redirect("/app/dashboard");
   }
 
   return (
@@ -42,3 +42,4 @@ export default async function OnboardingSitePage() {
     </PageFrame>
   );
 }
+

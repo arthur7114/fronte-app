@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useState } from "react";
 import type { Tables } from "@super/db";
@@ -6,7 +6,7 @@ import { FREQUENCIES } from "@super/shared";
 import {
   saveAutomationConfigSettings,
   type SettingsState,
-} from "@/app/app/settings/actions";
+} from "@/app/app/configuracoes/actions";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsSectionCard } from "@/components/settings-section-card";
 import { SettingsSubmitButton } from "@/components/settings-submit-button";
@@ -148,3 +148,4 @@ export function SettingsAutomationPanel({
     </section>
   );
 }
+

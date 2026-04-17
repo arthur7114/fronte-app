@@ -93,6 +93,7 @@ export const AI_RULE_TYPES: readonly AiRuleType[] = [
  */
 export type JobType =
     | "research_topics"
+    | "generate_keyword_strategy"
     | "generate_brief"
     | "generate_post"
     | "review_post"
@@ -102,6 +103,7 @@ export type JobType =
 
 export const JOB_TYPES: readonly JobType[] = [
     "research_topics",
+    "generate_keyword_strategy",
     "generate_brief",
     "generate_post",
     "review_post",

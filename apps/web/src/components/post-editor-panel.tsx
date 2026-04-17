@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
 import type { Tables } from "@super/db";
@@ -6,7 +6,7 @@ import {
   createPost,
   type PostEditorState,
   updatePost,
-} from "@/app/app/posts/actions";
+} from "@/app/app/artigos/actions";
 import { normalizePostSlug, POST_STATUS_LABELS } from "@/lib/post";
 
 type PostEditorPanelProps = {
@@ -225,3 +225,4 @@ export function PostEditorPanel({ post, mode }: PostEditorPanelProps) {
     </section>
   );
 }
+

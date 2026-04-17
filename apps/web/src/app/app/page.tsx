@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import { getAuthContext } from "@/lib/auth-context";
 
 export default async function AppEntryPage() {
@@ -12,5 +12,6 @@ export default async function AppEntryPage() {
     redirect("/onboarding");
   }
 
-  redirect(site ? "/app/overview" : "/onboarding/site");
+  redirect(site ? "/app/dashboard" : "/onboarding/site");
 }
+

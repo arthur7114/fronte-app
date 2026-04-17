@@ -1,4 +1,4 @@
-export function parseBriefingList(input: string) {
+﻿export function parseBriefingList(input: string) {
   return input
     .split(/[\n,;]+/)
     .map((item) => item.trim())
@@ -31,7 +31,7 @@ export function buildBusinessBriefingSummary(input: {
   ];
 
   if (input.location) {
-    parts.push(`Contexto geografico: ${input.location}.`);
+    parts.push(`Contexto Presença em IAsgrafico: ${input.location}.`);
   }
 
   if (input.desiredKeywords.length > 0) {
@@ -110,3 +110,4 @@ export function validateBusinessBriefingInput(formData: FormData) {
     },
   };
 }
+

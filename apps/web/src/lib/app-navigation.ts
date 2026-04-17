@@ -7,177 +7,177 @@ export type AppNavItem = {
 
 export const APP_NAV_ITEMS: AppNavItem[] = [
   {
-    href: "/app/overview",
+    href: "/app/dashboard",
     label: "Dashboard",
-    description: "Resumo do projeto, pipeline e proximos passos.",
+    description: "Resumo do projeto, pipeline e próximos passos.",
     shortCode: "DB",
   },
   {
-    href: "/app/site",
-    label: "Meu blog",
-    description: "Identidade do site, rota publica e configuracao editorial.",
-    shortCode: "MB",
+    href: "/app/aprovacoes",
+    label: "Aprovações",
+    description: "Operação pendente: revise e destrave a produção.",
+    shortCode: "AP",
   },
   {
-    href: "/app/briefing",
-    label: "Estrategia",
-    description: "Briefing do negocio e contexto que guia o conteudo.",
+    href: "/app/estrategias",
+    label: "Estratégias",
+    description: "Gestor de conteúdo, temas e motor de inteligência.",
     shortCode: "ES",
   },
   {
-    href: "/app/automation",
-    label: "Plano de conteudo",
-    description: "Temas, briefings e configuracao do motor de geracao.",
-    shortCode: "PC",
-  },
-  {
-    href: "/app/posts",
+    href: "/app/artigos",
     label: "Artigos",
-    description: "Lista editorial, novos rascunhos e edicao de posts.",
+    description: "Lista editorial, novos rascunhos e edição de posts.",
     shortCode: "AR",
   },
   {
-    href: "/app/trends",
-    label: "Tendencias",
+    href: "/app/blog",
+    label: "Blog",
+    description: "Identidade do site, rota pública e configuração editorial.",
+    shortCode: "BL",
+  },
+  {
+    href: "/app/perfil",
+    label: "Perfil do Negócio",
+    description: "Contexto global que guia toda a operação de conteúdo.",
+    shortCode: "PN",
+  },
+  {
+    href: "/app/tendencias",
+    label: "Tendências",
     description: "Radar de sinais atuais com base nos temas pesquisados.",
     shortCode: "TD",
   },
   {
     href: "/app/analytics",
-    label: "Analytics",
-    description: "Leitura de saude operacional e impacto do conteudo.",
-    shortCode: "AN",
+    label: "Resultados",
+    description: "Leitura de saúde operacional e impacto do conteúdo.",
+    shortCode: "RE",
   },
   {
-    href: "/app/settings/account",
-    label: "Configuracoes",
-    description: "Conta, workspace, site e preferencias de IA.",
+    href: "/app/configuracoes/account",
+    label: "Configurações",
+    description: "Conta, workspace, site e preferências de IA.",
     shortCode: "CF",
   },
 ];
 
 export function getAppRouteMeta(pathname: string) {
-  if (pathname === "/app/overview") {
+  if (pathname === "/app/dashboard") {
     return {
       breadcrumb: "Dashboard",
       label: "Dashboard",
     };
   }
 
-  if (pathname.startsWith("/app/site")) {
+  if (pathname.startsWith("/app/aprovacoes")) {
     return {
-      breadcrumb: "Meu blog",
-      label: "Meu blog",
+      breadcrumb: "Centro de Aprovação",
+      label: "Aprovações",
     };
   }
 
-  if (pathname.startsWith("/app/posts/new")) {
+  if (pathname.startsWith("/app/blog")) {
+    return {
+      breadcrumb: "Blog",
+      label: "Meu Blog",
+    };
+  }
+
+  if (pathname.startsWith("/app/artigos/new")) {
     return {
       breadcrumb: "Artigos / Novo artigo",
       label: "Novo artigo",
     };
   }
 
-  if (pathname.startsWith("/app/posts/")) {
+  if (pathname.startsWith("/app/artigos/")) {
     return {
       breadcrumb: "Artigos / Editor",
       label: "Editor",
     };
   }
 
-  if (pathname.startsWith("/app/posts")) {
+  if (pathname.startsWith("/app/artigos")) {
     return {
       breadcrumb: "Artigos",
       label: "Artigos",
     };
   }
 
-  if (pathname.startsWith("/app/briefing")) {
+  if (pathname.startsWith("/app/perfil")) {
     return {
-      breadcrumb: "Estrategia",
-      label: "Estrategia",
+      breadcrumb: "Perfil do Negócio",
+      label: "Perfil do Negócio",
     };
   }
 
-  if (pathname.startsWith("/app/automation/topics")) {
+  if (pathname.startsWith("/app/estrategias/")) {
     return {
-      breadcrumb: "Plano de conteudo / Temas",
-      label: "Temas",
+      breadcrumb: "Estratégias / Detalhe",
+      label: "Estratégia",
     };
   }
 
-  if (pathname.startsWith("/app/automation/briefs")) {
+  if (pathname.startsWith("/app/estrategias")) {
     return {
-      breadcrumb: "Plano de conteudo / Briefings",
-      label: "Briefings",
+      breadcrumb: "Estratégias",
+      label: "Estratégias de Conteúdo",
     };
   }
 
-  if (pathname.startsWith("/app/automation")) {
+  if (pathname.startsWith("/app/tendencias")) {
     return {
-      breadcrumb: "Plano de conteudo",
-      label: "Plano de conteudo",
-    };
-  }
-
-  if (pathname.startsWith("/app/trends")) {
-    return {
-      breadcrumb: "Tendencias",
-      label: "Tendencias",
+      breadcrumb: "Tendências",
+      label: "Tendências",
     };
   }
 
   if (pathname.startsWith("/app/analytics")) {
     return {
-      breadcrumb: "Analytics",
-      label: "Analytics",
+      breadcrumb: "Resultados",
+      label: "Resultados",
     };
   }
 
-  if (pathname.startsWith("/app/jobs")) {
+  if (pathname.startsWith("/app/configuracoes/account")) {
     return {
-      breadcrumb: "Operacao / Jobs",
-      label: "Jobs",
-    };
-  }
-
-  if (pathname.startsWith("/app/settings/account")) {
-    return {
-      breadcrumb: "Configuracoes / Conta",
+      breadcrumb: "Configurações / Conta",
       label: "Conta",
     };
   }
 
-  if (pathname.startsWith("/app/settings/workspace")) {
+  if (pathname.startsWith("/app/configuracoes/workspace")) {
     return {
-      breadcrumb: "Configuracoes / Workspace",
+      breadcrumb: "Configurações / Workspace",
       label: "Workspace",
     };
   }
 
-  if (pathname.startsWith("/app/settings/site")) {
+  if (pathname.startsWith("/app/configuracoes/site")) {
     return {
-      breadcrumb: "Configuracoes / Site",
-      label: "Site",
+      breadcrumb: "Configurações / Blog",
+      label: "Configurações do Blog",
     };
   }
 
-  if (pathname.startsWith("/app/settings/ai")) {
+  if (pathname.startsWith("/app/configuracoes/ai")) {
     return {
-      breadcrumb: "Configuracoes / IA",
-      label: "IA",
+      breadcrumb: "Configurações / IA",
+      label: "Preferências de IA",
     };
   }
 
-  if (pathname.startsWith("/app/settings/automation")) {
+  if (pathname.startsWith("/app/configuracoes/automation")) {
     return {
-      breadcrumb: "Configuracoes / Automacao",
-      label: "Automacao",
+      breadcrumb: "Configurações / Automação",
+      label: "Regras de Automação",
     };
   }
 
   return {
-    breadcrumb: "Workspace",
-    label: "Workspace",
+    breadcrumb: "Portal",
+    label: "Fronte",
   };
 }
+

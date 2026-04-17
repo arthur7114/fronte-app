@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -125,7 +125,7 @@ export function ConversationalOnboarding() {
     const result = await completeOnboarding(finalData);
 
     if (result.success) {
-      router.push("/app/overview");
+      router.push("/app/dashboard");
       router.refresh();
     } else {
       setError(result.error ?? "Erro ao salvar.");
@@ -369,15 +369,15 @@ export function ConversationalOnboarding() {
             <div className="mt-4 space-y-4">
               <div className="space-y-1">
                 <p className="text-[10px] font-bold uppercase text-slate-400">Segmento</p>
-                <p className="text-sm font-medium">{structuredData.segment || "—"}</p>
+                <p className="text-sm font-medium">{structuredData.segment || "â€”"}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] font-bold uppercase text-slate-400">Público</p>
-                <p className="text-sm font-medium line-clamp-2">{structuredData.customer_profile || "—"}</p>
+                <p className="text-sm font-medium line-clamp-2">{structuredData.customer_profile || "â€”"}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] font-bold uppercase text-slate-400">Ofertas</p>
-                <p className="text-sm font-medium line-clamp-2">{structuredData.offerings || "—"}</p>
+                <p className="text-sm font-medium line-clamp-2">{structuredData.offerings || "â€”"}</p>
               </div>
             </div>
           </CardContent>
@@ -392,3 +392,4 @@ export function ConversationalOnboarding() {
     </div>
   );
 }
+

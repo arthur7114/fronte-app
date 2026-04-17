@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 type SettingsNavItem = {
   href: string;
@@ -43,7 +43,7 @@ export function SettingsNav({
         </div>
 
         <Link
-          href="/app/overview"
+          href="/app/dashboard"
           className="mt-4 inline-flex h-10 items-center justify-center rounded-lg border border-border bg-white px-4 text-xs font-semibold uppercase tracking-[0.2em] text-foreground transition duration-200 hover:-translate-y-0.5"
         >
           Voltar ao painel
@@ -76,3 +76,4 @@ export function SettingsNav({
     </aside>
   );
 }
+

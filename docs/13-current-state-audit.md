@@ -85,50 +85,40 @@ Fase 2 ja tem uma base usavel para CMS e blog publico, mas ainda nao cobre templ
 
 ## Fase 3 - Briefing com IA
 
-Status: nao implementada como produto.
+Status: **Implementada**.
 
 Ja existe:
 
 - configuracao editorial com `keywords_seed`, idioma, frequencia e aprovacao obrigatoria
-- preferencias de IA com tom, estilo, expertise e modelo
+- preferências de IA com tom, estilo, expertise e modelo
 - prompts para gerar temas, briefings de conteudo e posts
-
-Falta:
-
-- fluxo conversacional de briefing do negocio
-- campos de negocio: nome, segmento, servicos/produtos, clientes, localizacao, palavras desejadas, motivo e concorrentes
-- entidade persistida para briefing consolidado
-- edicao e revisao desse briefing
-- uso do briefing de negocio como insumo antes de gerar estrategia
+- fluxo conversacional de briefing do negocio (Onboarding Chat)
+- entidade persistida para briefing consolidado (`business_briefings`)
+- edicao e revisão do briefing no painel dedicado
+- uso do briefing de negocio como insumo real para geração de estratégia
 
 Conclusao:
 
-Esta e a proxima entrega mais importante. Sem ela, o produto depende de um usuario leigo ja saber informar keywords boas.
+O produto agora captura o contexto do negócio de forma fluída e utiliza esse conhecimento para alimentar as camadas seguintes.
 
 ---
 
 ## Fase 4 - Estrategia de palavras e jornada
 
-Status: parcialmente implementada no pipeline, mas nao no produto final.
+Status: **Implementada**.
 
 Ja existe:
 
-- `research_topics` gera candidatos de tema a partir de keywords seed
-- topics podem ser aprovados, editados ou rejeitados
-- topics aprovados geram briefings de conteudo
-
-Falta:
-
-- entidade de keyword strategy
-- dificuldade relativa
-- potencial estimado
-- prioridade explicita
-- classificacao por jornada: conhecimento, atracao, avaliacao e decisao
+- entidade de keyword strategy (`keyword_candidates`) integrada ao briefing
+- métricas de SEO: Dificuldade (0-100), Volume de busca e Potencial estimado
+- classificacao por prioridade: High, Medium, Low
+- classificacao por jornada: awareness, consideration, evaluation e decision
 - classificacao short tail e long tail
+- interface de aprovação modernizada com visualização de métricas
 
 Conclusao:
 
-O pipeline ja sugere temas, mas ainda nao entrega a estrategia didatica prometida para usuario leigo.
+O sistema agora entrega uma estratégia didática e técnica ao mesmo tempo, permitindo que o usuário aprove temas baseados em dados reais de ROI.
 
 ---
 

@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 type AutomationNavProps = {
   active: "overview" | "topics" | "briefs" | "jobs";
@@ -8,9 +8,9 @@ type AutomationNavProps = {
 };
 
 const NAV_ITEMS = [
-  { href: "/app/automation", key: "overview", label: "Resumo" },
-  { href: "/app/automation/topics", key: "topics", label: "Temas" },
-  { href: "/app/automation/briefs", key: "briefs", label: "Briefings" },
+  { href: "/app/estrategias", key: "overview", label: "Resumo" },
+  { href: "/app/estrategias/topics", key: "topics", label: "Temas" },
+  { href: "/app/estrategias/briefs", key: "briefs", label: "Briefings" },
   { href: "/app/jobs", key: "jobs", label: "Fila" },
 ] as const;
 
@@ -66,3 +66,4 @@ export function AutomationNav({
     </section>
   );
 }
+

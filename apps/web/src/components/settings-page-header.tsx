@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import type { Tables } from "@super/db";
 
 type SettingsPageHeaderProps = {
@@ -46,7 +46,7 @@ export function SettingsPageHeader({
 
         <div className="flex flex-wrap gap-3">
           <Link
-            href="/app/overview"
+            href="/app/dashboard"
             className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-white px-4 text-xs font-semibold uppercase tracking-[0.22em] text-foreground transition duration-200 hover:-translate-y-0.5"
           >
             Voltar ao painel
@@ -60,7 +60,7 @@ export function SettingsPageHeader({
             </Link>
           ) : (
             <Link
-              href="/app/settings/site"
+              href="/app/configuracoes/site"
               className="inline-flex h-11 items-center justify-center rounded-lg border border-accent/25 bg-accent/10 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-accent transition duration-200 hover:-translate-y-0.5"
             >
               Criar site
@@ -78,3 +78,4 @@ export function SettingsPageHeader({
     </header>
   );
 }
+

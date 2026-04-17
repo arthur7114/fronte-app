@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -45,14 +45,14 @@ type AppShellProps = {
 
 // Map shortCodes or hrefs to Lucide Icons to match the prototype
 function getIconForAppNav(item: AppNavItem) {
-  if (item.href === "/app/overview") return LayoutDashboard;
-  if (item.href === "/app/site") return FileText;
-  if (item.href.startsWith("/app/briefing")) return Lightbulb;
-  if (item.href.startsWith("/app/automation")) return CalendarDays;
-  if (item.href.startsWith("/app/posts")) return PenTool;
+  if (item.href === "/app/dashboard") return LayoutDashboard;
+  if (item.href === "/app/blog") return FileText;
+  if (item.href.startsWith("/app/perfil")) return Lightbulb;
+  if (item.href.startsWith("/app/estrategias")) return CalendarDays;
+  if (item.href.startsWith("/app/artigos")) return PenTool;
   if (item.href.startsWith("/app/trends")) return TrendingUp;
   if (item.href.startsWith("/app/analytics")) return BarChart3;
-  if (item.href.startsWith("/app/settings")) return Settings;
+  if (item.href.startsWith("/app/configuracoes")) return Settings;
   return LayoutDashboard;
 }
 
@@ -83,7 +83,7 @@ export function AppShell({
       {/* Sidebar for Desktop */}
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         {/* Logo */}
-        <Link href="/app/overview" className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6 hover:bg-sidebar-accent/30 transition">
+        <Link href="/app/dashboard" className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6 hover:bg-sidebar-accent/30 transition">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
@@ -97,7 +97,7 @@ export function AppShell({
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
-              (item.href !== "/app/overview" && pathname.startsWith(item.href));
+              (item.href !== "/app/dashboard" && pathname.startsWith(item.href));
             
             const Icon = getIconForAppNav(item);
             
@@ -231,7 +231,7 @@ export function AppShell({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><Link href="/app/settings/account">Minha conta</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/app/configuracoes/account">Minha conta</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <div className="p-1">
                   <LogoutButton />
@@ -248,7 +248,7 @@ export function AppShell({
               {navItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
-                  (item.href !== "/app/overview" && pathname.startsWith(item.href));
+                  (item.href !== "/app/dashboard" && pathname.startsWith(item.href));
                 
                 const Icon = getIconForAppNav(item);
                 
@@ -286,3 +286,4 @@ export function AppShell({
     </div>
   );
 }
+

@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import type { SettingsState } from "@/app/app/settings/actions";
+import type { SettingsState } from "@/app/app/configuracoes/actions";
 
 type SettingsFeedbackProps = {
   state: SettingsState;
@@ -26,3 +26,4 @@ export function SettingsFeedback({ state }: SettingsFeedbackProps) {
     </div>
   );
 }
+

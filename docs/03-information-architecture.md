@@ -1,137 +1,242 @@
 # Arquitetura de Informação, Telas e Fluxos
 
+> **Versão**: 2.0 — Revisada em Abril/2026
+> **Fonte de verdade de UX/IA**: `docs/14-ux-and-ia-redesign.md`
+> Esta versão reflete o redesign aprovado pelo Product Owner.
+> Mudança central: **Estratégia passa a ser a entidade primária operacional**.
+
+---
+
+## Princípio Central de IA
+
+```
+CONTA → PROJETO → ESTRATÉGIA(S) → Briefing / Keywords / Temas / Artigos / Resultados
+```
+
+- **Projeto** = o negócio no sistema (agrega blog, configurações, conta)
+- **Estratégia** = linha editorial ou hipótese operacional (múltiplas por projeto)
+- Tudo que é editorial (keywords, temas, artigos) pertence a uma Estratégia — não diretamente ao Projeto
+
+---
+
 ## Navegação principal
-- Dashboard
-- Meu Blog
-- Estratégia
-- Plano de Conteúdo
-- Artigos
-- Tendências
-- Analytics
-- Configurações
+
+```
+Dashboard            → central de ação e status por projeto
+Estratégias          → lista e detalhe de estratégias (entidade primária)
+Artigos              → visão global de produção (cross-estratégia)
+Tendências           → oportunidades externas semanais
+Analytics            → resultados aprofundados e comparativos
+Meu Blog             → configuração do canal
+Configurações        → sistema, conta, integrações
+```
+
+### O que foi removido da nav
+
+| Removido | Motivo | Destino |
+|----------|--------|---------|
+| Plano de Conteúdo | Absorvido pela Estratégia (keywords + temas) | Subnav da Estratégia |
+| Automação | Conceito técnico — invisível para o usuário | Configurações > Avançado |
+| Jobs | Técnico, não é feature de produto | Configurações > Avançado |
+
+---
+
+## Subnav contextual da Estratégia
+
+Aparece apenas dentro do detalhe de uma estratégia:
+
+```
+← Estratégias / [Nome da Estratégia]
+
+[ Visão Geral ]  [ Briefing ]  [ Keywords ]  [ Temas ]  [ Artigos ]  [ Resultados ]
+```
+
+---
 
 ## Telas principais
 
 ### Dashboard
-Objetivo: mostrar rapidamente o que está acontecendo no projeto.
+Objetivo: orientar a ação imediata. Responder "o que preciso fazer agora?"
+
+**Estrutura de três zonas**:
+1. **Ação Prioritária** — card grande com o gargalo atual + CTA direto
+2. **KPIs rápidos** — Publicados / Em aprovação / Tráfego
+3. **Contexto** — cards mini por estratégia + tendências da semana
+
+**Centro de Aprovação** (feature core):
+- Acesso direto via badge no Dashboard
+- Consolida tudo com `pending_review`: artigos, temas, keywords
+- Cross-estratégia, ordenado por urgência
+
+### Lista de Estratégias
+Objetivo: visão geral de todas as estratégias do projeto.
 
 Exibe:
-- artigos planejados da semana
-- artigos em produção
-- artigos aguardando aprovação
-- artigos publicados
-- ganhos de tráfego
-- alertas da IA
-- próximas ações sugeridas
+- cards com nome, foco, status, contadores (keywords / temas / artigos)
+- badge de pendências por estratégia
+- botão "Nova Estratégia"
 
-### Meu Blog
-Objetivo: estruturar e administrar o blog.
+### Detalhe da Estratégia
+Objetivo: centralizar toda a operação de uma estratégia.
 
-Permite:
-- escolher template
-- personalizar blog
-- configurar domínio ou subdomínio
-- usar CMS próprio
-- integrar CMS externo
-- editar estrutura do blog
+Subnav com as abas:
+- **Visão Geral**: pipeline visual + métricas resumidas + próxima ação sugerida
+- **Briefing**: contexto específico desta estratégia (editável)
+- **Keywords**: lista com métricas, filtros por jornada e aprovação
+- **Temas**: pautas geradas, aprovação / rejeição
+- **Artigos**: artigos desta estratégia, por status
+- **Resultados**: métricas resumidas desta estratégia com toggle SEO/GEO
 
-### Estratégia
-Objetivo: centralizar o briefing e a inteligência-base.
+### Artigos (global)
+Objetivo: visão unificada de toda a produção cross-estratégia.
 
 Inclui:
-- onboarding via IA
-- resumo do negócio
-- dados de segmento
-- serviços
-- clientes
-- localização
-- concorrentes
-- palavras iniciais
-- edição do briefing
-
-### Plano de Conteúdo
-Objetivo: mostrar a estratégia de palavras e temas.
-
-Inclui:
-- palavras sugeridas
-- dificuldade e potencial
-- jornada de compra
-- short tail e long tail
-- aprovação ou edição do plano
-- geração de temáticas e clusters
-
-### Artigos
-Objetivo: operar a produção.
-
-Inclui:
-- conteúdos planejados e gerados
-- edição de artigos
-- aprovação ou reprovação
-- publicação
-- atualização de conteúdo já publicado
-- upload de referências
-- ajuste da configuração editorial
+- filtros por estratégia, status, período e jornada
+- ações rápidas: aprovar / ver / publicar
 
 ### Tendências
-Objetivo: captar oportunidades novas.
+Objetivo: apresentar oportunidades externas de conteúdo.
 
 Inclui:
-- análise semanal
-- temas em alta
-- filtros por geral, nicho e localização
-- justificativa da recomendação
-- adicionar oportunidade ao plano com 1 clique
+- análise semanal por nicho e localização
+- justificativa da recomendação (IA explica por que importa)
+- "Adicionar como tema" (com seleção de qual estratégia)
 
 ### Analytics
-Objetivo: acompanhar resultado e orientar ação.
+Objetivo: visão aprofundada e comparativa de resultados.
+
+> **Diferente de Resultados**: Analytics é global e comparativo. Resultados (dentro da Estratégia) é resumido e contextual.
 
 Inclui:
-- tráfego orgânico
-- performance por palavra-chave e página
-- CTR
-- ranking médio
-- top conteúdos
-- conteúdos com baixa performance
-- conversões e cliques
-- performance por estágio da jornada
-- comparação SEO vs GEO
+- filtros por estratégia e período
+- toggle SEO / GEO (Presença em IAs) / Ambos
+- KPIs: tráfego, posição média, CTR, menções em IAs (GEO)
+- performance por jornada
+- comparativo entre estratégias
+
+### Meu Blog
+Objetivo: estruturar e administrar o canal de publicação.
+
+Inclui:
+- template, domínio, CMS
+- preview do blog publicado
 
 ### Configurações
-Objetivo: administrar o projeto.
+Objetivo: gerenciar sistema, conta e integrações.
 
 Inclui:
 - dados do negócio
-- integração com CMS
-- GTM
-- GA
-- Meta Pixel / CAPI
-- preferências de produção
-- limites do plano
-- billing
-- permissões
+- integrações (GA, GTM, Meta Pixel, CAPI)
+- preferências de produção (tom, estilo, tamanho)
+- plano e billing
+- equipe e permissões
+- **Avançado**: jobs de automação (visível apenas aqui)
+
+---
+
+## Modos de Operação da IA
+
+| Modo | Comportamento | Ativação |
+|------|--------------|---------|
+| **Manual** | Tudo exige aprovação humana | Padrão inicial |
+| **Assistido** | IA avança keywords → temas; artigos ainda precisam de aprovação | Opt-in por estratégia |
+| **Automático** | IA pode gerar e publicar conforme regras definidas | Opt-in com dupla confirmação |
+
+---
+
+## Camadas SEO e GEO
+
+| Camada | O que é | Onde aparece |
+|--------|---------|-------------|
+| **SEO** | Visibilidade no Google | Em toda a interface quando há dados |
+| **GEO (Presença em IAs)** | Menções em respostas de IAs como ChatGPT | Resultados + Analytics com toggle |
+
+**Linguagem para o usuário**:
+- ❌ "GEO score" → ✅ "Presença em IAs"
+- ❌ "GEO indexing" → ✅ "Como IAs falam sobre você"
+
+---
 
 ## Fluxos principais
 
-### Fluxo de ativação
+### Fluxo de ativação (primeiro acesso)
 1. usuário cria conta
-2. escolhe template de blog
-3. configura blog ou integra CMS
-4. faz briefing com IA
-5. revisa briefing
-6. recebe plano de palavras
-7. aprova plano
-8. recebe plano editorial
-9. define referências e tamanho dos artigos
-10. gera primeiros artigos
-11. aprova e publica
-12. acompanha analytics
+2. onboarding: nomeia o negócio e configura o blog
+3. cria primeira estratégia (3 passos: nome → foco → briefing)
+4. IA gera keywords → usuário aprova
+5. IA gera temas → usuário aprova
+6. IA gera artigos → usuário revisa e publica
+   → Primeiro valor percebido ✅
 
-### Fluxo recorrente
-1. entra no dashboard
-2. vê conteúdos planejados
-3. aprova ou edita artigos
-4. publica
-5. acompanha performance
-6. roda análise de tendências
-7. adiciona novos temas
-8. ajusta o plano conforme resultado
+### Fluxo recorrente (uso semanal)
+1. entra no Dashboard
+2. vê gargalo atual (ex: artigos pendentes)
+3. acessa Centro de Aprovação
+4. aprova / edita / publica
+5. vê tendências da semana
+6. adiciona tendência como tema em uma estratégia
+7. acompanha resultados em Analytics
+
+### Fluxo de expansão (nova estratégia)
+1. vai em Estratégias → "Nova Estratégia"
+2. define nome, foco, briefing específico
+3. IA gera keywords novas (focadas no foco desta estratégia)
+4. opera o fluxo: keywords → temas → artigos
+5. compara com a estratégia anterior em Analytics
+
+---
+
+## Terminologia padrão de interface
+
+| ❌ Não usar | ✅ Usar |
+|------------|---------|
+| Pauta e Tema misturados | **Tema** (único termo na UI) |
+| Topics / Briefs | **Tema** (para o usuário) |
+| Keywords Seed | **Palavras-chave** |
+| GEO (sigla) | **Presença em IAs** |
+| Automação / Jobs | (invisível ou "produção automática") |
+| Plano de Conteúdo | (removido — absorvido pela Estratégia) |
+| Esteira Editorial | (removido — pipeline vive na Visão Geral da Estratégia) |
+
+---
+
+## Sitemap completo
+
+```
+/auth/login
+/auth/signup
+/onboarding
+
+/app
+  /dashboard
+  /aprovacoes                         ← Centro de Aprovação
+
+  /estrategias
+    /new                              ← Onboarding de nova estratégia (3 steps)
+    /[id]
+      /overview
+      /briefing
+      /keywords
+      /temas
+      /artigos
+      /resultados
+
+  /artigos                            ← Visão global cross-estratégia
+    /[id]                             ← Editor de artigo
+
+  /tendencias
+
+  /analytics
+
+  /blog
+    /configurar
+    /personalizar
+
+  /configuracoes
+    /conta
+    /integracoes
+    /producao
+    /plano
+    /equipe
+    /avancado                         ← Jobs técnicos (invisível na nav)
+```

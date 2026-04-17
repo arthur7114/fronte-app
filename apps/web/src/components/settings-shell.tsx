@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 import type { Tables } from "@super/db";
 import { SettingsNav } from "@/components/settings-nav";
 import { SettingsPageHeader } from "@/components/settings-page-header";
@@ -14,11 +14,11 @@ type SettingsShellProps = {
 };
 
 const SETTINGS_ITEMS = [
-  { href: "/app/settings/account", label: "Conta", description: "Nome e acesso" },
-  { href: "/app/settings/workspace", label: "Workspace", description: "Identidade do tenant" },
-  { href: "/app/settings/site", label: "Site", description: "Blog e subdominio" },
-  { href: "/app/settings/ai", label: "IA", description: "Tom e estilo" },
-  { href: "/app/settings/automation", label: "Automacao", description: "Seeds e frequencia" },
+  { href: "/app/configuracoes/account", label: "Conta", description: "Nome e acesso" },
+  { href: "/app/configuracoes/workspace", label: "Workspace", description: "Identidade do tenant" },
+  { href: "/app/configuracoes/site", label: "Site", description: "Blog e subdominio" },
+  { href: "/app/configuracoes/ai", label: "IA", description: "Tom e estilo" },
+  { href: "/app/configuracoes/automation", label: "Automacao", description: "Seeds e frequencia" },
 ];
 
 export function SettingsShell({
@@ -56,3 +56,4 @@ export function SettingsShell({
     </section>
   );
 }
+

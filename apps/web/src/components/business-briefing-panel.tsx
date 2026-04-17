@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useMemo, useState, useEffect } from "react";
 import type { Tables } from "@super/db";
 import {
   saveBusinessBriefing,
   type BusinessBriefingState,
-} from "@/app/app/briefing/actions";
+} from "@/app/app/perfil/actions";
 import { stringifyBriefingList } from "@/lib/business-briefing";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -421,3 +421,4 @@ export function BusinessBriefingPanel({
     </div>
   );
 }
+
