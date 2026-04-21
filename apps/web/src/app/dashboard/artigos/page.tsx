@@ -1,42 +1,81 @@
-import { redirect } from "next/navigation";
-import { PageHeader } from "@/components/page-header";
-import { PostsBoard } from "@/components/posts-board";
-import { getAuthContext } from "@/lib/auth-context";
-import { listPostsForSite } from "@/lib/post-data";
+"use client";
 
-type ArticlesPageProps = {
-  searchParams: Promise<{
-    strategy?: string;
-  }>;
-};
+import { useState } from "react";
+import { ArticleEditor } from "@/components/articles/article-editor";
+import { ArticlesList } from "@/components/articles/articles-list";
+import { GenerateArticleDialog } from "@/components/articles/generate-article-dialog";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Grid3X3, LayoutList, Sparkles } from "lucide-react";
 
-export default async function ArticlesPage({ searchParams }: ArticlesPageProps) {
-  const params = await searchParams;
-  const { user, membership, tenant, site } = await getAuthContext();
+export default function ArtigosPage() {
+  const [selectedArticle, setSelectedArticle] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
 
-  if (!user) {
-    redirect("/login");
+  if (selectedArticle) {
+    return (
+      <ArticleEditor
+        articleId={selectedArticle}
+        isNew={selectedArticle === "new"}
+        onBack={() => setSelectedArticle(null)}
+      />
+    );
   }
-
-  if (!membership || !tenant) {
-    redirect("/onboarding");
-  }
-
-  if (!site) {
-    redirect("/onboarding/site");
-  }
-
-  const posts = await listPostsForSite(tenant.id, site.id);
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        eyebrow="Artigos"
-        title="Sua mesa editorial."
-        description="Lista global real, criacao e edicao permanecem reaproveitadas da base atual. Quando uma estrategia vier por query string, ela filtra o contexto de leitura sem forcar mudanca no modelo de dados."
-        badge={params.strategy ? <span>Filtro contextual por estrategia</span> : <span>{site.subdomain}</span>}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Artigos</h1>
+          <p className="mt-1 text-muted-foreground">
+            Gerencie e edite seus artigos em todas as etapas.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center rounded-lg border border-border p-1">
+            {[
+              { value: "list" as const, icon: LayoutList },
+              { value: "grid" as const, icon: Grid3X3 },
+            ].map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setViewMode(item.value)}
+                className={cn(
+                  "rounded-md p-2 transition-colors",
+                  viewMode === item.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
+            <span className="text-sm text-muted-foreground">Modo Auto</span>
+            <button type="button" className="relative h-6 w-11 rounded-full bg-primary transition-colors">
+              <span className="absolute right-1 top-1 h-4 w-4 rounded-full bg-white transition-transform" />
+            </button>
+          </div>
+
+          <Button className="gap-2" onClick={() => setShowGenerateDialog(true)}>
+            <Sparkles className="h-4 w-4" />
+            Gerar Artigo
+          </Button>
+        </div>
+      </div>
+
+      <ArticlesList viewMode={viewMode} onSelectArticle={setSelectedArticle} />
+
+      <GenerateArticleDialog
+        open={showGenerateDialog}
+        onOpenChange={setShowGenerateDialog}
+        onGenerated={(id) => {
+          setShowGenerateDialog(false);
+          setSelectedArticle(id);
+        }}
       />
-      <PostsBoard posts={posts} site={site} />
     </div>
   );
 }

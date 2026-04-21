@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { WorkspaceBannedCard } from "@/components/content-plan/workspace-banned"
 
 const integrations = [
   {
@@ -204,6 +205,9 @@ export default function ConfiguracoesPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Banidos do workspace */}
+          <WorkspaceBannedCard />
         </div>
 
         {/* Plan Sidebar */}

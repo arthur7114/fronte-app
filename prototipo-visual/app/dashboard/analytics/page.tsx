@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   BarChart3,
   TrendingUp,
   TrendingDown,
@@ -20,6 +27,13 @@ import {
   Bot,
   Link2,
   MessageSquare,
+  Target,
+  Zap,
+  MessageCircle,
+  Calendar,
+  ShoppingBag,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -32,6 +46,10 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from "recharts"
 
 // SEO Data
@@ -130,8 +148,53 @@ const citedArticles = [
   { title: "Sensibilidade Dental: Causas e Tratamentos", citations: 22, engines: 2 },
 ]
 
+// Conversion Data
+const CTA_OPTIONS = [
+  { value: "formulario", label: "Lead via formulário", icon: MessageCircle },
+  { value: "whatsapp", label: "Clique no WhatsApp", icon: MessageSquare },
+  { value: "compra", label: "Compra concluída", icon: ShoppingBag },
+  { value: "agendamento", label: "Agendamento", icon: Calendar },
+]
+
+const conversionTrendData = [
+  { name: "Jan", conversoes: 18 },
+  { name: "Fev", conversoes: 24 },
+  { name: "Mar", conversoes: 32 },
+  { name: "Abr", conversoes: 48 },
+  { name: "Mai", conversoes: 67 },
+  { name: "Jun", conversoes: 82 },
+  { name: "Jul", conversoes: 108 },
+  { name: "Ago", conversoes: 134 },
+]
+
+const conversionBySource = [
+  { name: "Orgânico", value: 58, color: "hsl(var(--primary))" },
+  { name: "Direto", value: 22, color: "hsl(var(--chart-2, 221 83% 53%))" },
+  { name: "Social", value: 14, color: "hsl(var(--chart-3, 142 71% 45%))" },
+  { name: "Referência", value: 6, color: "hsl(var(--chart-4, 38 92% 50%))" },
+]
+
+const conversionEvents = [
+  { date: "08/11 14:32", type: "Lead via formulário", origin: "/blog/clareamento-dental", user: "marina.s@email.com", status: "confirmado" },
+  { date: "08/11 11:08", type: "Clique no WhatsApp", origin: "/blog/implante-dentario", user: "5511987654321", status: "confirmado" },
+  { date: "07/11 19:45", type: "Agendamento", origin: "/contato", user: "joao.p@gmail.com", status: "confirmado" },
+  { date: "07/11 16:22", type: "Lead via formulário", origin: "/blog/aparelho-invisivel", user: "ana.costa@outlook.com", status: "confirmado" },
+  { date: "07/11 10:14", type: "Clique no WhatsApp", origin: "/servicos", user: "5511912345678", status: "pendente" },
+  { date: "06/11 18:30", type: "Compra concluída", origin: "/blog/dicas-cuidados", user: "pedro.s@email.com", status: "confirmado" },
+  { date: "06/11 09:05", type: "Lead via formulário", origin: "/blog/sensibilidade-dental", user: "carla.m@yahoo.com", status: "confirmado" },
+  { date: "05/11 21:18", type: "Agendamento", origin: "/home", user: "ricardo.o@gmail.com", status: "pendente" },
+]
+
+const integrations = [
+  { name: "Meta Pixel", connected: true, description: "Rastreamento de eventos do Facebook/Instagram" },
+  { name: "Google Analytics 4", connected: true, description: "Eventos customizados GA4" },
+  { name: "Google Ads", connected: false, description: "Conversões do Google Ads" },
+  { name: "TikTok Pixel", connected: false, description: "Eventos da plataforma TikTok" },
+]
+
 export default function AnalyticsPage() {
-  const [viewMode, setViewMode] = useState<"seo" | "geo">("seo")
+  const [viewMode, setViewMode] = useState<"seo" | "geo" | "conversoes">("seo")
+  const [selectedCTA, setSelectedCTA] = useState<string>("formulario")
 
   return (
     <div className="space-y-6">
@@ -170,6 +233,18 @@ export default function AnalyticsPage() {
               <Sparkles className="h-4 w-4" />
               GEO (IA)
             </button>
+            <button
+              onClick={() => setViewMode("conversoes")}
+              className={cn(
+                "flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                viewMode === "conversoes"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Target className="h-4 w-4" />
+              Conversões
+            </button>
           </div>
           <DateRangePicker />
         </div>
@@ -194,8 +269,42 @@ export default function AnalyticsPage() {
         </Card>
       )}
 
+      {/* Conversões Controls */}
+      {viewMode === "conversoes" && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <Target className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground">Rastreamento de conversões</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Acompanhe CTAs que geram resultado real — leads, WhatsApp, compras e agendamentos.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-sm font-medium text-foreground">CTA:</span>
+              <Select value={selectedCTA} onValueChange={setSelectedCTA}>
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CTA_OPTIONS.map((cta) => (
+                    <SelectItem key={cta.value} value={cta.value}>
+                      {cta.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* KPI Cards */}
-      {viewMode === "seo" ? (
+      {viewMode === "seo" && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="p-6">
@@ -253,7 +362,9 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         </div>
-      ) : (
+      )}
+
+      {viewMode === "geo" && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="p-6">
@@ -313,7 +424,68 @@ export default function AnalyticsPage() {
         </div>
       )}
 
+      {viewMode === "conversoes" && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <Target className="h-5 w-5 text-primary" />
+                <Badge className="bg-green-100 text-green-700">
+                  <ArrowUpRight className="mr-1 h-3 w-3" />
+                  +43%
+                </Badge>
+              </div>
+              <p className="mt-4 text-2xl font-semibold text-foreground">513</p>
+              <p className="text-sm text-muted-foreground">Conversões totais</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <Zap className="h-5 w-5 text-primary" />
+                <Badge className="bg-green-100 text-green-700">
+                  <ArrowUpRight className="mr-1 h-3 w-3" />
+                  +0.8%
+                </Badge>
+              </div>
+              <p className="mt-4 text-2xl font-semibold text-foreground">4.1%</p>
+              <p className="text-sm text-muted-foreground">Taxa de conversão</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                <Badge className="bg-green-100 text-green-700">
+                  <ArrowUpRight className="mr-1 h-3 w-3" />
+                  +28%
+                </Badge>
+              </div>
+              <p className="mt-4 text-2xl font-semibold text-foreground">187</p>
+              <p className="text-sm text-muted-foreground">Leads qualificados</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <Calendar className="h-5 w-5 text-primary" />
+                <Badge className="bg-red-100 text-red-700">
+                  <ArrowDownRight className="mr-1 h-3 w-3" />
+                  -6%
+                </Badge>
+              </div>
+              <p className="mt-4 text-2xl font-semibold text-foreground">R$ 84</p>
+              <p className="text-sm text-muted-foreground">Custo por conversão</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Charts */}
+      {viewMode !== "conversoes" && (
       <div className="grid gap-6 lg:grid-cols-2">
         {viewMode === "seo" ? (
           <>
@@ -493,9 +665,114 @@ export default function AnalyticsPage() {
           </>
         )}
       </div>
+      )}
+
+      {/* Conversion Charts */}
+      {viewMode === "conversoes" && (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="h-5 w-5 text-primary" />
+                Evolução das conversões
+                <button className="ml-auto text-muted-foreground hover:text-foreground">
+                  <HelpCircle className="h-4 w-4" />
+                </button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Total de conversões registradas nos últimos 8 meses
+              </p>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={conversionTrendData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis
+                      dataKey="name"
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                    />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="conversoes"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ r: 3, fill: "hsl(var(--primary))" }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Zap className="h-5 w-5 text-primary" />
+                Por fonte
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm text-muted-foreground">
+                De onde vêm suas conversões
+              </p>
+              <div className="h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={conversionBySource}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={2}
+                    >
+                      {conversionBySource.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-2 space-y-1.5">
+                {conversionBySource.map((source) => (
+                  <div key={source.name} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: source.color }}
+                      />
+                      <span className="text-foreground">{source.name}</span>
+                    </div>
+                    <span className="font-medium text-foreground">{source.value}%</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Tables */}
-      {viewMode === "seo" ? (
+      {viewMode === "seo" && (
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
@@ -559,7 +836,9 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         </div>
-      ) : (
+      )}
+
+      {viewMode === "geo" && (
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
@@ -640,47 +919,175 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* Low Performing */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <TrendingDown className="h-5 w-5 text-amber-600" />
-            {viewMode === "seo"
-              ? "Conteúdos que precisam de atenção"
-              : "Oportunidades para aparecer mais em IAs"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4 text-sm text-muted-foreground">
-            {viewMode === "seo"
-              ? "Estes artigos podem melhorar com algumas otimizações sugeridas pela IA:"
-              : "Estes artigos têm potencial para serem mais citados por IAs generativas:"}
-          </p>
-          <div className="space-y-3">
-            {lowPerforming.map((page) => (
-              <div
-                key={page.page}
-                className="flex items-center justify-between rounded-lg border border-border p-4"
-              >
-                <div>
-                  <p className="font-medium text-foreground">{page.page}</p>
-                  <div className="mt-1 flex items-center gap-3 text-sm">
-                    <span className="text-muted-foreground">
-                      {page.visits} {viewMode === "seo" ? "visitas/mês" : "citações"}
-                    </span>
-                    <Badge variant="secondary" className="bg-amber-100 text-amber-700">
-                      {viewMode === "seo" ? page.issue : "Falta estrutura FAQ"}
-                    </Badge>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm">
-                  Ver sugestões
-                </Button>
+      {/* Conversion Events Table + Integrations */}
+      {viewMode === "conversoes" && (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Target className="h-5 w-5 text-primary" />
+                  Últimos eventos de conversão
+                </CardTitle>
+                <Badge variant="secondary" className="text-xs">
+                  {conversionEvents.length} eventos
+                </Badge>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Data
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Tipo
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Origem
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Usuário
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {conversionEvents.map((event, i) => (
+                      <tr
+                        key={i}
+                        className="border-b border-border last:border-b-0 transition-colors hover:bg-muted/30"
+                      >
+                        <td className="px-6 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                          {event.date}
+                        </td>
+                        <td className="px-6 py-3">
+                          <span className="text-sm font-medium text-foreground">
+                            {event.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 text-xs text-muted-foreground font-mono">
+                          {event.origin}
+                        </td>
+                        <td className="px-6 py-3 text-xs text-muted-foreground">
+                          {event.user}
+                        </td>
+                        <td className="px-6 py-3">
+                          {event.status === "confirmado" ? (
+                            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-[11px]">
+                              <CheckCircle2 className="mr-1 h-3 w-3" />
+                              Confirmado
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-[11px]">
+                              <AlertCircle className="mr-1 h-3 w-3" />
+                              Pendente
+                            </Badge>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Zap className="h-5 w-5 text-primary" />
+                Integrações
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Conecte plataformas para rastrear conversões com eventos customizados.
+              </p>
+              <div className="space-y-3">
+                {integrations.map((integration) => (
+                  <div
+                    key={integration.name}
+                    className="flex items-start justify-between gap-3 rounded-lg border border-border p-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground">
+                          {integration.name}
+                        </p>
+                        {integration.connected && (
+                          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-[10px] px-1.5 py-0">
+                            <CheckCircle2 className="mr-0.5 h-2.5 w-2.5" />
+                            Ativo
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                        {integration.description}
+                      </p>
+                    </div>
+                    <Button
+                      variant={integration.connected ? "outline" : "default"}
+                      size="sm"
+                      className="shrink-0 text-xs"
+                    >
+                      {integration.connected ? "Gerenciar" : "Conectar"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Low Performing (SEO / GEO only) */}
+      {viewMode !== "conversoes" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <TrendingDown className="h-5 w-5 text-amber-600" />
+              {viewMode === "seo"
+                ? "Conteúdos que precisam de atenção"
+                : "Oportunidades para aparecer mais em IAs"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-sm text-muted-foreground">
+              {viewMode === "seo"
+                ? "Estes artigos podem melhorar com algumas otimizações sugeridas pela IA:"
+                : "Estes artigos têm potencial para serem mais citados por IAs generativas:"}
+            </p>
+            <div className="space-y-3">
+              {lowPerforming.map((page) => (
+                <div
+                  key={page.page}
+                  className="flex items-center justify-between rounded-lg border border-border p-4"
+                >
+                  <div>
+                    <p className="font-medium text-foreground">{page.page}</p>
+                    <div className="mt-1 flex items-center gap-3 text-sm">
+                      <span className="text-muted-foreground">
+                        {page.visits} {viewMode === "seo" ? "visitas/mês" : "citações"}
+                      </span>
+                      <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                        {viewMode === "seo" ? page.issue : "Falta estrutura FAQ"}
+                      </Badge>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    Ver sugestões
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

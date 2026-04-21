@@ -103,8 +103,8 @@ export default function SiteConfigPage() {
       language,
     }))
 
-    // Proceed to briefing chat
-    router.push("/onboarding/briefing")
+    // Proceed to choose path
+    router.push("/onboarding/escolher")
   }
 
   return (
@@ -116,7 +116,9 @@ export default function SiteConfigPage() {
             { label: "Criar conta", done: true },
             { label: "Workspace", done: true },
             { label: "Site", done: false, active: true },
-            { label: "Briefing", done: false },
+            { label: "Estratégia", done: false },
+            { label: "Resumo", done: false },
+            { label: "Concluir", done: false },
           ].map((s, i) => (
             <div key={i} className="flex items-center gap-2">
               {i > 0 && (

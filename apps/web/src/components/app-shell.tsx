@@ -103,7 +103,7 @@ export function AppShell({
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-lg font-semibold text-sidebar-foreground">Super</span>
+          <span className="text-lg font-semibold text-sidebar-foreground">ContentAI</span>
         </Link>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
@@ -278,9 +278,7 @@ export function AppShell({
           </div>
         )}
 
-        <main className="p-4 lg:p-6">
-          <div className="mx-auto max-w-7xl flex-col gap-6">{children}</div>
-        </main>
+        <main className="p-4 lg:p-6">{children}</main>
       </div>
     </div>
   );

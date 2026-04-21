@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ExternalLink, Monitor, Smartphone, Tablet } from "lucide-react"
+import Link from "next/link"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
@@ -59,9 +60,11 @@ export function BlogPreview() {
                 <Smartphone className="h-4 w-4" />
               </button>
             </div>
-            <Button variant="outline" className="gap-2">
-              <ExternalLink className="h-4 w-4" />
-              Abrir blog
+            <Button variant="outline" className="gap-2" asChild>
+              <Link href="/blog" target="_blank">
+                <ExternalLink className="h-4 w-4" />
+                Abrir blog
+              </Link>
             </Button>
           </div>
         </div>

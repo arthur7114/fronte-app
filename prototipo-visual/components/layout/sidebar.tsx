@@ -7,22 +7,26 @@ import {
   LayoutDashboard,
   FileText,
   Lightbulb,
-  CalendarDays,
   PenTool,
   TrendingUp,
   BarChart3,
   Settings,
   Sparkles,
+  Users,
+  Mail,
+  Calendar,
 } from "lucide-react"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Meu Blog", href: "/dashboard/blog", icon: FileText },
-  { name: "Estratégia", href: "/dashboard/estrategia", icon: Lightbulb },
-  { name: "Plano de Conteúdo", href: "/dashboard/plano", icon: CalendarDays },
+  { name: "Estratégias", href: "/dashboard/estrategias", icon: Lightbulb },
   { name: "Artigos", href: "/dashboard/artigos", icon: PenTool },
+  { name: "Calendário", href: "/dashboard/calendario", icon: Calendar },
   { name: "Tendências", href: "/dashboard/tendencias", icon: TrendingUp },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+  { name: "Newsletter", href: "/dashboard/newsletter", icon: Mail },
+  { name: "Leads", href: "/dashboard/leads", icon: Users },
   { name: "Configurações", href: "/dashboard/configuracoes", icon: Settings },
 ]
 
@@ -44,8 +48,11 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navigation.map((item) => {
-          const isActive = pathname === item.href || 
-            (item.href !== "/dashboard" && pathname.startsWith(item.href))
+          const isActive =
+            pathname === item.href ||
+            (item.href !== "/dashboard" &&
+              (pathname === item.href ||
+                pathname.startsWith(item.href + "/")))
           
           return (
             <Link

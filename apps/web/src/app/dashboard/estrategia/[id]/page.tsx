@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { StrategyDetailPanel } from "@/components/strategy-detail-panel";
+import { StrategyChatInterface } from "@/components/strategy/strategy-chat";
+import { StrategySidebar } from "@/components/strategy/strategy-sidebar";
 import { loadAutomationWorkspaceData } from "@/app/app/estrategias/data";
-import { getBusinessBriefingForTenant } from "@/lib/business-briefing-data";
 
 type StrategyDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -16,23 +16,21 @@ export default async function StrategyDetailPage({ params }: StrategyDetailPageP
     notFound();
   }
 
-  const briefing = await getBusinessBriefingForTenant(data.tenant.id);
-  const strategyKeywords = data.keywords.filter((keyword) => keyword.strategy_id === id);
-  const strategyTopics = data.topics.filter((topic) => topic.strategy_id === id);
-  const strategyPosts = data.posts;
-
   return (
-    <div className="space-y-6">
-      <StrategyDetailPanel
-        strategy={strategy}
-        briefing={briefing}
-        keywordCount={strategyKeywords.length}
-        approvedKeywordCount={strategyKeywords.filter((keyword) => keyword.status === "approved").length}
-        topicCount={strategyTopics.length}
-        approvedTopicCount={strategyTopics.filter((topic) => topic.status === "approved").length}
-        postCount={strategyPosts.length}
-        pendingJobsCount={data.jobs.filter((job) => job.status === "pending" || job.status === "running").length}
-      />
+    <div className="flex flex-col gap-6 xl:flex-row">
+      <div className="min-w-0 flex-1">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-foreground">Estrategia de Conteudo</h1>
+          <p className="mt-1 text-muted-foreground">
+            Conte-nos sobre seu negocio para criarmos uma estrategia personalizada.
+          </p>
+        </div>
+        <StrategyChatInterface />
+      </div>
+
+      <div className="w-full shrink-0 xl:w-80">
+        <StrategySidebar />
+      </div>
     </div>
   );
 }
