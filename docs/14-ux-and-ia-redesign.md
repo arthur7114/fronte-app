@@ -1,271 +1,99 @@
-# UX e Arquitetura de Informacao - Redesign v2.0
+# UX e Arquitetura de Informacao - Redesign v4.0
 
-> Doc canonico de UX e IA.
-> Versao: 2.0 - Abril 2026
 > Fonte primaria visual: `prototipo-visual/`
+> Fonte primaria do design system: `prototipo-visual/design-system/`
 
 ---
 
-## Proposito deste documento
+## Regra principal
 
-Este documento define a arquitetura de experiencia do produto.
-
-`prototipo-visual/` deve ser tratado como a fonte de verdade para:
-
-- fluxo do usuario
-- organizacao das telas
-- prioridade de elementos
-- arquitetura da experiencia
-- navegacao principal
-- intencao de uso de cada etapa
-
-Quando houver conflito entre codigo existente, UX antiga, componentes antigos e o prototipo visual, o prototipo prevalece.
+O prototipo visual e a especificacao principal do front. Uma tela so e considerada convergida quando segue o prototipo em layout, hierarquia, blocos, densidade, navegacao local, estados visuais e interacoes visiveis.
 
 ---
 
-## Fluxo principal do produto
+## Design system
 
-```text
-Login ou Cadastro
-  -> Onboarding / workspace
-  -> Onboarding / site
-  -> Onboarding / briefing
-  -> Dashboard
-  -> uso recorrente em blog, estrategia, plano, artigos, tendencias, analytics e configuracoes
-```
+O design system do prototipo define:
 
-### Etapas e intencao
+- tokens em `app/globals.css`
+- espelho tipado em `design-system/tokens.ts`
+- pagina viva em `/design-system`
+- primitivos `components/ui/*`
+- regras de uso descritas em `design-system/README.md`
 
-| Etapa | Intencao |
-|------|----------|
-| `login` | recuperar acesso rapidamente |
-| `cadastro` | ativar a primeira experiencia |
-| `onboarding` | criar o workspace |
-| `onboarding/site` | criar o primeiro site e canal de publicacao |
-| `onboarding/briefing` | capturar o contexto do negocio |
-| `dashboard` | mostrar saude do funil e proxima acao |
-| `dashboard/estrategia` | listar linhas editoriais do projeto |
-| `dashboard/estrategia/[id]` | operar uma estrategia especifica |
-| `dashboard/plano` | organizar keywords, topics e calendario no mesmo contexto |
-| `dashboard/artigos` | operar producao e revisao editorial |
-| `dashboard/blog` | ver preview e configurar o canal |
-| `dashboard/tendencias` | explorar novas oportunidades |
-| `dashboard/analytics` | ler resultado agregado |
-| `dashboard/configuracoes` | concentrar preferencias e infraestrutura do workspace |
+Esses itens valem para dashboard, blog publico, onboarding e telas futuras.
 
 ---
 
-## Entidades e hierarquia de experiencia
-
-```text
-CONTA
-  -> WORKSPACE / PROJETO
-    -> SITE / BLOG
-    -> BRIEFING DE NEGOCIO
-    -> ESTRATEGIAS
-      -> KEYWORDS
-      -> TOPICS
-      -> ARTIGOS
-      -> RESULTADOS
-
-TENDENCIAS e ANALYTICS aparecem como visoes globais do workspace
-```
-
-### Regra critica
-
-Projeto e estrategia continuam separados.
-
-| Entidade | Papel |
-|----------|------|
-| Projeto / workspace | contexto do negocio, site e configuracoes |
-| Estrategia | foco editorial especifico dentro do projeto |
-
-`Estrategia` continua multi-strategy no modelo e na UX:
-
-- `/dashboard/estrategia` mostra cards de estrategias
-- `/dashboard/estrategia/[id]` abre a experiencia detalhada da estrategia selecionada
-
----
-
-## Navegacao principal canonica
+## Navegacao principal
 
 ```text
 Dashboard
 Meu Blog
-Estrategia
-Plano de Conteudo
+Estrategias
 Artigos
+Calendario
 Tendencias
 Analytics
+Newsletter
+Leads
 Configuracoes
 ```
 
-### O que sai da navegacao principal
-
-| Item | Decisao |
-|------|---------|
-| Aprovacoes | sai da nav principal |
-| Jobs | sai da nav principal |
-| Perfil do Negocio | deixa de existir como item principal isolado |
-| Configuracoes fragmentadas | substituidas por pagina unica com secoes |
+O item antigo `Plano de Conteudo` deixa de ser a navegacao principal nesta versao visual. Planejamento passa a aparecer distribuido entre Estrategias, Artigos e Calendario conforme o prototipo novo.
 
 ---
 
-## Estrutura das telas
+## Fluxo do produto
 
-### Dashboard
+```text
+Login / Cadastro
+  -> Onboarding workspace
+  -> Onboarding site
+  -> Escolha de caminho / briefing / estrategia
+  -> Resumo
+  -> Estrategias sugeridas
+  -> Dashboard
+```
 
-Objetivo: responder "o que precisa acontecer agora?".
+O backend real ainda exige workspace, site e briefing minimo antes de liberar `/dashboard`.
 
-Deve priorizar:
+---
 
-- estado atual do pipeline
-- indicadores rapidos
-- proximas acoes
-- atalhos para plano e artigos
+## Telas canonicas
 
-### Meu Blog
-
-Objetivo: concentrar canal de publicacao e ajustes do site.
-
-Deve combinar:
-
-- preview do blog
-- contexto de template/tema
-- configuracao do site
-- acessos rapidos para publicar ou ajustar estrutura
-
-### Estrategia
-
-Objetivo: mostrar todas as estrategias do workspace e facilitar a entrada em uma delas.
-
-Elementos esperados:
-
-- cards por estrategia
-- nome
-- foco
-- status
-- modo operacional
-- acesso direto ao detalhe
-
-### Estrategia detalhe
-
-Objetivo: operar a estrategia escolhida sem sair do contexto dela.
-
-Elementos esperados:
-
-- contexto e resumo lateral
-- proxima acao estrategica
-- acesso ao aprofundamento em keywords, topics e artigos
-- leitura de progresso da estrategia
-
-### Plano de Conteudo
-
-Objetivo: unificar planejamento editorial.
-
-Abas canonicas:
-
-- `keywords`
-- `topics`
-- `calendar`
-
-Comportamento:
-
-- aceita visao global
-- aceita filtro opcional por `strategy`
-
-### Artigos
-
-Objetivo: operar a producao editorial real.
-
-Deve concentrar:
-
-- lista global de artigos
-- filtros por status
-- criacao
-- edicao
-- revisao
-
-### Tendencias
-
-Objetivo: transformar sinal externo em oportunidade editorial.
-
-### Analytics
-
-Objetivo: mostrar leitura consolidada de performance.
-
-Quando metricas nao estiverem disponiveis, a interface deve usar estados vazios ou indisponiveis, nunca dados ficticios como fonte canonica.
-
-### Configuracoes
-
-Objetivo: unificar preferencias do workspace em um unico lugar.
-
-Secoes canonicas:
-
-- `account`
-- `workspace`
-- `site`
-- `automation`
-- `ai`
+| Tela | Intencao |
+|---|---|
+| `/dashboard` | saude operacional e proximas acoes |
+| `/dashboard/blog` | canal de publicacao e customizacao |
+| `/dashboard/estrategias` | gestao multi-estrategia |
+| `/dashboard/estrategias/nova` | criacao guiada de estrategia |
+| `/dashboard/estrategias/[id]` | detalhe e refinamento de estrategia |
+| `/dashboard/artigos` | producao editorial e fila |
+| `/dashboard/calendario` | agenda editorial |
+| `/dashboard/tendencias` | oportunidades |
+| `/dashboard/analytics` | performance SEO/GEO |
+| `/dashboard/newsletter` | relacionamento recorrente |
+| `/dashboard/leads` | captura e gestão de contatos |
+| `/dashboard/configuracoes` | configuracao unificada |
+| `/blog` e `/blog/[slug]` | experiencia publica |
 
 ---
 
 ## Regras de UX obrigatorias
 
-- uma unica shell autenticada para a experiencia principal
-- o backend atual so pode ser reaproveitado quando nao contradiz o prototipo
-- componentes existentes devem ser adaptados ao fluxo novo, nao o fluxo novo aos componentes antigos
-- quando faltar detalhamento comportamental no prototipo, completar com boas praticas coerentes com a intencao visual
-- dados reais sao prioritarios
-- estado vazio e melhor do que mock enganoso
+- o prototipo prevalece sobre UI antiga
+- o backend deve ser adaptado por adapters quando necessario
+- mocks sao temporarios e nao viram verdade funcional
+- dados reais substituem mocks sem mudar a composicao visual
+- rotas legadas existem apenas para compatibilidade
+- `Aprovacoes`, `Jobs` e telas antigas nao voltam para a nav principal sem novo prototipo
 
 ---
 
-## Terminologia padrao
-
-| Evitar | Usar |
-|--------|------|
-| `/auth/*` e `/app/*` como linguagem principal do produto | rotas canonicas `/login`, `/cadastro` e `/dashboard/*` |
-| Modulos tecnicos como `Jobs` e `Automação` na navegacao | linguagem orientada a produto |
-| Configuracoes espalhadas | `Configuracoes` com secoes |
-| Navegacao por arquitetura | navegacao por tarefa e fluxo |
-
----
-
-## Sitemap canonico
-
-```text
-/login
-/cadastro
-/onboarding
-/onboarding/site
-/onboarding/briefing
-
-/dashboard
-  /blog
-  /estrategia
-    /[id]
-  /plano
-  /artigos
-    /novo
-    /[id]
-  /tendencias
-  /analytics
-  /configuracoes
-```
-
-### Compatibilidade
-
-Rotas legadas com equivalente continuam existindo apenas como redirect.
-
-`/app/aprovacoes` e `/app/jobs` permanecem temporariamente fora da navegacao principal.
-
----
-
-## Historico de versoes
+## Historico
 
 | Versao | Data | Mudanca |
-|--------|------|---------|
-| 1.0 | 2026-04-14 | redesign inicial |
-| 1.1 | 2026-04-14 | refinamentos de UX e IA |
-| 2.0 | 2026-04-16 | `prototipo-visual/` promovido a fonte de verdade e migracao da experiencia principal para rotas canonicas `/dashboard/*` |
+|---|---|---|
+| 2.0 | 2026-04-16 | `prototipo-visual/` promovido a fonte de verdade |
+| 4.0 | 2026-04-20 | novo commit do prototipo aplicado: design system, blog publico, estrategias, calendario, newsletter e leads |

@@ -245,6 +245,9 @@ When user's prompt is NOT in English:
 | Web UI/UX    | `.agent/frontend-specialist.md` |
 | Mobile UI/UX | `.agent/mobile-developer.md`    |
 
+> 🔴 **ABSOLUTE SOURCE OF TRUTH (NEW RULE):**
+> Custom implementations, tokens, variables, components and aesthetics must NEVER diverge from `prototipo-visual/design-system`. This folder contains the absolute source of truth for the product. Before making visual layout enhancements or constructing elements, you **MUST** review `prototipo-visual/design-system/README.md`.
+
 **These agents contain:**
 
 - Purple Ban (no violet/purple colors)

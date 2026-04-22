@@ -7,49 +7,61 @@ export type AppNavItem = {
 
 export const APP_NAV_ITEMS: AppNavItem[] = [
   {
-    href: "/dashboard",
+    href: "/app/dashboard",
     label: "Dashboard",
     description: "Resumo do projeto, pipeline e proximos passos.",
     shortCode: "DB",
   },
   {
-    href: "/dashboard/blog",
+    href: "/app/blog",
     label: "Meu Blog",
     description: "Preview, identidade do site e configuracao editorial.",
     shortCode: "BL",
   },
   {
-    href: "/dashboard/estrategia",
-    label: "Estrategia",
+    href: "/app/estrategias",
+    label: "Estrategias",
     description: "Direcao editorial, contexto do negocio e foco por estrategia.",
     shortCode: "ES",
   },
   {
-    href: "/dashboard/plano",
-    label: "Plano de Conteudo",
-    description: "Keywords, temas e calendario no mesmo fluxo.",
-    shortCode: "PL",
-  },
-  {
-    href: "/dashboard/artigos",
+    href: "/app/artigos",
     label: "Artigos",
     description: "Lista editorial, criacao, revisao e edicao de posts.",
     shortCode: "AR",
   },
   {
-    href: "/dashboard/tendencias",
+    href: "/app/calendario",
+    label: "Calendario",
+    description: "Agenda editorial, publicacoes e itens sem data.",
+    shortCode: "CL",
+  },
+  {
+    href: "/app/tendencias",
     label: "Tendencias",
     description: "Radar dos sinais atuais com base nos temas pesquisados.",
     shortCode: "TD",
   },
   {
-    href: "/dashboard/analytics",
+    href: "/app/analytics",
     label: "Analytics",
     description: "Leitura operacional e sinais de performance do conteudo.",
     shortCode: "AN",
   },
   {
-    href: "/dashboard/configuracoes",
+    href: "/app/newsletter",
+    label: "Newsletter",
+    description: "Campanhas, assinantes e envios editoriais.",
+    shortCode: "NL",
+  },
+  {
+    href: "/app/leads",
+    label: "Leads",
+    description: "Captacao, origem e acompanhamento de oportunidades.",
+    shortCode: "LD",
+  },
+  {
+    href: "/app/configuracoes",
     label: "Configuracoes",
     description: "Conta, workspace, site, automacao e preferencias de IA.",
     shortCode: "CF",
@@ -100,6 +112,7 @@ export function getAppRouteMeta(pathname: string) {
   }
 
   if (
+    (isPath(pathname, "/dashboard/estrategias") && pathname !== "/dashboard/estrategias") ||
     (isPath(pathname, "/dashboard/estrategia") && pathname !== "/dashboard/estrategia") ||
     (isPath(pathname, "/app/estrategias") && pathname !== "/app/estrategias")
   ) {
@@ -109,17 +122,28 @@ export function getAppRouteMeta(pathname: string) {
     };
   }
 
-  if (isPath(pathname, "/dashboard/estrategia") || isPath(pathname, "/app/estrategias")) {
+  if (
+    isPath(pathname, "/dashboard/estrategias") ||
+    isPath(pathname, "/dashboard/estrategia") ||
+    isPath(pathname, "/app/estrategias")
+  ) {
     return {
       breadcrumb: "Estrategia",
       label: "Estrategia",
     };
   }
 
-  if (isPath(pathname, "/dashboard/plano")) {
+  if (isPath(pathname, "/dashboard/plano") || isPath(pathname, "/app/plano")) {
     return {
       breadcrumb: "Plano de Conteudo",
       label: "Plano",
+    };
+  }
+
+  if (isPath(pathname, "/dashboard/calendario") || isPath(pathname, "/app/calendario")) {
+    return {
+      breadcrumb: "Calendario",
+      label: "Calendario",
     };
   }
 
@@ -134,6 +158,20 @@ export function getAppRouteMeta(pathname: string) {
     return {
       breadcrumb: "Analytics",
       label: "Analytics",
+    };
+  }
+
+  if (isPath(pathname, "/dashboard/newsletter") || isPath(pathname, "/app/newsletter")) {
+    return {
+      breadcrumb: "Newsletter",
+      label: "Newsletter",
+    };
+  }
+
+  if (isPath(pathname, "/dashboard/leads") || isPath(pathname, "/app/leads")) {
+    return {
+      breadcrumb: "Leads",
+      label: "Leads",
     };
   }
 

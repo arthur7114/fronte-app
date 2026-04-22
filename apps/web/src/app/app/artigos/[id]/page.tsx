@@ -8,5 +8,5 @@ export default async function LegacyArticleDetailPage({
   params,
 }: LegacyArticleDetailPageProps) {
   const { id } = await params;
-  redirect(`/dashboard/artigos/${id}`);
+  redirect(`/app/artigos?id=${id}`);
 }

@@ -15,10 +15,14 @@
                 "shadcn@latest",
                 "mcp"
             ]
+        },
+        "strategy-ops": {
+            "command": "npm",
+            "args": [
+                "run",
+                "mcp:strategy"
+            ]
         }
-        //other mcp servers
     }
 }
-
-// setup mcp server in  ~/.gemini\antigravity\mcp_config.json
 

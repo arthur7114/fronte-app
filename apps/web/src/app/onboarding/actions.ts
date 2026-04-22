@@ -33,7 +33,7 @@ function revalidateOnboardingPaths(subdomain?: string | null) {
   revalidatePath("/", "layout");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/blog");
-  revalidatePath("/dashboard/estrategia");
+  revalidatePath("/dashboard/estrategias");
   revalidatePath("/dashboard/configuracoes");
   revalidatePath("/onboarding");
   revalidatePath("/onboarding/site");
@@ -62,7 +62,7 @@ export async function createTenant(
     const briefing = context.tenant
       ? await getBusinessBriefingForTenant(context.tenant.id)
       : null;
-    redirect(context.site ? (briefing ? "/dashboard" : "/onboarding/briefing") : "/onboarding/site");
+    redirect(context.site ? (briefing ? "/app/dashboard" : "/onboarding/briefing") : "/onboarding/site");
   }
 
   const validation = validateTenantInput(
@@ -130,7 +130,7 @@ export async function createOnboardingSite(
   const existingBriefing = await getBusinessBriefingForTenant(context.tenant.id);
 
   if (context.site) {
-    redirect(existingBriefing ? "/dashboard" : "/onboarding/briefing");
+    redirect(existingBriefing ? "/app/dashboard" : "/onboarding/briefing");
   }
 
   const validation = validateSiteInput(
@@ -260,7 +260,7 @@ export async function saveOnboardingBriefing(
   }
 
   revalidateOnboardingPaths(context.site.subdomain);
-  redirect("/dashboard");
+  redirect("/app/dashboard");
 }
 
 export async function completeOnboarding(

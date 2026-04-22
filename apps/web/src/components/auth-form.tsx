@@ -106,7 +106,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         return;
       }
 
-      router.push(isSignup ? "/onboarding" : "/dashboard");
+      router.push(isSignup ? "/onboarding" : "/app/dashboard");
       router.refresh();
     } catch {
       setError("Erro inesperado no servidor.");

@@ -1,137 +1,103 @@
 # Modelo de Dados e Entidades
 
-## Entidades principais do sistema
+## Entidades atuais reaproveitadas
 
-- usuario
-- tenant / workspace
-- membership
-- site
-- business_briefing
-- strategy
-- keyword_candidate
-- topic_candidate
-- post
-- trend_insight
-- analytics metrics
+- `users` via Supabase Auth
+- `tenants`
+- `memberships`
+- `sites`
+- `business_briefings`
+- `strategies`
+- `keyword_candidates`
+- `topic_candidates`
+- `posts`
 
----
+## Entidades criadas no ciclo Data-centric
+- `contacts` (Gestão de Leads unificada)
+- `newsletter_configs` (Settings 1:1 por tenant)
+- `analytics_daily` (Série temporal para tráfego/conversões)
+
+## Novas Entidades: Concorrência Orgânica (SERP)
+- `serp_snapshots` (Cache completo da query Serper.dev, expiração 72h)
+- `serp_results` (Links individuais, títulos, PAA destrinchados do snapshot)
+- `workspace_competitors` (Agregação de share of voice por tenant/site)
 
 ## Hierarquia de dominio
 
 ```text
 CONTA
   -> WORKSPACE / TENANT
-    -> SITE
+    -> SITE / BLOG
     -> BUSINESS_BRIEFING
     -> STRATEGIES
       -> KEYWORD_CANDIDATES
       -> TOPIC_CANDIDATES
-      -> POSTS
+    -> POSTS
+    -> NEWSLETTER / LEADS / ANALYTICS
+    -> SERP_SNAPSHOTS / WORKSPACE_COMPETITORS
 ```
 
-### Terminologia adotada
+## Terminologia de UX
 
-| Termo de UX | Entidade atual |
-|-------------|----------------|
+| UX | Entidade atual |
+|---|---|
 | Workspace / Projeto | `tenants` |
-| Membro do workspace | `memberships` |
 | Site / Blog | `sites` |
-| Briefing do negocio | `business_briefings` |
+| Briefing | `business_briefings` |
 | Estrategia | `strategies` |
 | Palavra-chave | `keyword_candidates` |
-| Tema | `topic_candidates` |
+| Topico | `topic_candidates` |
 | Artigo | `posts` |
+| Leads | `contacts` |
+| Newsletter | `newsletter_configs` |
+| Analytics SEO/GEO | `analytics_daily` + GA4 Mestre (para IA) |
+| Snapshot de SERP | `serp_snapshots` |
+| Concorrente Consolidado | `workspace_competitors` |
 
----
+## Sites e dominios personalizados
 
-## Separacao entre projeto e estrategia
+`sites` representa o canal publico do tenant. O campo `custom_domain` fica reservado para dominio do cliente, como `blog.cliente.com.br`, e deve coexistir com o subdominio da plataforma.
 
-Projeto e estrategia continuam sendo conceitos diferentes.
+Estados esperados para o dominio customizado:
 
-| Camada | Papel |
-|--------|------|
-| Projeto / workspace | contexto do negocio, configuracao e canal |
-| Estrategia | foco editorial especifico dentro do mesmo projeto |
+- `pending_dns`: dominio informado, aguardando CNAME correto
+- `active`: CNAME verificado e SSL pronto
+- `error`: falha de verificacao DNS, conflito ou erro de provisionamento
 
-O modelo multi-strategy permanece ativo nesta fase.
+Quando a requisicao publica vier por dominio customizado, o app deve resolver o `site` pelo header `host` antes de cair no fluxo por subdominio. A primeira implementacao futura deve usar subdominio customizado via `CNAME`, nao dominio raiz.
 
-Isso significa:
+## Multi-strategy
 
-- um workspace pode ter varias estrategias
-- a UX lista essas estrategias em `/dashboard/estrategia`
-- o detalhe da estrategia acontece em `/dashboard/estrategia/[id]`
+O modelo multi-strategy permanece.
 
----
+- `/dashboard/estrategias` lista estrategias
+- `/dashboard/estrategias/nova` cria a experiencia visual de nova estrategia
+- `/dashboard/estrategias/[id]` concentra detalhe
+- `/dashboard/estrategia*` existe apenas como compatibilidade
 
-## Entidades reutilizadas nesta migracao
-
-### `tenants`
-
-Representam o workspace principal do usuario.
-
-### `memberships`
-
-Vinculam usuario e workspace.
-
-### `sites`
-
-Representam o canal de publicacao do workspace.
-
-### `business_briefings`
-
-Guardam o contexto do negocio usado no onboarding e no produto recorrente.
-
-### `strategies`
-
-Representam as linhas editoriais do workspace.
-
-Campos relevantes:
-
-- `name`
-- `focus`
-- `status`
-- `operation_mode`
-- `tenant_id`
-
-### `keyword_candidates`
-
-Representam palavras sugeridas ou aprovadas para operacao editorial.
-
-### `topic_candidates`
-
-Representam temas gerados a partir das keywords e da estrategia.
-
-### `posts`
-
-Representam os artigos reais da operacao editorial.
-
----
-
-## Regra explicita desta fase
+## Posts
 
 `posts` seguem globais nesta fase.
 
-Isso significa:
+- a UX deve filtrar ou agrupar artigos por estrategia
+- o vinculo forte (`strategy_id`) em `posts` é **obrigatório** para garantir rastreabilidade total do motor de execução.
 
-- o produto pode filtrar artigos por estrategia na UX quando isso fizer sentido
-- esse filtro nao implica, nesta entrega, a introducao de um vinculo obrigatorio de banco com `strategy_id`
-- a navegacao e o modelo de experiencia mudaram antes da obrigatoriedade de alterar toda a modelagem editorial
+## Gaps de modelo (Resolvidos / Planejados)
 
----
+A maioria das superfícies do protótipo já possui modelo de dados oficial no Supabase:
 
-## Relacoes principais
+- ~~newsletter: campanhas, assinantes, envios e performance~~ (Resolvido via `newsletter_configs` e `contacts`)
+- ~~leads: origem, status, responsavel e historico~~ (Resolvido via `contacts`)
+- ~~analytics SEO/GEO: series temporais, canais, query terms e metricas de conversao~~ (SEO e Conversões via `analytics_daily`. GEO requer integração GA4 Server-to-Server)
+- ~~blog publico por slug~~: fonte de conteudo é `posts`, topologia publica em `/blog/[slug]` (Resolvido)
+- calendario editorial: eventos persistidos e itens sem data (Gap remanescente)
 
-- um usuario pode pertencer a varios workspaces via `memberships`
-- um workspace possui um `site`
-- um workspace possui um `business_briefing`
-- um workspace possui varias `strategies`
-- uma estrategia pode orientar keywords e topics
-- posts continuam operando como entidade editorial global do workspace nesta fase
+## Rastreamento de Tráfego de IAs (GEO)
 
----
+Foi decidido não criar uma tabela específica de tokens/integrações para o cliente final. O tráfego GEO será obtido via **Google Analytics 4 Mestre (do Dev)**:
+- Todos os blogs/sites gerados e trackeados pelo Fronte injetam eventos numa Propriedade Central (SaaS-owned).
+- O backend consulta a GA4 Data API filtrando por `tenant_id` (via Custom Dimension) e agrupa referrers de IAs (ChatGPT, Perplexity, Claude).
 
-## Implicacoes para implementacao
+## Regra de evolucao
 
-- reaproveitar entidades existentes e preferivel quando elas nao contradizem o prototipo
-- a camada de UX pode reorganizar o fluxo sem exigir remodelagem imediata do banco
-- quando houver conflito futuro entre experiencia desejada e modelo atual, o modelo deve ser adaptado para servir ao prototipo
+Quando houver conflito entre modelo atual e experiencia do prototipo, criar adapters ou evoluir o modelo para servir a interface. A interface do prototipo nao deve ser reduzida para caber no legado.

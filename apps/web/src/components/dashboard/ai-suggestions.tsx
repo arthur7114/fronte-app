@@ -1,17 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Sparkles } from "lucide-react"
+import { Sparkles, TrendingUp, RefreshCcw, Zap } from "lucide-react"
 
-export interface SuggestionData {
-  id: string
-  title: string
-  description: string
-  icon: React.ElementType
-  priority: "high" | "medium" | "low"
-}
-
-interface AISuggestionsProps {
-  suggestions: SuggestionData[]
-}
+const suggestions = [
+  {
+    id: 1,
+    title: "Escrever sobre clareamento",
+    description: "Este tema está em alta na sua região e pode trazer +500 visitas/mês",
+    icon: TrendingUp,
+    priority: "high",
+  },
+  {
+    id: 2,
+    title: "Atualizar artigo antigo",
+    description: "\"Cuidados com implantes\" pode melhorar 3 posições com pequenas edições",
+    icon: RefreshCcw,
+    priority: "medium",
+  },
+  {
+    id: 3,
+    title: "Adicionar CTA ao post",
+    description: "O artigo \"Dor de dente\" recebe visitas mas não tem chamada para ação",
+    icon: Zap,
+    priority: "medium",
+  },
+]
 
 const priorityStyles = {
   high: "border-l-green-500 bg-green-50/50",
@@ -19,7 +31,7 @@ const priorityStyles = {
   low: "border-l-blue-500 bg-blue-50/50",
 }
 
-export function AISuggestions({ suggestions }: AISuggestionsProps) {
+export function AISuggestions() {
   return (
     <Card className="h-full">
       <CardHeader className="pb-4">
@@ -33,17 +45,11 @@ export function AISuggestions({ suggestions }: AISuggestionsProps) {
           Ações recomendadas para melhorar seus resultados:
         </p>
         
-        {suggestions.length === 0 && (
-          <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
-            A IA está avaliando seu projeto. Suas sugestões aparecerão aqui em breve.
-          </div>
-        )}
-
         {suggestions.map((suggestion) => (
           <div
             key={suggestion.id}
             className={`cursor-pointer rounded-lg border-l-4 p-4 transition-all hover:shadow-sm ${
-              priorityStyles[suggestion.priority] || priorityStyles.low
+              priorityStyles[suggestion.priority as keyof typeof priorityStyles]
             }`}
           >
             <div className="flex items-start gap-3">
@@ -62,11 +68,9 @@ export function AISuggestions({ suggestions }: AISuggestionsProps) {
           </div>
         ))}
 
-        {suggestions.length > 0 && (
-          <button className="w-full rounded-lg border border-dashed border-border py-3 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary">
-            Ver mais sugestões
-          </button>
-        )}
+        <button className="w-full rounded-lg border border-dashed border-border py-3 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+          Ver mais sugestões
+        </button>
       </CardContent>
     </Card>
   )

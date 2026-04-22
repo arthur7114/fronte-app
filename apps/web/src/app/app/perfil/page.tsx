@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function LegacyProfilePage() {
-  redirect("/dashboard/estrategia");
+  redirect("/app/estrategias");
 }

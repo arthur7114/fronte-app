@@ -248,3 +248,22 @@ export async function getStrategyForTenant(tenantId: string, strategyId: string)
 
   return result.data;
 }
+
+export async function listWorkspaceCompetitorsForTenant(tenantId: string) {
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const result = (await (db as any)
+    .from("workspace_competitors")
+    .select("*")
+    .eq("tenant_id", tenantId)
+    .order("frequency_score", { ascending: false })
+    .limit(20)) as {
+    data: any[] | null;
+    error: { message: string } | null;
+  };
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  return result.data ?? [];
+}

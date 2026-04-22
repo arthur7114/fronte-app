@@ -5,7 +5,7 @@ export default async function HomePage() {
   const { user, tenant } = await getAuthContext();
 
   if (user) {
-    redirect(tenant ? "/dashboard" : "/onboarding");
+    redirect(tenant ? "/app/dashboard" : "/onboarding");
   }
 
   redirect("/login");

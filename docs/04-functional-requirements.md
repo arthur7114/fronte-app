@@ -2,87 +2,75 @@
 
 ## 1. Autenticacao e acesso
 
-- o sistema deve oferecer rotas canonicas `/login` e `/cadastro`
-- o sistema deve redirecionar usuarios autenticados para `/dashboard` ou `/onboarding`, conforme o estado do workspace
-- o sistema deve manter compatibilidade temporaria com rotas legadas via redirect
+- oferecer `/login` e `/cadastro` como rotas canonicas
+- manter Supabase Auth e callbacks existentes
+- redirecionar usuario autenticado conforme estado de onboarding
+- manter `/auth/*` apenas como compatibilidade
 
 ## 2. Onboarding
 
-- o sistema deve executar onboarding em 3 passos reais:
-  - `/onboarding` cria `tenant` e `membership`
-  - `/onboarding/site` cria o primeiro `site`
-  - `/onboarding/briefing` cria ou completa `business_briefings`
-- o sistema deve persistir progresso entre as etapas
-- o sistema deve impedir acesso ao dashboard principal antes da conclusao minima do onboarding
+- criar `tenant` e `membership` em `/onboarding`
+- criar `site` em `/onboarding/site`
+- persistir `business_briefings` em `/onboarding/briefing`
+- disponibilizar as telas visuais novas do prototipo: `/onboarding/escolher`, `/onboarding/estrategia`, `/onboarding/resumo` e `/onboarding/estrategias`
+- impedir entrada no dashboard sem workspace, site e briefing minimo exigido pelo backend atual
 
-## 3. Dashboard
+## 3. Design system
 
-- o sistema deve exibir uma visao inicial de saude do workspace
-- o sistema deve destacar proximas acoes do fluxo de conteudo
-- o sistema deve oferecer atalhos para `Plano de Conteudo` e `Artigos`
+- expor `/design-system` no app real
+- usar tokens do prototipo como fonte de verdade visual
+- preservar `app/globals.css` como runtime dos tokens
+- evitar cores literais quando houver token semantico equivalente
 
-## 4. Estrategia
+## 4. Dashboard e shell
 
-- o sistema deve manter suporte a multiplas estrategias por projeto
-- o sistema deve listar estrategias em `/dashboard/estrategia`
-- o sistema deve abrir o detalhe de cada estrategia em `/dashboard/estrategia/[id]`
-- o sistema deve permitir criar estrategia nova sem sair do contexto do dashboard
+- usar uma unica shell autenticada para `/dashboard/*`
+- exibir sidebar com Dashboard, Meu Blog, Estrategias, Artigos, Calendario, Tendencias, Analytics, Newsletter, Leads e Configuracoes
+- injetar dados reais de workspace/site/usuario no header quando disponiveis
 
-## 5. Plano de Conteudo
+## 5. Estrategias
 
-- o sistema deve unificar keywords, topics e calendario em `/dashboard/plano`
-- o sistema deve aceitar visao global e filtro opcional por `strategy`
-- o sistema deve expor as abas canonicas `keywords`, `topics` e `calendar`
+- manter modelo multi-strategy
+- listar estrategias em `/dashboard/estrategias`
+- criar estrategia em `/dashboard/estrategias/nova`
+- abrir detalhe em `/dashboard/estrategias/[id]`
+- manter `/dashboard/estrategia*` como redirect de compatibilidade
 
-## 6. Artigos
+## 6. Artigos e calendario
 
-- o sistema deve centralizar producao editorial em `/dashboard/artigos`
-- o sistema deve permitir criar artigo em `/dashboard/artigos/novo`
-- o sistema deve permitir editar artigo em `/dashboard/artigos/[id]`
-- o sistema deve manter a lista de artigos baseada em dados reais
+- centralizar producao editorial em `/dashboard/artigos`
+- incluir fila de producao e geracao em massa conforme prototipo
+- organizar agenda em `/dashboard/calendario`
+- manter `/dashboard/artigos/novo` e `/dashboard/artigos/[id]` como compatibilidade quando o prototipo consolidar a experiencia na pagina principal
 
-## 7. Meu Blog
+## 7. Blog publico e blog do dashboard
 
-- o sistema deve concentrar preview e configuracao do site em `/dashboard/blog`
-- o sistema deve reutilizar a configuracao real do `site`
-- o sistema nao deve introduzir CMS ficticio ou dados mockados como verdade funcional
+- configurar canal em `/dashboard/blog`
+- expor blog publico em `/blog`
+- expor artigo publico em `/blog/[slug]`
+- substituir a topologia antiga `/blog/[subdomain]` nesta fase pela topologia do prototipo
 
-## 8. Tendencias
+## 8. Tendencias, analytics, newsletter e leads
 
-- o sistema deve disponibilizar a tela de tendencias em `/dashboard/tendencias`
-- quando dados ainda nao existirem, a tela deve usar estado vazio ou indisponivel coerente
+- disponibilizar telas canonicas em `/dashboard/tendencias`, `/dashboard/analytics`, `/dashboard/newsletter` e `/dashboard/leads`
+- usar mocks/adapters temporarios onde o backend ainda nao existe
+- substituir mocks por dados reais sem mudar layout e hierarquia
 
-## 9. Analytics
+## 9. Configuracoes
+- manter `/dashboard/configuracoes` como pagina unica
+- preservar redirects de subrotas antigas de configuracao
+- concentrar conta, workspace, site, automacao, IA, plano e preferencias no mesmo contexto visual
 
-- o sistema deve disponibilizar a tela de analytics em `/dashboard/analytics`
-- o sistema deve priorizar leitura de dados reais
-- metricas nao integradas devem aparecer como indisponiveis, nao simuladas
-
-## 10. Configuracoes
-
-- o sistema deve oferecer uma unica pagina de configuracoes em `/dashboard/configuracoes`
-- a pagina deve organizar as secoes:
-  - `account`
-  - `workspace`
-  - `site`
-  - `automation`
-  - `ai`
-- as subrotas antigas de configuracao devem redirecionar para a pagina unica com `query param`
+## 10. Módulo de Concorrência Orgânica (SERP)
+- **Captura via Serper.dev:** Integrar API externa para capturar Top 10-20 orgânico.
+- **Cache Local:** Armazenar `serp_snapshots` no Supabase com expiração de 72h para economia de créditos.
+- **Agregação de Domínios:** Extrair root domains da SERP e calcular *Share of Voice Orgânico* em lote (cluster de palavras-chave).
+- **Injeção Ativa na IA:** Injetar títulos, snippets e PAA capturados na SERP no system prompt do Motor de Estratégia, garantindo que o output não seja "cego" ao mercado.
+- **Visualização UI:** Exibir painel consolidado de concorrentes fortes na aba "Concorrência" dentro de `/dashboard/estrategias/[id]`.
 
 ## 11. Politica de dados
 
-- o sistema deve priorizar reutilizacao de contratos e APIs existentes quando compativeis com o prototipo
-- o sistema deve preferir dados reais a mocks
-- na ausencia de dados ou integracoes, o sistema deve usar empty states ou estados de indisponibilidade explicitos
-
-## 12. Politica de compatibilidade de rotas
-
-- rotas `/auth/*` e `/app/*` com equivalente funcional devem existir apenas como compatibilidade
-- as rotas canonicas do produto passam a ser `/login`, `/cadastro`, `/onboarding/*` e `/dashboard/*`
-- `Aprovacoes` e `Jobs` nao devem aparecer na navegacao principal
-
-## 13. Briefing e estrategia
-
-- o briefing de negocio deve continuar alimentando a camada estrategica
-- a estrategia deve usar o contexto do briefing sempre que isso nao contradizer o prototipo
-- a pagina de estrategia detalhada deve manter coerencia com a intencao visual do prototipo, mesmo quando o comportamento interno exigir adaptacao
+- priorizar dados reais quando existirem
+- usar mocks apenas como ponte visual e documentar o gap
+- adaptar backend por adapters quando o contrato antigo nao servir a interface do prototipo
+- nao deformar a UI do prototipo para caber em implementacao legada

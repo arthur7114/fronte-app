@@ -132,7 +132,7 @@ export function StrategySelector({ strategies }: StrategySelectorProps) {
           {strategies.map((strategy) => (
             <Link
               key={strategy.id}
-              href={`/dashboard/estrategia/${strategy.id}`}
+              href={`/app/estrategias/${strategy.id}`}
               className="group flex flex-col rounded-xl border border-border bg-card p-4 transition-all hover:-translate-y-1 hover:border-black/20 hover:shadow-lg"
             >
               <div className="mb-2 flex items-start justify-between gap-2">

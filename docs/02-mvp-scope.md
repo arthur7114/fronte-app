@@ -75,6 +75,13 @@ Saída esperada:
 - performance por estágio da jornada
 - visão separada entre SEO e GEO
 
+### 11. Análise de Concorrência Orgânica (SERP)
+- pesquisar keywords no Google via Serper.dev
+- armazenar snapshots da SERP em cache
+- identificar domínios que mais aparecem (Top 3 e Top 10)
+- injetar dados da SERP (títulos, snippets) no prompt do Motor de Estratégia de IA
+- gerar estratégias e briefs baseados em lacunas reais dos concorrentes
+
 ## Fora do escopo inicial
 - refresh automático de conteúdos antigos
 - otimização automática de interlinking
@@ -82,7 +89,9 @@ Saída esperada:
 - múltiplos usuários com colaboração avançada
 - assistente de CRO para páginas
 - automações avançadas por performance
-- análises competitivas profundas
+- monitoramento recorrente/diário de posições de concorrentes (Rank Tracking)
+- análise de backlinks ou Domain Authority (Ahrefs/Semrush)
+- mídia paga (Google Ads)
 - testes A/B de títulos e meta descriptions
 
 ## GEO no produto

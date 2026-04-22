@@ -53,6 +53,16 @@ export type PublishPostResult = {
   post_id: string;
 };
 
+export type StrategyContext = {
+  id: string;
+  name: string;
+  focus: string | null;
+  tone: string | null;
+  audience: string | null;
+  goal: string | null;
+  operation_mode: string | null;
+};
+
 export type JobPayload = {
   tenant_id: string;
   site_id: string | null;
@@ -62,6 +72,7 @@ export type JobPayload = {
   post_id?: string | null;
   business_briefing_id?: string | null;
   strategy_id?: string | null;
+  keyword_count?: number;
 };
 
 export type JobResultJson = Json;

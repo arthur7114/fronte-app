@@ -9,7 +9,7 @@ export default async function LoginPage() {
 
   if (user) {
     if (!membership) redirect("/onboarding");
-    redirect(site ? "/dashboard" : "/onboarding/site");
+    redirect(site ? "/app/dashboard" : "/onboarding/site");
   }
 
   return (

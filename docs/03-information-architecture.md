@@ -1,29 +1,33 @@
 # Arquitetura de Informacao, Telas e Fluxos
 
-> Versao: 3.0 - Abril 2026
-> Fonte de verdade visual: `prototipo-visual/`
-> Fonte de verdade de UX/IA: `docs/14-ux-and-ia-redesign.md`
+> Versao: 4.0 - Abril 2026
+> Fonte de verdade visual e estrutural: `prototipo-visual/`
+> Fonte de verdade do design system: `prototipo-visual/design-system/` e `prototipo-visual/app/globals.css`
 
 ---
 
 ## Principio central
 
-O produto deve ser lido pelo fluxo:
+O front do app real deve seguir o prototipo visual antes da implementacao antiga. O backend, loaders e actions devem servir essa experiencia, nao redefini-la.
+
+Fluxo principal:
 
 ```text
-Conta -> Workspace -> Site -> Briefing -> Dashboard -> Operacao recorrente
+Conta -> Workspace -> Site -> Estrategia/briefing -> Dashboard -> Operacao recorrente
 ```
 
-Na camada recorrente, a navegacao principal e organizada por produto:
+Navegacao recorrente atual:
 
 ```text
 Dashboard
 Meu Blog
-Estrategia
-Plano de Conteudo
+Estrategias
 Artigos
+Calendario
 Tendencias
 Analytics
+Newsletter
+Leads
 Configuracoes
 ```
 
@@ -31,27 +35,30 @@ Configuracoes
 
 ## Fluxos principais
 
-### Fluxo de ativacao
+### Ativacao
 
-1. usuario acessa `/login` ou `/cadastro`
-2. sistema direciona para `/onboarding`
-3. usuario cria o workspace
-4. usuario cria o primeiro site em `/onboarding/site`
-5. usuario preenche o briefing em `/onboarding/briefing`
-6. sistema entra em `/dashboard`
+1. usuario entra por `/login` ou `/cadastro`
+2. cria workspace em `/onboarding`
+3. cria site em `/onboarding/site`
+4. segue para a etapa visual de escolha/estrategia do prototipo quando aplicavel
+5. conclui briefing minimo exigido pelo backend em `/onboarding/briefing`
+6. entra em `/dashboard`
 
-### Fluxo recorrente
+Rotas visuais adicionais do prototipo:
 
-1. usuario entra em `/dashboard`
-2. identifica pendencias e proximas acoes
-3. navega para `Estrategia`, `Plano de Conteudo`, `Artigos`, `Meu Blog`, `Tendencias`, `Analytics` ou `Configuracoes`
+- `/onboarding/escolher`
+- `/onboarding/estrategia`
+- `/onboarding/resumo`
+- `/onboarding/estrategias`
 
-### Fluxo de estrategia
+### Operacao recorrente
 
-1. usuario entra em `/dashboard/estrategia`
-2. escolhe uma estrategia existente ou cria uma nova
-3. acessa `/dashboard/estrategia/[id]`
-4. aprofunda a execucao usando `Plano de Conteudo` e `Artigos`
+1. `/dashboard` mostra resumo, proximas acoes e desempenho
+2. `/dashboard/estrategias` concentra linhas editoriais
+3. `/dashboard/artigos` concentra producao, revisao e fila
+4. `/dashboard/calendario` organiza agenda editorial
+5. `/dashboard/blog` configura e visualiza o canal
+6. `/dashboard/newsletter` e `/dashboard/leads` expandem captura e relacionamento
 
 ---
 
@@ -59,131 +66,103 @@ Configuracoes
 
 ```text
 /
-  -> redireciona para /login, /onboarding ou /dashboard conforme sessao e estado
+  -> redireciona para /login, /onboarding ou /dashboard
 
 /login
 /cadastro
 
 /onboarding
-/onboarding/site
-/onboarding/briefing
+  /site
+  /briefing
+  /escolher
+  /estrategia
+  /resumo
+  /estrategias
 
 /dashboard
   /blog
-  /estrategia
+  /estrategias
+    /nova
     /[id]
-  /plano
   /artigos
     /novo
     /[id]
+  /calendario
   /tendencias
   /analytics
+  /newsletter
+  /leads
   /configuracoes
+  /estrategia
+    /[id] -> redirect de compatibilidade
+
+/blog
+  /[slug]
+
+/design-system
 ```
 
-### Politica de compatibilidade de rotas
+### Dominios personalizados futuros
 
-Rotas antigas em `/auth/*` e `/app/*` com equivalente funcional continuam existindo como redirects para as rotas canonicas.
+Dominios personalizados de clientes sao uma capacidade planejada, mas fora do escopo imediato.
+Quando implementados, o subdominio publico da plataforma e o dominio customizado devem resolver para o mesmo site publico.
 
-Exemplos:
+Fluxo recomendado:
 
-- `/auth/login` -> `/login`
-- `/auth/signup` -> `/cadastro`
-- `/app/dashboard` -> `/dashboard`
-- `/app/blog` -> `/dashboard/blog`
-- `/app/estrategias/[id]/keywords` -> `/dashboard/plano?strategy=<id>&tab=keywords`
+- o cliente configura um subdominio como `blog.cliente.com.br`
+- o DNS usa `CNAME` com nome `blog` apontando para o dominio canonico da plataforma, por exemplo `cname.fronte.app`
+- o produto salva o dominio em `sites.custom_domain` com status inicial `pending_dns`
+- uma verificacao confirma o CNAME antes de marcar o dominio como `active`
+- a infraestrutura emite e renova SSL automaticamente
+- a renderizacao publica resolve o `site` pelo header `host` quando a requisicao vier pelo dominio customizado
+
+O primeiro suporte deve priorizar subdominio customizado via CNAME. Dominio raiz (`cliente.com.br`) fica fora da primeira entrega porque exige `A/AAAA`, `ALIAS` ou `ANAME`, variando por provedor DNS.
+
+### Compatibilidade
+
+- `/dashboard/estrategia` redireciona para `/dashboard/estrategias`.
+- `/dashboard/estrategia/[id]` redireciona para `/dashboard/estrategias/[id]`.
+- `/auth/*` e `/app/*` permanecem como redirects quando possuem equivalente.
+- `/app/aprovacoes` e `/app/jobs` seguem como legado por URL direta, fora da navegacao principal.
 
 ---
 
 ## Shell autenticada
 
-Toda a experiencia principal acontece dentro de uma shell unica de dashboard.
+A shell do dashboard segue o prototipo:
 
-### Objetivos da shell
-
-- manter navegacao lateral consistente
-- reduzir dispersao entre telas
-- preservar contexto do workspace e do site
-- permitir operacao e configuracao no mesmo espaco
-
-### Itens de navegacao
-
-| Item | Rota |
-|------|------|
-| Dashboard | `/dashboard` |
-| Meu Blog | `/dashboard/blog` |
-| Estrategia | `/dashboard/estrategia` |
-| Plano de Conteudo | `/dashboard/plano` |
-| Artigos | `/dashboard/artigos` |
-| Tendencias | `/dashboard/tendencias` |
-| Analytics | `/dashboard/analytics` |
-| Configuracoes | `/dashboard/configuracoes` |
-
-### Removidos da navegacao principal
-
-| Item | Motivo |
-|------|--------|
-| Aprovacoes | sai da navegação principal; responsabilidades redistribuidas |
-| Jobs | tecnico, mantido apenas como legado acessivel por URL |
-| Perfil do Negocio | absorvido por Estrategia e Configuracoes |
+- sidebar fixa no desktop
+- header com seletor de projeto, busca, notificacoes e usuario
+- conteudo em `main` com padding responsivo
+- dados reais de usuario/workspace/site injetados no header quando disponiveis
 
 ---
 
 ## Estrutura por tela
 
-### `/dashboard`
-
-- orientacao de proxima acao
-- indicadores rapidos
-- atalhos para plano e artigos
-- leitura resumida de pipeline
-
-### `/dashboard/blog`
-
-- preview do blog
-- contexto do site atual
-- configuracao do canal
-
-### `/dashboard/estrategia`
-
-- lista de estrategias em cards
-- criacao de nova estrategia
-- entrada para o detalhe
-
-### `/dashboard/estrategia/[id]`
-
-- contexto da estrategia
-- resumo lateral
-- acoes para evolucao da estrategia
-
-### `/dashboard/plano`
-
-- abas `keywords`, `topics` e `calendar`
-- visao global ou filtrada por `strategy`
-
-### `/dashboard/artigos`
-
-- board/lista global
-- filtros por status
-- criacao e edicao
-
-### `/dashboard/tendencias`
-
-- oportunidades e sinais externos
-
-### `/dashboard/analytics`
-
-- leitura agregada de performance
-
-### `/dashboard/configuracoes`
-
-- secoes internas `account`, `workspace`, `site`, `automation` e `ai`
+| Rota | Intencao |
+|---|---|
+| `/dashboard` | resumo operacional e proximas acoes |
+| `/dashboard/blog` | preview, template, personalizacao e configuracoes do blog |
+| `/dashboard/estrategias` | lista multi-estrategia com cards, status e acoes |
+| `/dashboard/estrategias/nova` | criacao visual de estrategia por preset, formulario ou assistente |
+| `/dashboard/estrategias/[id]` | detalhe de estrategia com assistente, formulario e preview |
+| `/dashboard/artigos` | lista editorial, editor, geracao em massa e fila de producao |
+| `/dashboard/calendario` | agenda editorial e itens sem data |
+| `/dashboard/tendencias` | oportunidades e sinais externos |
+| `/dashboard/analytics` | leitura de performance SEO/GEO |
+| `/dashboard/newsletter` | campanhas, assinantes e performance de newsletter |
+| `/dashboard/leads` | captura e gestão de contatos |
+| `/dashboard/configuracoes` | configuracoes unificadas |
+| `/blog` e `/blog/[slug]` | experiencia publica do blog no formato do prototipo |
+| `/design-system` | visualizacao viva dos tokens e componentes |
 
 ---
 
-## Regras de implementacao derivadas da IA
+## Regras de implementacao
 
-- `prototipo-visual/` manda no fluxo e na organizacao de telas
-- reaproveitamento e desejavel, mas subordinado ao prototipo
-- comportamento legado so permanece se nao distorcer o fluxo novo
-- o usuario deve perceber uma experiencia unica, mesmo com reaproveitamento interno
+- `prototipo-visual/` manda em layout, hierarquia, densidade, navegacao e estados visuais.
+- O design system do prototipo manda em tokens, tipografia, cores, radius e componentes.
+- Mocks temporarios sao aceitaveis quando faltam integracoes, desde que documentados.
+- Dados reais devem substituir mocks progressivamente sem alterar a composicao visual.
+- A UI antiga nao deve ser usada como fallback estrutural das telas principais.

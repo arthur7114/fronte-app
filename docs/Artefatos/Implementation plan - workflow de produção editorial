@@ -1,0 +1,332 @@
+# Redesign do Pipeline de Produção de Artigos
+
+## Contexto e Diagnóstico Completo
+
+Analisei em profundidade as **3 telas principais** do fluxo editorial + todos os componentes compartilhados. Aqui está o diagnóstico real:
+
+---
+
+### 📊 Diagnóstico: Tela de Estratégia (`/estrategias/[id]`)
+
+**449 linhas** — `StrategyDetailClient` — **FAZ DEMAIS**
+
+A tela concentra **6 abas** numa única view:
+
+| Aba | O que faz | Problema |
+|-----|-----------|----------|
+| `chat` | Chat com IA (StrategyAssistant, 394 linhas) | Funciona bem, mas é genérico — não sabe gerar artigos |
+| `keywords` | KeywordsTable (18K bytes!) | Tabela operacional robusta, OK |
+| `topics` | TopicsTable (12K bytes) | Tem ação "Gerar artigo" mas chama dialog fake |
+| `articles` | ArticlesList (reuso) | Lista artigos, mas sem link para pipeline de produção |
+| `competitors` | CompetitorsView | Estática, pouco conectada ao fluxo |
+| `settings` | StrategyForm + Preview | Configuração mestra, funciona |
+
+**Problemas chave**:
+- O botão "Gerar artigo" no header e na aba topics abre `GenerateArticleDialog` que **simula** geração com `setTimeout(2400ms)` → não faz nada real
+- Quando clica em um artigo na aba articles, **a tela inteira vira o ArticleEditor** (state swap) — perde todo o contexto da estratégia
+- Production queue aparece inline, sem forma de ver pipeline global
+- O chat de IA (StrategyAssistant) é forte operacionalmente mas **não tem capacidade de gerar artigos**
+
+---
+
+### 📊 Diagnóstico: Tela de Artigos (`/artigos`)
+
+**240 linhas** — `ArtigosClient` — **Mistura responsabilidades**
+
+| Feature | Problema |
+|---------|----------|
+| Lista editorial (ArticlesList) | Funciona, mas esconde artigos `queued`/`generating` — vai pra ProductionQueue |
+| Production Queue inline | Misturada na listagem — deveria ser tela separada |
+| Generate Dialog | **Fake** — `setTimeout(2400ms)`, zero IA real |
+| Bulk Generate Dialog | 11K bytes de dialog, mas também **simulado** |
+| View toggle (list/grid) | Grid nunca implementado (só list funciona) |
+| Strategy filter | OK, funcional |
+
+**Problemas chave**:
+- Artigos `queued`/`generating` ficam na ProductionQueue no topo, o resto na tabela abaixo → confuso
+- Clicar em artigo faz `setSelectedArticle(id)` que **swap toda a tela** para ArticleEditor
+- O ArticleEditor tem dados **hardcoded** (`existingArticleData`, `generatedArticleData`) — não puxa do banco
+- Pontuação SEO hardcoded em 78, checklist estático
+
+---
+
+### 📊 Diagnóstico: Tela de Calendário (`/calendario`)
+
+**395 linhas** — `CalendarioClient` — **Razoável, mas desconectada**
+
+| Feature | Status |
+|---------|--------|
+| Calendar grid (ContentCalendar) | ⚠️ **Hardcoded** — `currentMonth` fixo em "Abril 2026", dias fixos, não navega de verdade |
+| Tab "Lista" com tables agendados/não-agendados | ✅ Funcional, dados reais do DB |
+| Quick stats | ✅ Funcional |
+| Strategy filter | ✅ Funcional |
+| Botão "Agendar" | ❌ Não faz nada |
+| Generate/Bulk dialogs | ❌ Mesmos dialogs fake |
+
+**Problemas chave**:
+- O ContentCalendar importa `CALENDAR_EVENTS` como fallback → mock data misturada com dados reais
+- Não há como arrastar artigo para uma data (drag-to-schedule)
+- Botão "Agendar" na lista não-agendada não abre um datepicker/modal
+- Os mesmos dialogs de geração fake aparecem aqui também
+
+---
+
+### 📊 Diagnóstico: Componentes Compartilhados
+
+| Componente | Bytes | Problema Principal |
+|------------|-------|-------------------|
+| `generate-article-dialog.tsx` | 10.9K | **100% fake** — `setTimeout(2400ms)` |
+| `bulk-generate-dialog.tsx` | 11.4K | **100% fake** |
+| `article-editor.tsx` | 13.9K | Dados hardcoded, toolbar fake, SEO score estático |
+| `production-queue.tsx` | 5K | UI ok, mas `progress` é estático |
+| `content-calendar.tsx` | 8.1K | Mês hardcoded, sem navegação, eventos mock |
+| `strategy-assistant.tsx` | 15.3K | Funcional! Mas não gera artigos |
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Prioridade: Qual fluxo atacar primeiro?**
+> Com base no diagnóstico, existem duas abordagens possíveis:
+> 
+> **Opção A — Bottom-up**: Primeiro fazer o AI Writer Agent funcionar de verdade (backend), depois redesenhar as telas para consumir ele. Garante que quando a UX mudar, ela já funciona.
+> 
+> **Opção B — Top-down**: Primeiro redesenhar a UX e a separação de responsabilidades, depois plugar o agente. Permite validar o fluxo visual rapidamente.
+> 
+> **Minha recomendação: Opção A** — porque o maior problema hoje é que NADA funciona de verdade. O dialog de geração é fake, o editor é hardcoded, o calendário não navega. Precisamos do backend real primeiro.
+
+> [!IMPORTANT]
+> **Decisão: Manter 6 abas na Estratégia ou simplificar?**
+> A tela de estratégia tem 6 abas. Sugiro manter as 4 que fazem sentido (chat, keywords, topics, settings) e **mover a aba "Artigos"** para a tela dedicada `/artigos` com filtro de estratégia pré-selecionado. Isso elimina a duplicação.
+
+> [!WARNING]
+> **Impacto real: 3 componentes inteiramente fake**
+> `generate-article-dialog.tsx`, `bulk-generate-dialog.tsx` e parte do `article-editor.tsx` precisam ser **reescritos** para consumir APIs reais. Não é refactor — é substituição.
+
+---
+
+## Open Questions
+
+1. **Quem aprova artigos?** O próprio dono da conta? Múltiplos revisores? Isso define a complexidade do approval flow.
+
+2. **Pesquisa real na internet?** O agente deve usar a Serper API (já existe em `lib/serper.ts`) para pesquisar concorrentes e gaps antes de escrever? Ou só contexto interno?
+
+3. **Publicação automática?** Quando `scheduled_for` chega, publica automaticamente (cron/webhook) ou é apenas visual?
+
+4. **Calendário funcional?** Quer que o calendário realmente navegue entre meses e permita drag-to-schedule, ou é suficiente a view de lista por enquanto?
+
+---
+
+## Proposed Changes
+
+### Mapa do Fluxo Proposto
+
+```mermaid
+graph TB
+    subgraph "ESTRATÉGIA /estrategias/[id]"
+        S1["Chat com IA"]
+        S2["Keywords"]
+        S3["Tópicos"]
+        S4["Configurações"]
+    end
+    
+    S3 -->|"Gerar artigo (real)"| W["WIZARD /artigos/novo"]
+    
+    subgraph "WIZARD - AI Writer Agent"
+        W1["1. Briefing"]
+        W2["2. Pesquisa (IA)"]
+        W3["3. Outline (editável)"]
+        W4["4. Escrita + Review"]
+    end
+    W --> W1 --> W2 --> W3 --> W4
+    
+    W4 -->|"Artigo pronto"| A["ARTIGOS /artigos"]
+    
+    subgraph "ARTIGOS"
+        A1["Lista Editorial"]
+        A2["Editor real"]
+    end
+    
+    A1 -->|"Agendar"| C["CALENDÁRIO /calendario"]
+    
+    subgraph "CALENDÁRIO"
+        C1["Grade mensal"]
+        C2["Lista agendados"]
+    end
+```
+
+---
+
+### Frente 1: AI Writer Agent (Backend Real)
+
+#### [NEW] `apps/web/src/lib/article-agent.ts`
+Motor do agente com 4 fases, cada uma com prompt especializado:
+
+**Phase 1 — RESEARCH**:
+- Consulta `post_metrics` + `analytics_daily` para artigos com melhor performance
+- Usa `serper.ts` para pesquisar SERPs do tema
+- Extrai gaps de conteúdo vs top 5 resultados
+- Puxa contexto do `business_briefings` e `keyword_candidates`
+- **Output**: `{ research_summary, competitor_insights[], content_gaps[], recommended_angles[] }`
+
+**Phase 2 — STRUCTURE**:
+- Define metodologia (listicle, how-to, guia, comparativo, FAQ)
+- Cria outline com H2s/H3s
+- Distribui keywords por seção
+- Define CTAs estratégicos
+- **Output**: `{ methodology, outline[{ heading, subheadings, key_points, target_keywords }] }`
+
+**Phase 3 — WRITE**:
+- Escreve seção por seção seguindo outline
+- Aplica escaneabilidade (parágrafos curtos, bullets, destaques)
+- Mantém tom de voz da estratégia
+- Gera meta title + meta description
+- **Output**: Markdown completo + meta tags
+
+**Phase 4 — REVIEW**:
+- Checklist SEO on-page (keyword no H1, meta desc, links internos)
+- Análise de legibilidade
+- Verificação de escaneabilidade
+- Score de qualidade (0-100)
+- Sugestões de melhoria priorizadas
+- **Output**: `{ seo_score, readability_score, issues[], suggestions[] }`
+
+#### [NEW] `apps/web/src/app/api/article-agent/route.ts`
+Endpoint que orquestra o pipeline. Recebe `{ briefing, strategyId, phase }`, persiste progresso no DB.
+
+---
+
+### Frente 2: Schema (Supabase Migration)
+
+```sql
+-- Pipeline de geração de artigos
+CREATE TABLE article_generations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id),
+  strategy_id UUID REFERENCES strategies(id),
+  post_id UUID REFERENCES posts(id),
+  topic TEXT NOT NULL,
+  primary_keyword TEXT,
+  tone TEXT,
+  target_length TEXT,
+  additional_instructions TEXT,
+  phase TEXT NOT NULL DEFAULT 'briefing',
+  research_result JSONB,
+  structure_result JSONB,
+  review_result JSONB,
+  started_at TIMESTAMPTZ DEFAULT now(),
+  completed_at TIMESTAMPTZ,
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Novos campos em posts
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS approved_by UUID;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS generation_id UUID REFERENCES article_generations(id);
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS seo_score INTEGER;
+```
+
+---
+
+### Frente 3: UX — Telas Redesenhadas
+
+#### `/artigos/novo` — Wizard de Criação (Substituir generate-article-dialog)
+
+Em vez de um dialog que simula, uma **página full-width** com wizard visual:
+- Step 1: Briefing (tema, keyword, tom, tamanho) — reaproveita inputs do dialog atual
+- Step 2: Pesquisa (mostra o que a IA encontrou, editável)
+- Step 3: Outline (estrutura proposta, arrastar seções, editar)
+- Step 4: Escrita + Review (progresso real, scorecard)
+
+#### `/artigos` — Lista Editorial (Simplificar)
+
+- Remove ProductionQueue inline (link para `/artigos/producao` ou badge no header)
+- Remove GenerateArticleDialog e BulkGenerateDialog
+- CTA principal: "Criar artigo" → navega para `/artigos/novo`
+- Remove view toggle (grid nunca implementado)
+- Mantém filtro por estratégia + filtro por status
+
+#### `/artigos/[id]` — Editor Real (Substituir dados hardcoded)
+
+- Puxa dados reais do post via `getPost(id)` 
+- SEO score real vindo de `article_generations.review_result`
+- Checklist dinâmico baseado no review do agente
+- Botão "Re-review com IA" que roda Phase 4 de novo
+- Botões de aprovar/agendar funcionais
+
+#### `/calendario` — Calendário Funcional
+
+- Navegação entre meses real (useState com Date)
+- Eventos vindo do DB (já funciona na tab Lista)
+- Botão "Agendar" abre datepicker real que salva `scheduled_for` no DB
+- Remove dialogs de geração fake
+
+#### `/estrategias/[id]` — Simplificar abas
+
+- Remove aba "Artigos" (vai para `/artigos?strategy={id}`)
+- Mantém: chat, keywords, topics, competitors, settings
+- "Gerar artigo" no topics → navega para `/artigos/novo?topic={id}&strategy={id}`
+
+---
+
+### Componentes a Criar
+
+| Componente | Responsabilidade |
+|---|---|
+| `article-creation-wizard.tsx` | Wizard de 4 steps para `/artigos/novo` |
+| `research-preview.tsx` | Visualização dos resultados de pesquisa (Phase 1) |
+| `outline-editor.tsx` | Editor interativo do outline (Phase 2) |
+| `generation-progress.tsx` | Progresso em tempo real com steps (Phase 3-4) |
+| `review-scorecard.tsx` | Dashboard de qualidade do artigo (Phase 4) |
+| `schedule-dialog.tsx` | Datepicker para agendar publicação |
+
+### Componentes a Modificar
+
+| Componente | Mudança |
+|---|---|
+| `articles-list.tsx` | Simplificar, adicionar coluna SEO score |
+| `article-editor.tsx` | Dados reais, review integrado, ações funcionais |
+| `content-calendar.tsx` | Navegação real, eventos do DB, remover mocks |
+| `topics-table.tsx` | "Gerar artigo" → navega para wizard |
+| `artigos/client.tsx` | Remover production queue, dialogs fake |
+| `calendario/client.tsx` | Remover dialogs fake, agendar funcional |
+| `estrategias/[id]/client.tsx` | Remover aba articles, link para wizard |
+
+### Componentes a Deletar
+
+| Componente | Motivo |
+|---|---|
+| `generate-article-dialog.tsx` | Substituído pelo wizard |
+| `bulk-generate-dialog.tsx` | Substituído pelo wizard com batch |
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Testar cada phase do AI Writer Agent isoladamente
+- Testar migration do Supabase
+- Verificar tipagem com `tsc --noEmit`
+
+### Manual Verification
+- Fluxo completo: Tópico aprovado → Gerar artigo → Pesquisa → Outline → Escrita → Review → Aprovar → Agendar
+- Verificar que dados são persistidos no DB em cada step
+- Verificar responsividade
+
+---
+
+## Ordem de Execução
+
+| # | Frente | O que | Deps |
+|---|--------|-------|------|
+| 1 | Schema | Migration `article_generations` + campos em `posts` | — |
+| 2 | Backend | `article-agent.ts` + `/api/article-agent/route.ts` | #1 |
+| 3 | UX | Wizard `/artigos/novo` + componentes novos | #2 |
+| 4 | UX | Editor real `/artigos/[id]` | #2 |
+| 5 | UX | Simplificar lista `/artigos` | #3 |
+| 6 | UX | Calendário funcional | #1 |
+| 7 | UX | Limpar estratégia (remover aba articles, linkar wizard) | #3 |
+| 8 | Cleanup | Deletar componentes fake, remover mocks | #5, #6, #7 |

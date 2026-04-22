@@ -10,7 +10,7 @@ export default async function OnboardingSitePage() {
   if (!membership || !tenant) redirect("/onboarding");
 
   const briefing = await getBusinessBriefingForTenant(tenant.id);
-  if (site) redirect(briefing ? "/dashboard" : "/onboarding/briefing");
+  if (site) redirect(briefing ? "/app/dashboard" : "/onboarding/briefing");
 
   return <OnboardingSiteForm tenantName={tenant.name} />;
 }

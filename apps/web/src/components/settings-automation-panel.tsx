@@ -10,7 +10,12 @@ import {
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsSectionCard } from "@/components/settings-section-card";
 import { SettingsSubmitButton } from "@/components/settings-submit-button";
-import { FREQUENCY_LABELS, stringifyKeywordsSeed } from "@/lib/automation";
+import {
+  FREQUENCY_LABELS,
+  OPERATION_MODE_HELP,
+  OPERATION_MODE_LABELS,
+  stringifyKeywordsSeed,
+} from "@/lib/automation";
 import { SITE_LANGUAGE_OPTIONS } from "@/lib/site";
 
 type SettingsAutomationPanelProps = {
@@ -35,6 +40,9 @@ export function SettingsAutomationPanel({
   );
   const [language, setLanguage] = useState(automationConfig?.language ?? "pt-BR");
   const [frequency, setFrequency] = useState(automationConfig?.frequency ?? "weekly");
+  const [operationMode, setOperationMode] = useState(
+    (automationConfig?.operation_mode as keyof typeof OPERATION_MODE_LABELS) ?? "assisted",
+  );
   const [approvalRequired, setApprovalRequired] = useState(
     automationConfig?.approval_required ?? true,
   );
@@ -99,6 +107,37 @@ export function SettingsAutomationPanel({
             </label>
           </div>
 
+          <div className="space-y-3">
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-[#2563eb]/70">
+              Modo operacional
+            </span>
+            <div className="grid gap-3 md:grid-cols-3">
+              {(["manual", "assisted", "automatic"] as const).map((mode) => {
+                const active = operationMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setOperationMode(mode)}
+                    className={[
+                      "rounded-[24px] border px-4 py-4 text-left transition",
+                      active
+                        ? "border-[#2563eb] bg-[#eff6ff] shadow-[0_0_0_4px_rgba(37,99,235,0.08)]"
+                        : "border-[#1e293b]/10 bg-white hover:border-[#2563eb]/30",
+                    ].join(" ")}
+                  >
+                    <p className="text-sm font-semibold text-[#0f172a]">
+                      {OPERATION_MODE_LABELS[mode]}
+                    </p>
+                    <p className="mt-1 text-xs leading-6 text-[#475569]">
+                      {OPERATION_MODE_HELP[mode]}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <label className="flex items-start gap-3 rounded-[24px] border border-[#1e293b]/10 bg-[#f8fafc] px-4 py-4 text-sm leading-7 text-[#475569]">
             <input
               type="checkbox"
@@ -109,6 +148,8 @@ export function SettingsAutomationPanel({
             />
             <span>Exigir curadoria humana antes de gerar o briefing.</span>
           </label>
+
+          <input type="hidden" name="operation_mode" value={operationMode} />
 
           <SettingsFeedback state={state} />
 
@@ -130,6 +171,7 @@ export function SettingsAutomationPanel({
             <p>Workspace: <span className="font-semibold text-[#0f172a]">{tenantName}</span></p>
             <p>Site atual: <span className="font-semibold text-[#0f172a]">{siteSubdomain ?? "Sem site"}</span></p>
             <p>A frequencia controla apenas o contexto editorial do produto neste bloco.</p>
+            <p>Modo atual: <span className="font-semibold text-[#0f172a]">{OPERATION_MODE_LABELS[operationMode]}</span></p>
           </div>
         </SettingsSectionCard>
 
@@ -142,6 +184,7 @@ export function SettingsAutomationPanel({
             <p>1. Seeds alimentam a pesquisa de temas.</p>
             <p>2. Topics aprovados seguem para briefing.</p>
             <p>3. Briefings aprovados viram drafts no CMS.</p>
+            <p>4. O modo manual libera controle total; o assistido adiciona checkpoints; o autônomo reduz paradas.</p>
           </div>
         </SettingsSectionCard>
       </div>

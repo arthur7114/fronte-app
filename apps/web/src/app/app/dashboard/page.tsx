@@ -1,5 +1,1 @@
-import { redirect } from "next/navigation";
-
-export default function LegacyDashboardPage() {
-  redirect("/dashboard");
-}
+export { default } from "@/app/dashboard/page";

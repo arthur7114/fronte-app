@@ -1,51 +1,84 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, Users, FileText, Target, MousePointerClick } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-export interface KPIData {
-  title: string
-  value: string | number
-  change?: string
-  trend?: "up" | "down" | "neutral"
-  description: string
-  icon: React.ElementType
-}
+import type { DashboardStats } from "@/lib/dashboard-server"
 
 interface KPICardsProps {
-  data: KPIData[]
+  stats: DashboardStats
 }
 
-export function KPICards({ data }: KPICardsProps) {
+export function KPICards({ stats }: KPICardsProps) {
+  // We format numbers larger than 10k into a "k" representation
+  const formatCompact = (num: number) => {
+    return Intl.NumberFormat("pt-BR", {
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(num)
+  }
+
+  const kpis = [
+    {
+      title: "Tráfego Mensal (Views)",
+      value: formatCompact(stats.organicTraffic),
+      change: "+23%",
+      trend: "up",
+      description: "Visualizações reportadas",
+      icon: Users,
+      tooltip: "Visualizações baseadas nas métricas agregadas dos artigos (Temporário)",
+    },
+    {
+      title: "Artigos Publicados",
+      value: stats.publishedArticles.toString(),
+      change: "+3",
+      trend: "up",
+      description: "este mês",
+      icon: FileText,
+      tooltip: "Conteúdos publicados no seu blog",
+    },
+    {
+      title: "Palavras Aprovadas",
+      value: stats.keywordsRanked.toString(),
+      change: "+12",
+      trend: "up",
+      description: "em validação",
+      icon: Target,
+      tooltip: "Termos aprovados de inteligência e pesquisa",
+    },
+    {
+      title: "Leads Gerados",
+      value: stats.conversions.toString(),
+      change: "-5%",
+      trend: "down",
+      description: "contatos rastreados",
+      icon: MousePointerClick,
+      tooltip: "Pessoas que preencheram cadastros das suas pautas",
+    },
+  ]
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {data.map((kpi) => (
+      {kpis.map((kpi) => (
         <Card key={kpi.title} className="relative overflow-hidden">
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                 <kpi.icon className="h-5 w-5 text-primary" />
               </div>
-              {kpi.trend && kpi.change && (
-                <div
-                  className={cn(
-                    "flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium",
-                    kpi.trend === "up"
-                      ? "bg-green-100 text-green-700"
-                      : kpi.trend === "down"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-gray-100 text-gray-700"
-                  )}
-                >
-                  {kpi.trend === "up" ? (
-                    <ArrowUpRight className="h-3 w-3" />
-                  ) : kpi.trend === "down" ? (
-                    <ArrowDownRight className="h-3 w-3" />
-                  ) : (
-                    <Minus className="h-3 w-3" />
-                  )}
-                  {kpi.change}
-                </div>
-              )}
+              <div
+                className={cn(
+                  "flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium",
+                  kpi.trend === "up"
+                    ? "bg-success/20 text-success"
+                    : "bg-destructive/20 text-destructive"
+                )}
+              >
+                {kpi.trend === "up" ? (
+                  <ArrowUpRight className="h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="h-3 w-3" />
+                )}
+                {kpi.change}
+              </div>
             </div>
             <div className="mt-4">
               <p className="text-sm text-muted-foreground">{kpi.title}</p>

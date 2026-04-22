@@ -1,4 +1,5 @@
 import type { Tables } from "@super/db";
+import type { StrategyContext } from "./types.js";
 
 function formatRules(rules: Tables<"ai_rules">[]) {
   if (rules.length === 0) {
@@ -15,7 +16,8 @@ export function buildResearchPrompt(
   config: Tables<"automation_configs">,
   site: Tables<"sites">,
   briefing: Tables<"business_briefings"> | null | undefined,
-  approvedKeywords: Tables<"keyword_candidates">[]
+  approvedKeywords: Tables<"keyword_candidates">[],
+  strategy?: StrategyContext | null,
 ) {
   const lines = [
     "VOCÊ É UM EDITOR-CHEFE E ESPECIALISTA EM ESTRATÉGIA DE CONTEÚDO.",
@@ -27,6 +29,15 @@ export function buildResearchPrompt(
     if (briefing.segment) lines.push(`Business Segment: ${briefing.segment}`);
     if (briefing.customer_profile) lines.push(`Target Audience: ${briefing.customer_profile}`);
     if (briefing.offerings) lines.push(`Products/Services: ${briefing.offerings}`);
+  }
+
+  if (strategy) {
+    lines.push("", "CONTEXTO DA ESTRATÉGIA:");
+    lines.push(`Nome: ${strategy.name}`);
+    if (strategy.focus) lines.push(`Foco: ${strategy.focus}`);
+    if (strategy.tone) lines.push(`Tom de voz: ${strategy.tone}`);
+    if (strategy.audience) lines.push(`Público-alvo: ${strategy.audience}`);
+    if (strategy.goal) lines.push(`Objetivo: ${strategy.goal}`);
   }
 
   if (approvedKeywords.length > 0) {
@@ -57,6 +68,7 @@ export function buildBriefPrompt(
   topic: Tables<"topic_candidates">,
   preferences: Tables<"ai_preferences"> | null,
   rules: Tables<"ai_rules">[],
+  serpContext?: string,
 ) {
   return [
     "VOCÊ É UM ESTRATEGISTA DE CONTEÚDO SÊNIOR.",
@@ -72,6 +84,13 @@ export function buildBriefPrompt(
     formatRules(rules),
     "",
     "INSTRUÇÕES:",
+    ...(serpContext ? [
+      "CONTEXTO DA CONCORRÊNCIA NA SERP:",
+      "Abaixo estão os resultados reais do Google para os concorrentes deste tema.",
+      "Você DEVE utilizar estas informações para identificar lacunas no conteúdo dos concorrentes e gerar um ângulo e título superiores.",
+      serpContext,
+      ""
+    ] : []),
     "1. Desenvolva um Briefing (título otimizado, ângulo narrativo e palavras-chave secundárias).",
     "2. O Ângulo ('angle') deve seguir estritamente o Racional Estratégico e o Estágio da Jornada fornecidos.",
     "3. Refine a justificativa e o estágio se necessário para o contexto do briefing.",
@@ -85,6 +104,7 @@ export function buildPostPrompt(
   brief: Tables<"content_briefs">,
   preferences: Tables<"ai_preferences"> | null,
   rules: Tables<"ai_rules">[],
+  strategy?: StrategyContext | null,
 ) {
   return [
     "VOCÊ É UM REDATOR DE ELITE ESPECIALISTA EM SEO E CONVERSÃO.",
@@ -100,6 +120,16 @@ export function buildPostPrompt(
     `Estilo: ${preferences?.writing_style ?? "Informativo"}`,
     `Expertise: ${preferences?.expertise_level ?? "Especialista"}`,
     formatRules(rules),
+
+    ...(strategy ? [
+      "",
+      "CONTEXTO DA ESTRATÉGIA:",
+      `Estratégia: ${strategy.name}`,
+      ...(strategy.tone ? [`Tom de voz da estratégia: ${strategy.tone}`] : []),
+      ...(strategy.audience ? [`Público-alvo da estratégia: ${strategy.audience}`] : []),
+      ...(strategy.goal ? [`Objetivo da estratégia: ${strategy.goal}`] : []),
+    ] : []),
+
     "",
     "REQUISITOS DO ARTIGO:",
     "1. Crie um post de blog completo, altamente engajador e otimizado para SEO.",
@@ -111,7 +141,13 @@ export function buildPostPrompt(
 }
 
 
-export function buildKeywordStrategyPrompt(briefing: Tables<"business_briefings">) {
+export function buildKeywordStrategyPrompt(
+  briefing: Tables<"business_briefings">,
+  serpContext?: string,
+  keywordCount?: number,
+  strategy?: StrategyContext | null,
+) {
+  const count = keywordCount || 10;
   const lines = [
     "VOCÊ É UM ESPECIALISTA EM SEO E ESTRATÉGIA DE CONTEÚDO.",
     "GERAR ESTRATÉGIA DE PALAVRAS-CHAVE PARA O SEGUINTE NEGÓCIO:",
@@ -130,19 +166,34 @@ export function buildKeywordStrategyPrompt(briefing: Tables<"business_briefings"
     lines.push(`Concorrentes: ${briefing.competitors.join(", ")}`);
   }
 
+  if (strategy) {
+    lines.push("", "CONTEXTO DA ESTRATÉGIA:");
+    lines.push(`Estratégia: ${strategy.name}`);
+    if (strategy.goal) lines.push(`Objetivo: ${strategy.goal}`);
+    if (strategy.audience) lines.push(`Público-alvo: ${strategy.audience}`);
+    if (strategy.tone) lines.push(`Tom de voz: ${strategy.tone}`);
+  }
+
   lines.push(
     "",
     "INSTRUÇÕES:",
-    "1. Gere entre 30 e 50 palavras-chave relevantes.",
+    ...(serpContext ? [
+      "CONTEXTO DA CONCORRÊNCIA NA SERP (Sementes):",
+      "Abaixo estão os resultados do Google para suas palavras-chave sementes.",
+      "Utilize isso para basear a estimativa de concorrência e sugerir termos mais assertivos.",
+      serpContext,
+      ""
+    ] : []),
+    `1. Gere exatamente ${count} palavras-chave relevantes.`,
     "2. Cubra tanto 'Short Tail' (termos genéricos) quanto 'Long Tail' (termos específicos e variações).",
     "3. Classifique cada palavra por:",
     "   - journey_stage: 'awareness' (topo/consciência), 'consideration' (meio/consideração), 'evaluation' (comparação/avaliação), 'decision' (fundo/decisão).",
     "   - priority: 'high', 'medium', 'low' baseado no potencial de conversão para este negócio.",
     "   - tail_type: 'short' ou 'long'.",
     "   - difficulty: um número de 0 a 100 indicando a dificuldade de rankeamento (SEO Difficulty).",
-    "   - search_volume: uma estimativa amigável de volume (ex: 'Alto', 'Médio', 'Baixo' ou faixas numéricas).",
+    "   - search_volume: OBRIGATÓRIO. Estimativa de busca mensal em faixa numérica (ex: '100-500', '500-1K', '1K-5K', '5K-10K', '10K+'). Nunca deixe vazio.",
     "4. Forneça uma 'motivation' curta explicando o contexto estratégico.",
-    "5. Forneça um 'estimated_potential' detalhando por que esta palavra pode trazer ROI para o cliente.",
+    "5. Forneça um 'estimated_potential' detalhando tráfego mensal estimado e por que esta palavra pode trazer ROI (ex: '~300 visitas/mês, alta intenção de compra').",
     "6. Retorne APENAS um JSON válido seguindo este formato:",
     '{ "keywords": [{ "keyword": "string", "journey_stage": "awareness|consideration|evaluation|decision", "priority": "high|medium|low", "tail_type": "short|long", "difficulty": number, "search_volume": "string", "motivation": "string", "estimated_potential": "string" }] }'
   );

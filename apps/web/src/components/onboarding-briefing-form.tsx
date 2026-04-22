@@ -198,7 +198,7 @@ export function OnboardingBriefingForm({ tenantName, siteName }: OnboardingBrief
         setError(result.error);
         return;
       }
-      router.push("/dashboard");
+      router.push("/app/dashboard");
     });
   }
 
@@ -298,7 +298,7 @@ export function OnboardingBriefingForm({ tenantName, siteName }: OnboardingBrief
           {error ? <p className="mt-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</p> : null}
           {!isComplete && started ? (
             <div className="mt-4 text-center">
-              <button type="button" onClick={() => router.push("/dashboard")} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              <button type="button" onClick={() => router.push("/app/dashboard")} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
                 Pular por agora e configurar depois
               </button>
             </div>

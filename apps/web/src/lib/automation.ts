@@ -13,6 +13,8 @@ import {
 } from "@super/shared";
 import { SITE_LANGUAGE_OPTIONS } from "@/lib/site";
 
+export type OperationMode = "manual" | "assisted" | "automatic";
+
 export const TOPIC_STATUS_LABELS: Record<TopicCandidateStatus, string> = {
   pending: "Pendente",
   approved: "Aprovado",
@@ -51,6 +53,18 @@ export const FREQUENCY_LABELS: Record<Frequency, string> = {
   monthly: "Mensal",
 };
 
+export const OPERATION_MODE_LABELS: Record<OperationMode, string> = {
+  manual: "Manual",
+  assisted: "Assistido",
+  automatic: "Autônomo",
+};
+
+export const OPERATION_MODE_HELP: Record<OperationMode, string> = {
+  manual: "A equipe opera tudo manualmente com apoio pontual da IA.",
+  assisted: "A IA executa, mas pede aprovação nos pontos críticos.",
+  automatic: "A IA roda sozinha dentro das regras definidas.",
+};
+
 export const AI_MODEL_OPTIONS = [...AI_MODELS];
 export const AI_RULE_TYPES = [...SHARED_AI_RULE_TYPES];
 
@@ -82,11 +96,13 @@ export function validateAutomationConfigInput(
   keywordsSeedRaw: string,
   language: string,
   frequency: string,
+  operationMode: string,
   approvalRequired: boolean,
 ) {
   const keywordsSeed = parseKeywordsSeed(keywordsSeedRaw);
   const normalizedLanguage = language.trim() || APP_DEFAULTS.language;
   const normalizedFrequency = (frequency.trim() || APP_DEFAULTS.frequency) as Frequency;
+  const normalizedOperationMode = (operationMode.trim() || "assisted") as OperationMode;
 
   if (!SITE_LANGUAGE_OPTIONS.includes(normalizedLanguage as (typeof SITE_LANGUAGE_OPTIONS)[number])) {
     return {
@@ -102,12 +118,20 @@ export function validateAutomationConfigInput(
     };
   }
 
+  if (!(normalizedOperationMode in OPERATION_MODE_LABELS)) {
+    return {
+      ok: false as const,
+      error: "Escolha um modo operacional valido.",
+    };
+  }
+
   return {
     ok: true as const,
     value: {
       keywords_seed: keywordsSeed.length > 0 ? keywordsSeed : null,
       language: normalizedLanguage,
       frequency: normalizedFrequency,
+      operation_mode: normalizedOperationMode,
       approval_required: approvalRequired,
     },
   };

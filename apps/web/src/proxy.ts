@@ -78,7 +78,7 @@ export async function proxy(request: NextRequest) {
   const hasMembership = Boolean(membershipResult.data);
 
   if (pathname === "/onboarding" && hasMembership) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/app/dashboard", request.url));
   }
 
   if ((pathname.startsWith("/app") || pathname.startsWith("/dashboard")) && !hasMembership) {
@@ -93,7 +93,7 @@ export async function proxy(request: NextRequest) {
     pathname === "/auth/signup"
   ) {
     return NextResponse.redirect(
-      new URL(hasMembership ? "/dashboard" : "/onboarding", request.url),
+      new URL(hasMembership ? "/app/dashboard" : "/onboarding", request.url),
     );
   }
 

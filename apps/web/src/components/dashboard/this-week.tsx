@@ -2,23 +2,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, AlertCircle } from "lucide-react"
 
-export interface WeeklyArticle {
-  id: string
-  title: string
-  scheduledFor?: string
-  progress?: number
-  createdAt?: string
+const articles = {
+  planned: [
+    { id: 1, title: "Como escolher a escova de dentes ideal", scheduledFor: "Amanhã" },
+    { id: 2, title: "Benefícios do fio dental diário", scheduledFor: "Quinta-feira" },
+  ],
+  inProgress: [
+    { id: 3, title: "Clareamento dental: mitos e verdades", progress: 75 },
+  ],
+  awaitingApproval: [
+    { id: 4, title: "Dicas para cuidar do aparelho ortodôntico", createdAt: "Há 2 horas" },
+    { id: 5, title: "Alimentação e saúde bucal", createdAt: "Há 1 dia" },
+  ],
 }
 
-interface ThisWeekProps {
-  planned: WeeklyArticle[]
-  inProgress: WeeklyArticle[]
-  awaitingApproval: WeeklyArticle[]
-}
-
-export function ThisWeek({ planned, inProgress, awaitingApproval }: ThisWeekProps) {
+export function ThisWeek() {
   return (
-    <Card className="h-full">
+    <Card>
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Calendar className="h-5 w-5 text-primary" />
@@ -34,20 +34,17 @@ export function ThisWeek({ planned, inProgress, awaitingApproval }: ThisWeekProp
             </div>
             <span className="text-sm font-medium text-foreground">Planejados</span>
             <Badge variant="secondary" className="text-xs">
-              {planned.length}
+              {articles.planned.length}
             </Badge>
           </div>
           <div className="space-y-2 pl-8">
-            {planned.length === 0 && (
-              <p className="text-xs text-muted-foreground">Nenhum artigo agendado.</p>
-            )}
-            {planned.map((article) => (
+            {articles.planned.map((article) => (
               <div
                 key={article.id}
                 className="flex items-center justify-between rounded-lg border border-border bg-card p-3"
               >
-                <span className="text-sm text-foreground line-clamp-1">{article.title}</span>
-                <span className="text-xs text-muted-foreground ml-2 whitespace-nowrap">{article.scheduledFor}</span>
+                <span className="text-sm text-foreground">{article.title}</span>
+                <span className="text-xs text-muted-foreground">{article.scheduledFor}</span>
               </div>
             ))}
           </div>
@@ -61,26 +58,23 @@ export function ThisWeek({ planned, inProgress, awaitingApproval }: ThisWeekProp
             </div>
             <span className="text-sm font-medium text-foreground">Em produção</span>
             <Badge variant="secondary" className="text-xs">
-              {inProgress.length}
+              {articles.inProgress.length}
             </Badge>
           </div>
           <div className="space-y-2 pl-8">
-            {inProgress.length === 0 && (
-              <p className="text-xs text-muted-foreground">Nem um rascunho ativo.</p>
-            )}
-            {inProgress.map((article) => (
+            {articles.inProgress.map((article) => (
               <div
                 key={article.id}
                 className="rounded-lg border border-border bg-card p-3"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-foreground line-clamp-1">{article.title}</span>
-                  <span className="text-xs font-medium text-primary ml-2">{article.progress || 0}%</span>
+                  <span className="text-sm text-foreground">{article.title}</span>
+                  <span className="text-xs font-medium text-primary">{article.progress}%</span>
                 </div>
                 <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${article.progress || 0}%` }}
+                    style={{ width: `${article.progress}%` }}
                   />
                 </div>
               </div>
@@ -96,21 +90,18 @@ export function ThisWeek({ planned, inProgress, awaitingApproval }: ThisWeekProp
             </div>
             <span className="text-sm font-medium text-foreground">Aguardando aprovação</span>
             <Badge variant="secondary" className="text-xs">
-              {awaitingApproval.length}
+              {articles.awaitingApproval.length}
             </Badge>
           </div>
           <div className="space-y-2 pl-8">
-            {awaitingApproval.length === 0 && (
-              <p className="text-xs text-muted-foreground">Tudo em dia!</p>
-            )}
-            {awaitingApproval.map((article) => (
+            {articles.awaitingApproval.map((article) => (
               <div
                 key={article.id}
                 className="flex items-center justify-between rounded-lg border border-border bg-card p-3"
               >
-                <span className="text-sm text-foreground line-clamp-1">{article.title}</span>
-                <div className="flex items-center gap-2 ml-2">
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">{article.createdAt}</span>
+                <span className="text-sm text-foreground">{article.title}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{article.createdAt}</span>
                   <button className="rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90">
                     Revisar
                   </button>

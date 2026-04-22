@@ -1,5 +1,1 @@
-import { redirect } from "next/navigation";
-
-export default function LegacyAnalyticsPage() {
-  redirect("/dashboard/analytics");
-}
+export { default, metadata } from "@/app/dashboard/analytics/page";

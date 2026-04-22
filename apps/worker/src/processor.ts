@@ -8,6 +8,7 @@ import {
   buildPostPrompt,
   buildResearchPrompt,
 } from "./prompts.js";
+import { fetchSerpWithCache } from "./serper.js";
 import type {
   BriefGenerationResult,
   ClaimedJob,
@@ -16,6 +17,7 @@ import type {
   PostGenerationResult,
   PublishPostResult,
   TopicResearchResult,
+  StrategyContext,
 } from "./types.js";
 
 const JOB_TYPES = new Set([
@@ -94,6 +96,21 @@ async function loadAutomationContext(client: ReturnType<typeof createAdminClient
     throw new Error(briefingResult.error.message);
   }
 
+  // Load strategy context when strategy_id is present in the payload
+  let strategy: StrategyContext | null = null;
+  if (payload.strategy_id) {
+    const strategyResult = await client
+      .from("strategies")
+      .select("id, name, focus, tone, audience, goal, operation_mode")
+      .eq("id", payload.strategy_id)
+      .eq("tenant_id", payload.tenant_id)
+      .maybeSingle();
+
+    if (!strategyResult.error && strategyResult.data) {
+      strategy = strategyResult.data as StrategyContext;
+    }
+  }
+
   return {
     payload,
     site: siteResult.data,
@@ -101,6 +118,7 @@ async function loadAutomationContext(client: ReturnType<typeof createAdminClient
     preferences: preferencesResult.data,
     rules: rulesResult.data ?? [],
     briefing: briefingResult.data,
+    strategy,
   };
 }
 
@@ -215,7 +233,7 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
     messages: [
       {
         role: "user",
-        content: buildResearchPrompt(context.config, context.site, context.briefing, approvedKeywords),
+        content: buildResearchPrompt(context.config, context.site, context.briefing, approvedKeywords, context.strategy),
       },
     ],
     schemaHint:
@@ -269,6 +287,35 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
     throw new Error("OpenAI returned empty topic suggestions.");
   }
 
+  // Auto-mode processing
+  if (context.strategy?.operation_mode === "automatic") {
+    const topTopicIds = topicCandidateIds.slice(0, 3);
+    
+    // Auto-approve the top topics
+    await client
+      .from("topic_candidates")
+      .update({ status: "approved" })
+      .in("id", topTopicIds);
+
+    // Schedule brief generation for each
+    for (const topicId of topTopicIds) {
+      await client.from("automation_jobs").insert({
+        tenant_id: context.payload.tenant_id,
+        site_id: context.payload.site_id,
+        type: "generate_brief",
+        status: "pending",
+        max_attempts: 3,
+        priority: 20, // same priority as UI dispatched
+        payload_json: {
+          tenant_id: context.payload.tenant_id,
+          site_id: context.payload.site_id,
+          topic_candidate_id: topicId,
+          strategy_id: strategyId,
+        },
+      } satisfies TablesInsert<"automation_jobs">);
+    }
+  }
+
   await finishJob(client, job.id, {
     status: "completed",
     finished_at: new Date().toISOString(),
@@ -289,12 +336,29 @@ async function processKeywordStrategy(client: ReturnType<typeof createAdminClien
 
   const model = resolveOpenAiModel(context.preferences);
 
+  // Fetch SERP context for seed keywords if available
+  const seedKeywords = Array.isArray(context.briefing.desired_keywords)
+    ? context.briefing.desired_keywords
+    : (context.config?.keywords_seed || []);
+  
+  let serpContextString = "";
+  if (seedKeywords.length > 0) {
+    const mainKeyword = seedKeywords[0];
+    const serpData = await fetchSerpWithCache(mainKeyword, context.payload.tenant_id);
+    serpContextString = serpData.contextString;
+  }
+
   const aiResult = await callOpenAiJson<KeywordStrategyResult>({
     model,
     messages: [
       {
         role: "user",
-        content: buildKeywordStrategyPrompt(context.briefing),
+        content: buildKeywordStrategyPrompt(
+          context.briefing,
+          serpContextString,
+          context.payload.keyword_count,
+          context.strategy,
+        ),
       },
     ],
     schemaHint:
@@ -380,12 +444,15 @@ async function processGenerateBrief(client: ReturnType<typeof createAdminClient>
 
   const model = resolveOpenAiModel(context.preferences);
 
+  // Fetch SERP context for the topic
+  const serpData = await fetchSerpWithCache(topicResult.data.topic, payload.tenant_id);
+
   const aiResult = await callOpenAiJson<BriefGenerationResult>({
     model,
     messages: [
       {
         role: "user",
-        content: buildBriefPrompt(topicResult.data, context.preferences, context.rules),
+        content: buildBriefPrompt(topicResult.data, context.preferences, context.rules, serpData.contextString),
       },
     ],
     schemaHint: '{ "title": "string", "angle": "string", "keywords": ["string"] }',
@@ -405,9 +472,6 @@ async function processGenerateBrief(client: ReturnType<typeof createAdminClient>
       topic: topicResult.data.topic,
       keywords: aiResult.keywords,
       angle: aiResult.angle,
-      justification: aiResult.justification || topicResult.data.justification,
-      journey_stage: aiResult.journey_stage || topicResult.data.journey_stage,
-      topic_id: topicResult.data.id,
       status: "approved",
       strategy_id: strategyId,
     } satisfies TablesInsert<"content_briefs">)
@@ -417,6 +481,22 @@ async function processGenerateBrief(client: ReturnType<typeof createAdminClient>
   if (briefResult.error || !briefResult.data) {
     throw new Error(briefResult.error?.message ?? "Failed to insert content brief.");
   }
+
+  // Always chain to generate_post (the dashboard UX combines brief and post generation)
+  await client.from("automation_jobs").insert({
+    tenant_id: payload.tenant_id,
+    site_id: payload.site_id, 
+    type: "generate_post",
+    status: "pending",
+    max_attempts: 3,
+    priority: 30, // Higher priority to finish the chain
+    payload_json: {
+      tenant_id: payload.tenant_id,
+      site_id: payload.site_id ?? context.site?.id, // fallback to context
+      content_brief_id: briefResult.data.id,
+      strategy_id: strategyId,
+    },
+  } satisfies TablesInsert<"automation_jobs">);
 
   await finishJob(client, job.id, {
     status: "completed",
@@ -476,7 +556,7 @@ async function processGeneratePost(client: ReturnType<typeof createAdminClient>,
     messages: [
       {
         role: "user",
-        content: buildPostPrompt(briefResult.data, context.preferences, context.rules),
+        content: buildPostPrompt(briefResult.data, context.preferences, context.rules, context.strategy),
       },
     ],
     schemaHint: '{ "title": "string", "slug": "string", "content": "string" }',
@@ -521,6 +601,7 @@ async function processGeneratePost(client: ReturnType<typeof createAdminClient>,
       content: aiResult.content.trim(),
       status: "draft",
       published_at: null,
+      strategy_id: (briefResult.data as any).strategy_id ?? null,
     } satisfies TablesInsert<"posts">)
     .select("*")
     .single();
@@ -671,7 +752,6 @@ export async function startProcessor() {
   const claimedJobs = await claimNextJobs(client);
 
   if (claimedJobs.length === 0) {
-    console.log(`[Processor] No jobs ready. Max attempts: ${WORKER_DEFAULTS.maxAttempts}`);
     return;
   }
 

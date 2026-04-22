@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { revalidatePath } from "next/cache";
 import type { Tables, TablesInsert, TablesUpdate } from "@super/db";
@@ -83,9 +83,13 @@ function revalidateAutomationPaths(subdomain: string) {
   revalidatePath("/app/estrategias/briefs");
   revalidatePath("/app/jobs");
   revalidatePath("/dashboard");
-  revalidatePath("/dashboard/estrategia");
+  revalidatePath("/dashboard/estrategias");
   revalidatePath("/dashboard/plano");
   revalidatePath("/dashboard/artigos");
+  revalidatePath("/app/dashboard");
+  revalidatePath("/app/estrategias");
+  revalidatePath("/app/plano");
+  revalidatePath("/app/artigos");
   revalidatePath(`/blog/${subdomain}`);
 }
 
@@ -98,6 +102,7 @@ export async function saveAutomationSettings(
     String(formData.get("keywords_seed") ?? ""),
     String(formData.get("language") ?? ""),
     String(formData.get("frequency") ?? ""),
+    String(formData.get("operation_mode") ?? ""),
     formData.get("approval_required") === "on",
   );
   const preferencesValidation = validateAiPreferencesInput(

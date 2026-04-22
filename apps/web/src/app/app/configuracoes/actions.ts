@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -42,15 +42,17 @@ function revalidateSettingsPaths(subdomain?: string | null) {
   revalidatePath("/", "layout");
   revalidatePath("/app");
   revalidatePath("/app/dashboard");
+  revalidatePath("/app/blog");
+  revalidatePath("/app/estrategias");
+  revalidatePath("/app/configuracoes");
   revalidatePath("/app/configuracoes/account");
   revalidatePath("/app/configuracoes/workspace");
   revalidatePath("/app/configuracoes/site");
   revalidatePath("/app/configuracoes/ai");
   revalidatePath("/app/configuracoes/automation");
-  revalidatePath("/app/estrategias");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/blog");
-  revalidatePath("/dashboard/estrategia");
+  revalidatePath("/dashboard/estrategias");
   revalidatePath("/dashboard/configuracoes");
   if (subdomain) {
     revalidatePath(`/blog/${subdomain}`);
@@ -610,6 +612,7 @@ export async function saveAutomationConfigSettings(
     String(formData.get("keywords_seed") ?? ""),
     String(formData.get("language") ?? ""),
     String(formData.get("frequency") ?? ""),
+    String(formData.get("operation_mode") ?? ""),
     formData.get("approval_required") === "on",
   );
 

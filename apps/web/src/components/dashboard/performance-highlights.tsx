@@ -1,31 +1,48 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp, TrendingDown, Eye, ExternalLink } from "lucide-react"
 
-export interface TopPerformingData {
-  id: string | number
-  title: string
-  views: string
-  position: number
-  change: string
-}
+const bestPerforming = [
+  {
+    id: 1,
+    title: "10 Dicas para Cuidar dos Dentes em Casa",
+    views: "2.3K",
+    position: 3,
+    change: "+5",
+  },
+  {
+    id: 2,
+    title: "Quanto Custa um Implante Dentário em 2024",
+    views: "1.8K",
+    position: 2,
+    change: "+2",
+  },
+  {
+    id: 3,
+    title: "Clareamento Dental: Vale a Pena?",
+    views: "1.2K",
+    position: 5,
+    change: "+8",
+  },
+]
 
-export interface WorstPerformingData {
-  id: string | number
-  title: string
-  views: string
-  position: number
-  issue: string
-}
+const worstPerforming = [
+  {
+    id: 1,
+    title: "História da Odontologia no Brasil",
+    views: "45",
+    position: 48,
+    issue: "Tema muito amplo",
+  },
+  {
+    id: 2,
+    title: "Tipos de Anestesia Local",
+    views: "89",
+    position: 34,
+    issue: "Falta de palavras-chave",
+  },
+]
 
-interface PerformanceHighlightsProps {
-  bestPerforming: TopPerformingData[]
-  worstPerforming: WorstPerformingData[]
-}
-
-export function PerformanceHighlights({
-  bestPerforming,
-  worstPerforming,
-}: PerformanceHighlightsProps) {
+export function PerformanceHighlights() {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       {/* Best Performing */}
@@ -41,22 +58,17 @@ export function PerformanceHighlights({
             Seus artigos que mais trazem visitantes do Google:
           </p>
           <div className="space-y-3">
-            {bestPerforming.length === 0 && (
-              <div className="text-center py-4 text-sm text-muted-foreground border border-dashed rounded-lg">
-                Aguardando primeiros dados de audiência.
-              </div>
-            )}
             {bestPerforming.map((article, index) => (
               <div
                 key={article.id}
                 className="flex items-center justify-between rounded-lg border border-border p-4 transition-colors hover:bg-muted/50"
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-semibold text-green-700">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-sm font-semibold text-green-700">
                     {index + 1}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground line-clamp-1">
+                    <p className="text-sm font-medium text-foreground">
                       {article.title}
                     </p>
                     <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
@@ -94,19 +106,14 @@ export function PerformanceHighlights({
             Artigos que podem melhorar com algumas edições:
           </p>
           <div className="space-y-3">
-            {worstPerforming.length === 0 && (
-              <div className="text-center py-4 text-sm text-muted-foreground border border-dashed rounded-lg">
-                Seus artigos não apresentam problemas.
-              </div>
-            )}
             {worstPerforming.map((article) => (
               <div
                 key={article.id}
                 className="rounded-lg border border-border p-4"
               >
                 <div className="flex items-start justify-between">
-                  <div className="w-full">
-                    <p className="text-sm font-medium text-foreground line-clamp-1">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
                       {article.title}
                     </p>
                     <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
@@ -123,7 +130,7 @@ export function PerformanceHighlights({
                     {article.issue}
                   </span>
                   <button className="text-xs font-medium text-primary hover:underline">
-                    Ver sugestões
+                    Ver sugestões de melhoria
                   </button>
                 </div>
               </div>

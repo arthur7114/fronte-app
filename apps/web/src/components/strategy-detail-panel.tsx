@@ -141,7 +141,7 @@ export function StrategyDetailPanel({
             </form>
 
             <Button asChild variant="outline">
-              <Link href={`/dashboard/plano?strategy=${strategy.id}&tab=keywords`}>Abrir plano</Link>
+              <Link href={`/app/plano?strategy=${strategy.id}&tab=keywords`}>Abrir plano</Link>
             </Button>
           </div>
 
@@ -223,17 +223,17 @@ export function StrategyDetailPanel({
           </p>
           <div className="mt-4 flex flex-col gap-3">
             <Button asChild variant="outline">
-              <Link href={`/dashboard/plano?strategy=${strategy.id}&tab=topics`}>
+              <Link href={`/app/plano?strategy=${strategy.id}&tab=topics`}>
                 Ver temas desta estrategia
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href={`/dashboard/artigos?strategy=${strategy.id}`}>
+              <Link href={`/app/artigos?strategy=${strategy.id}`}>
                 Abrir artigos
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/dashboard/configuracoes?section=automation">
+              <Link href="/app/configuracoes/automation">
                 Ajustar automacao
               </Link>
             </Button>

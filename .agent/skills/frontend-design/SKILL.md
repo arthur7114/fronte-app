@@ -11,6 +11,15 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 ---
 
+## 🎯 Source of Truth (MANDATORY PROJECT RULE)
+
+> 🔴 **CRITICAL:** The absolute source of truth for all visual and design decisions in this specific workspace is located at `prototipo-visual/design-system`.
+
+Before implementing *any* UI components, styling, or layouts, you **MUST** adhere completely to the rules defined in `prototipo-visual/design-system/README.md`.
+Never use arbitrary spacing, colors, colors variations outside the defined CSS tokens (`app/globals.css` and `design-system/tokens.ts`).
+
+---
+
 ## 🎯 Selective Reading Rule (MANDATORY)
 
 **Read REQUIRED files always, OPTIONAL only when needed:**

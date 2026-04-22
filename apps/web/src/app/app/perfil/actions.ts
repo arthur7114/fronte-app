@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -87,10 +87,11 @@ export async function saveBusinessBriefing(
 
   revalidatePath("/app");
   revalidatePath("/app/dashboard");
+  revalidatePath("/app/estrategias");
   revalidatePath("/app/perfil");
   revalidatePath("/app/estrategias");
   revalidatePath("/dashboard");
-  revalidatePath("/dashboard/estrategia");
+  revalidatePath("/dashboard/estrategias");
 
   return { success: "Briefing do negocio salvo com sucesso." };
 }

@@ -77,7 +77,7 @@ Estratégia principal: PLG — Product-Led Growth.
 
 ## Princípios do produto
 - simplicidade acima de sofisticação técnica
-- IA como guia, não só como geradora
+- IA como guia ativa e conectada ao mercado (injeta dados reais da SERP)
 - foco em resultado percebido
 - automação com possibilidade de controle
 - conteúdo conectado ao negócio do cliente

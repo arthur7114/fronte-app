@@ -1,89 +1,170 @@
-"use client";
+"use client"
 
-import { AlertCircle, Calendar, CheckCircle2, Clock, Edit2, Eye, FileText, MoreHorizontal } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-
-const articles = [
-  { id: "1", title: "10 Dicas para Manter os Dentes Brancos em Casa", excerpt: "Descubra tecnicas simples e eficazes para manter o brilho do seu sorriso sem sair de casa...", status: "published", createdAt: "5 Abr 2026", views: "2.3K", keywords: ["clareamento dental", "dentes brancos"] },
-  { id: "2", title: "Quanto Custa um Implante Dentario em 2024", excerpt: "Um guia completo sobre valores, procedimentos e o que esperar ao fazer um implante dentario...", status: "published", createdAt: "2 Abr 2026", views: "1.8K", keywords: ["implante dentario", "preco implante"] },
-  { id: "3", title: "Clareamento Dental: Caseiro ou no Consultorio?", excerpt: "Entenda as diferencas entre os metodos de clareamento e qual e o melhor para voce...", status: "review", createdAt: "Hoje", views: null, keywords: ["clareamento dental", "clareamento caseiro"] },
-  { id: "4", title: "Por Que Meus Dentes Doem com Frio?", excerpt: "Sensibilidade dental pode ter varias causas. Veja o que pode estar acontecendo...", status: "draft", createdAt: "Hoje", views: null, keywords: ["sensibilidade dental", "dor de dente"] },
-  { id: "5", title: "Guia Completo do Aparelho Invisivel", excerpt: "Tudo o que voce precisa saber sobre alinhadores transparentes e como funcionam...", status: "scheduled", scheduledFor: "15 Abr 2026", createdAt: "8 Abr 2026", views: null, keywords: ["aparelho invisivel", "invisalign"] },
-];
+import { useState } from "react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table"
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  FileText, Clock, CheckCircle2, AlertCircle, Eye, Edit2,
+  MoreHorizontal, Calendar, Loader2, Trash2,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import type { ArticleItem, ArticleStatus } from "@/lib/strategies"
 
 const statusConfig = {
+  queued: { label: "Na fila", icon: Clock, color: "bg-muted text-muted-foreground" },
+  generating: { label: "Gerando", icon: Loader2, color: "bg-primary/10 text-primary" },
   draft: { label: "Rascunho", icon: FileText, color: "bg-muted text-muted-foreground" },
-  review: { label: "Em revisao", icon: AlertCircle, color: "bg-amber-100 text-amber-700" },
+  review: { label: "Em revisão", icon: AlertCircle, color: "bg-amber-100 text-amber-700" },
   scheduled: { label: "Agendado", icon: Calendar, color: "bg-blue-100 text-blue-700" },
   published: { label: "Publicado", icon: CheckCircle2, color: "bg-green-100 text-green-700" },
-};
+} satisfies Record<ArticleStatus, { label: string; icon: typeof FileText; color: string }>
+
+type StatusFilter = "all" | ArticleStatus
 
 type ArticlesListProps = {
-  viewMode: "list" | "grid";
-  onSelectArticle: (id: string) => void;
-};
+  articles?: ArticleItem[]
+  viewMode: "list" | "grid"
+  onSelectArticle: (id: string) => void
+  showStatusFilter?: boolean
+  emptyLabel?: string
+}
 
-export function ArticlesList({ viewMode, onSelectArticle }: ArticlesListProps) {
+export function ArticlesList({
+  articles = [], viewMode, onSelectArticle,
+  showStatusFilter = true, emptyLabel = "Nenhum artigo por aqui ainda.",
+}: ArticlesListProps) {
+  const [filter, setFilter] = useState<StatusFilter>("all")
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+
+  const visible = articles.filter((a) => a.status !== "queued" && a.status !== "generating")
+  const filtered = filter === "all" ? visible : visible.filter((a) => a.status === filter)
+
+  const counts = {
+    all: visible.length,
+    draft: visible.filter((a) => a.status === "draft").length,
+    review: visible.filter((a) => a.status === "review").length,
+    scheduled: visible.filter((a) => a.status === "scheduled").length,
+    published: visible.filter((a) => a.status === "published").length,
+  }
+
+  const filterOptions: { value: StatusFilter; label: string }[] = [
+    { value: "all", label: `Todos (${counts.all})` },
+    { value: "draft", label: `Rascunhos (${counts.draft})` },
+    { value: "review", label: `Revisão (${counts.review})` },
+    { value: "scheduled", label: `Agendados (${counts.scheduled})` },
+    { value: "published", label: `Publicados (${counts.published})` },
+  ]
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        {["Todos", "Rascunhos", "Em revisao", "Agendados", "Publicados"].map((filter, index) => (
-          <Button key={filter} variant={index === 0 ? "secondary" : "ghost"} size="sm" className="rounded-full">
-            {filter}
-          </Button>
-        ))}
-      </div>
+      {showStatusFilter && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          {filterOptions.map((opt) => (
+            <Button key={opt.value} variant={filter === opt.value ? "secondary" : "ghost"} size="sm" className="rounded-full" onClick={() => setFilter(opt.value)}>
+              {opt.label}
+            </Button>
+          ))}
+        </div>
+      )}
 
-      <div className={cn("gap-4", viewMode === "grid" ? "grid sm:grid-cols-2 lg:grid-cols-3" : "space-y-4")}>
-        {articles.map((article) => {
-          const status = statusConfig[article.status as keyof typeof statusConfig];
-          const StatusIcon = status.icon;
-          return (
-            <Card key={article.id} className="cursor-pointer transition-all hover:shadow-md" onClick={() => onSelectArticle(article.id)}>
-              <CardContent className={cn("p-5", viewMode === "list" && "flex gap-6")}>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <Badge className={cn("mb-2", status.color)}>
-                        <StatusIcon className="mr-1 h-3 w-3" />
-                        {status.label}
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border py-12 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+            <FileText className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <p className="font-medium text-foreground">{emptyLabel}</p>
+            <p className="mt-1 text-sm text-muted-foreground">Gere um artigo a partir de um tópico aprovado.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[40px]">
+                  <Checkbox
+                    checked={filtered.length > 0 && selected.size === filtered.length}
+                    onCheckedChange={(c) => { if (c) setSelected(new Set(filtered.map(a => a.id))); else setSelected(new Set()) }}
+                  />
+                </TableHead>
+                <TableHead>Título</TableHead>
+                <TableHead className="w-[110px]">Status</TableHead>
+                <TableHead className="w-[180px]">Keywords</TableHead>
+                <TableHead className="w-[100px]">Data</TableHead>
+                <TableHead className="w-[60px] text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((article) => {
+                const status = statusConfig[article.status]
+                const StatusIcon = status.icon
+                return (
+                  <TableRow key={article.id} className="cursor-pointer" onClick={() => onSelectArticle(article.id)}>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox checked={selected.has(article.id)} onCheckedChange={() => toggle(article.id)} />
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-medium text-foreground line-clamp-1">{article.title}</span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={cn("text-[11px]", status.color)}>
+                        <StatusIcon className="mr-1 h-3 w-3" />{status.label}
                       </Badge>
-                      <h3 className="line-clamp-2 font-medium text-foreground">{article.title}</h3>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(event) => event.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="shrink-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem><Edit2 className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
-                        <DropdownMenuItem><Eye className="mr-2 h-4 w-4" />Visualizar</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Excluir</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{article.excerpt}</p>
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {article.keywords.map((keyword) => (
-                      <span key={keyword} className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{keyword}</span>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{article.createdAt}</span>
-                    {article.views ? <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{article.views} visualizacoes</span> : null}
-                    {article.scheduledFor ? <span className="flex items-center gap-1 text-blue-600"><Calendar className="h-3 w-3" />Agendado para {article.scheduledFor}</span> : null}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {article.keywords.slice(0, 2).map((kw) => (
+                          <span key={kw} className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">{kw}</span>
+                        ))}
+                        {article.keywords.length > 2 && (
+                          <span className="text-[11px] text-muted-foreground">+{article.keywords.length - 2}</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs text-muted-foreground">{article.createdAt}</span>
+                    </TableCell>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => onSelectArticle(article.id)}>
+                            <Edit2 className="mr-2 h-4 w-4" />Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem><Eye className="mr-2 h-4 w-4" />Visualizar</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive focus:text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" />Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
-  );
+  )
 }

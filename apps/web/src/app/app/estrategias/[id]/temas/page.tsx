@@ -8,5 +8,5 @@ export default async function LegacyStrategyTopicsPage({
   params,
 }: LegacyStrategyTopicsPageProps) {
   const { id } = await params;
-  redirect(`/dashboard/plano?strategy=${id}&tab=topics`);
+  redirect(`/app/plano?strategy=${id}&tab=topics`);
 }

@@ -18,6 +18,7 @@ import {
   Settings,
   Sparkles,
   TrendingUp,
+  Users,
 } from "lucide-react";
 import { LogoutButton } from "@/components/logout-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -43,19 +44,22 @@ type AppShellProps = {
 };
 
 function getIconForAppNav(item: AppNavItem) {
-  if (item.href === "/dashboard") return LayoutDashboard;
-  if (item.href === "/dashboard/blog") return FileText;
-  if (item.href.startsWith("/dashboard/estrategia")) return Lightbulb;
-  if (item.href.startsWith("/dashboard/plano")) return CalendarDays;
-  if (item.href.startsWith("/dashboard/artigos")) return PenTool;
-  if (item.href.startsWith("/dashboard/tendencias")) return TrendingUp;
-  if (item.href.startsWith("/dashboard/analytics")) return BarChart3;
-  if (item.href.startsWith("/dashboard/configuracoes")) return Settings;
+  if (item.href.endsWith("/dashboard")) return LayoutDashboard;
+  if (item.href.endsWith("/blog")) return FileText;
+  if (item.href.includes("/estrategia")) return Lightbulb;
+  if (item.href.includes("/calendario")) return CalendarDays;
+  if (item.href.includes("/newsletter")) return Bell;
+  if (item.href.includes("/leads")) return Users;
+  if (item.href.includes("/plano")) return CalendarDays;
+  if (item.href.includes("/artigos")) return PenTool;
+  if (item.href.includes("/tendencias")) return TrendingUp;
+  if (item.href.includes("/analytics")) return BarChart3;
+  if (item.href.includes("/configuracoes")) return Settings;
   return LayoutDashboard;
 }
 
 function isActiveItem(pathname: string, href: string) {
-  if (href === "/dashboard") {
+  if (href === "/app/dashboard" || href === "/dashboard") {
     return pathname === href;
   }
 
@@ -97,7 +101,7 @@ export function AppShell({
     <div className="min-h-screen bg-background">
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         <Link
-          href="/dashboard"
+          href="/app/dashboard"
           className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6 transition hover:bg-sidebar-accent/30"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
@@ -239,7 +243,7 @@ export function AppShell({
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/configuracoes?section=account">Minha conta</Link>
+                  <Link href="/app/configuracoes/account">Minha conta</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <div className="p-1">

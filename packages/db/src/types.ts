@@ -87,6 +87,151 @@ export type Database = {
           },
         ]
       }
+      analytics_daily: {
+        Row: {
+          avg_time_on_page: number | null
+          bounce_rate: number | null
+          clicks: number
+          created_at: string
+          date: string
+          id: string
+          page_views: number
+          post_id: string | null
+          source: string | null
+          tenant_id: string
+          unique_visitors: number
+        }
+        Insert: {
+          avg_time_on_page?: number | null
+          bounce_rate?: number | null
+          clicks?: number
+          created_at?: string
+          date?: string
+          id?: string
+          page_views?: number
+          post_id?: string | null
+          source?: string | null
+          tenant_id: string
+          unique_visitors?: number
+        }
+        Update: {
+          avg_time_on_page?: number | null
+          bounce_rate?: number | null
+          clicks?: number
+          created_at?: string
+          date?: string
+          id?: string
+          page_views?: number
+          post_id?: string | null
+          source?: string | null
+          tenant_id?: string
+          unique_visitors?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_daily_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_daily_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      article_generations: {
+        Row: {
+          additional_instructions: string | null
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          phase: string
+          post_id: string | null
+          primary_keyword: string | null
+          research_result: Json | null
+          review_result: Json | null
+          started_at: string | null
+          strategy_id: string | null
+          structure_result: Json | null
+          target_length: string | null
+          tenant_id: string
+          tone: string | null
+          topic: string
+          updated_at: string
+          write_result: Json | null
+        }
+        Insert: {
+          additional_instructions?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          phase?: string
+          post_id?: string | null
+          primary_keyword?: string | null
+          research_result?: Json | null
+          review_result?: Json | null
+          started_at?: string | null
+          strategy_id?: string | null
+          structure_result?: Json | null
+          target_length?: string | null
+          tenant_id: string
+          tone?: string | null
+          topic: string
+          updated_at?: string
+          write_result?: Json | null
+        }
+        Update: {
+          additional_instructions?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          phase?: string
+          post_id?: string | null
+          primary_keyword?: string | null
+          research_result?: Json | null
+          review_result?: Json | null
+          started_at?: string | null
+          strategy_id?: string | null
+          structure_result?: Json | null
+          target_length?: string | null
+          tenant_id?: string
+          tone?: string | null
+          topic?: string
+          updated_at?: string
+          write_result?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_generations_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_generations_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_generations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_configs: {
         Row: {
           approval_required: boolean
@@ -277,24 +422,33 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          interest: string
           name: string | null
           source: string | null
+          source_article: string | null
+          status: string
           tenant_id: string
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
+          interest?: string
           name?: string | null
           source?: string | null
+          source_article?: string | null
+          status?: string
           tenant_id: string
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          interest?: string
           name?: string | null
           source?: string | null
+          source_article?: string | null
+          status?: string
           tenant_id?: string
         }
         Relationships: [
@@ -314,12 +468,9 @@ export type Database = {
           id: string
           keywords: string[] | null
           status: string
+          strategy_id: string | null
           tenant_id: string
           topic: string
-          justification: string | null
-          journey_stage: string | null
-          topic_id: string | null
-          strategy_id: string | null
         }
         Insert: {
           angle?: string | null
@@ -327,12 +478,9 @@ export type Database = {
           id?: string
           keywords?: string[] | null
           status?: string
+          strategy_id?: string | null
           tenant_id: string
           topic: string
-          justification?: string | null
-          journey_stage?: string | null
-          topic_id?: string | null
-          strategy_id?: string | null
         }
         Update: {
           angle?: string | null
@@ -340,15 +488,18 @@ export type Database = {
           id?: string
           keywords?: string[] | null
           status?: string
+          strategy_id?: string | null
           tenant_id?: string
           topic?: string
-          justification?: string | null
-          journey_stage?: string | null
-          topic_id?: string | null
-          strategy_id?: string | null
         }
-
         Relationships: [
+          {
+            foreignKeyName: "content_briefs_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "strategies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "content_briefs_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -356,11 +507,70 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      keyword_candidates: {
+        Row: {
+          created_at: string
+          difficulty: number | null
+          estimated_potential: string | null
+          id: string
+          journey_stage: string
+          keyword: string
+          motivation: string | null
+          priority: string
+          search_volume: string | null
+          status: string
+          strategy_id: string | null
+          tail_type: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: number | null
+          estimated_potential?: string | null
+          id?: string
+          journey_stage: string
+          keyword: string
+          motivation?: string | null
+          priority: string
+          search_volume?: string | null
+          status?: string
+          strategy_id?: string | null
+          tail_type: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: number | null
+          estimated_potential?: string | null
+          id?: string
+          journey_stage?: string
+          keyword?: string
+          motivation?: string | null
+          priority?: string
+          search_volume?: string | null
+          status?: string
+          strategy_id?: string | null
+          tail_type?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "content_briefs_strategy_id_fkey"
+            foreignKeyName: "keyword_candidates_strategy_id_fkey"
             columns: ["strategy_id"]
             isOneToOne: false
             referencedRelation: "strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "keyword_candidates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -392,6 +602,71 @@ export type Database = {
             foreignKeyName: "memberships_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_configs: {
+        Row: {
+          ask_name: boolean
+          created_at: string | null
+          cta_label: string
+          description: string
+          enabled: boolean
+          id: string
+          incentive: boolean
+          incentive_text: string
+          placement: string
+          privacy_consent: boolean
+          success_message: string
+          tenant_id: string
+          title: string
+          trigger_type: string
+          trigger_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          ask_name?: boolean
+          created_at?: string | null
+          cta_label?: string
+          description?: string
+          enabled?: boolean
+          id?: string
+          incentive?: boolean
+          incentive_text?: string
+          placement?: string
+          privacy_consent?: boolean
+          success_message?: string
+          tenant_id: string
+          title?: string
+          trigger_type?: string
+          trigger_value?: number
+          updated_at?: string | null
+        }
+        Update: {
+          ask_name?: boolean
+          created_at?: string | null
+          cta_label?: string
+          description?: string
+          enabled?: boolean
+          id?: string
+          incentive?: boolean
+          incentive_text?: string
+          placement?: string
+          privacy_consent?: boolean
+          success_message?: string
+          tenant_id?: string
+          title?: string
+          trigger_type?: string
+          trigger_value?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -466,47 +741,85 @@ export type Database = {
       }
       posts: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           content: string | null
           created_at: string
+          generation_id: string | null
           id: string
+          meta_description: string | null
+          meta_title: string | null
           published_at: string | null
+          scheduled_for: string | null
+          seo_score: number | null
           site_id: string
           slug: string
           status: string
+          strategy_id: string | null
           tenant_id: string
           title: string
           updated_at: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           content?: string | null
           created_at?: string
+          generation_id?: string | null
           id?: string
+          meta_description?: string | null
+          meta_title?: string | null
           published_at?: string | null
+          scheduled_for?: string | null
+          seo_score?: number | null
           site_id: string
           slug: string
           status?: string
+          strategy_id?: string | null
           tenant_id: string
           title: string
           updated_at?: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           content?: string | null
           created_at?: string
+          generation_id?: string | null
           id?: string
+          meta_description?: string | null
+          meta_title?: string | null
           published_at?: string | null
+          scheduled_for?: string | null
+          seo_score?: number | null
           site_id?: string
           slug?: string
           status?: string
+          strategy_id?: string | null
           tenant_id?: string
           title?: string
           updated_at?: string
         }
         Relationships: [
           {
+            foreignKeyName: "posts_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "article_generations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "posts_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "strategies"
             referencedColumns: ["id"]
           },
           {
@@ -538,6 +851,85 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      serp_results: {
+        Row: {
+          created_at: string
+          id: string
+          is_competitor: boolean | null
+          link: string
+          position: number
+          snapshot_id: string
+          snippet: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_competitor?: boolean | null
+          link: string
+          position: number
+          snapshot_id: string
+          snippet?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_competitor?: boolean | null
+          link?: string
+          position?: number
+          snapshot_id?: string
+          snippet?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "serp_results_snapshot_id_fkey"
+            columns: ["snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "serp_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      serp_snapshots: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          keyword: string
+          query_time: string
+          snapshot_data: Json
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          keyword: string
+          query_time?: string
+          snapshot_data: Json
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          keyword?: string
+          query_time?: string
+          snapshot_data?: Json
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "serp_snapshots_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sites: {
         Row: {
@@ -580,6 +972,139 @@ export type Database = {
           },
         ]
       }
+      strategies: {
+        Row: {
+          audience: string | null
+          color: string | null
+          created_at: string
+          description: string | null
+          focus: string | null
+          goal: string | null
+          id: string
+          name: string
+          operation_mode: string
+          status: string
+          strategy_type: string | null
+          tenant_id: string
+          tone: string | null
+          updated_at: string
+        }
+        Insert: {
+          audience?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          focus?: string | null
+          goal?: string | null
+          id?: string
+          name: string
+          operation_mode?: string
+          status?: string
+          strategy_type?: string | null
+          tenant_id: string
+          tone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audience?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          focus?: string | null
+          goal?: string | null
+          id?: string
+          name?: string
+          operation_mode?: string
+          status?: string
+          strategy_type?: string | null
+          tenant_id?: string
+          tone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strategy_chat_messages: {
+        Row: {
+          chat_id: string
+          content: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "strategy_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strategy_chats: {
+        Row: {
+          created_at: string
+          id: string
+          strategy_id: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          strategy_id: string
+          tenant_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          strategy_id?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_chats_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strategy_chats_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           created_at: string
@@ -608,52 +1133,51 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          journey_stage: string | null
+          justification: string | null
+          keyword_id: string | null
+          scheduled_date: string | null
           score: number | null
           source: string | null
           status: string
+          strategy_id: string | null
           tenant_id: string
           topic: string
-          justification: string | null
-          journey_stage: string | null
-          keyword_id: string | null
-          scheduled_date: string | null
-          strategy_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          journey_stage?: string | null
+          justification?: string | null
+          keyword_id?: string | null
+          scheduled_date?: string | null
           score?: number | null
           source?: string | null
           status?: string
+          strategy_id?: string | null
           tenant_id: string
           topic: string
-          justification?: string | null
-          journey_stage?: string | null
-          keyword_id?: string | null
-          scheduled_date?: string | null
-          strategy_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          journey_stage?: string | null
+          justification?: string | null
+          keyword_id?: string | null
+          scheduled_date?: string | null
           score?: number | null
           source?: string | null
           status?: string
+          strategy_id?: string | null
           tenant_id?: string
           topic?: string
-          justification?: string | null
-          journey_stage?: string | null
-          keyword_id?: string | null
-          scheduled_date?: string | null
-          strategy_id?: string | null
         }
-
         Relationships: [
           {
-            foreignKeyName: "topic_candidates_tenant_id_fkey"
-            columns: ["tenant_id"]
+            foreignKeyName: "topic_candidates_keyword_id_fkey"
+            columns: ["keyword_id"]
             isOneToOne: false
-            referencedRelation: "tenants"
+            referencedRelation: "keyword_candidates"
             referencedColumns: ["id"]
           },
           {
@@ -663,108 +1187,43 @@ export type Database = {
             referencedRelation: "strategies"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      keyword_candidates: {
-        Row: {
-          id: string
-          tenant_id: string
-          keyword: string
-          priority: "high" | "medium" | "low"
-          journey_stage: string
-          tail_type: "short" | "long"
-          motivation: string | null
-          estimated_potential: string | null
-          difficulty: number | null
-          search_volume: string | null
-          status: "pending" | "approved" | "rejected"
-          created_at: string
-          updated_at: string
-          strategy_id: string | null
-        }
-        Insert: {
-          id?: string
-          tenant_id: string
-          keyword: string
-          priority: "high" | "medium" | "low"
-          journey_stage: string
-          tail_type: "short" | "long"
-          motivation?: string | null
-          estimated_potential?: string | null
-          difficulty?: number | null
-          search_volume?: string | null
-          status?: "pending" | "approved" | "rejected"
-          created_at?: string
-          updated_at?: string
-          strategy_id?: string | null
-        }
-        Update: {
-          id?: string
-          tenant_id?: string
-          keyword?: string
-          priority?: "high" | "medium" | "low"
-          journey_stage?: string
-          tail_type?: "short" | "long"
-          motivation?: string | null
-          estimated_potential?: string | null
-          difficulty?: number | null
-          search_volume?: string | null
-          status?: "pending" | "approved" | "rejected"
-          updated_at?: string
-          strategy_id?: string | null
-        }
-
-        Relationships: [
           {
-            foreignKeyName: "keyword_candidates_tenant_id_fkey"
+            foreignKeyName: "topic_candidates_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "keyword_candidates_strategy_id_fkey"
-            columns: ["strategy_id"]
-            isOneToOne: false
-            referencedRelation: "strategies"
-            referencedColumns: ["id"]
-          },
         ]
       }
-      strategies: {
+      workspace_competitors: {
         Row: {
-          id: string
-          tenant_id: string
-          name: string
-          focus: string | null
-          status: "configuring" | "active" | "paused" | "archived"
-          operation_mode: "manual" | "assisted" | "automatic"
           created_at: string
-          updated_at: string
+          domain: string
+          frequency_score: number
+          id: string
+          last_seen: string
+          tenant_id: string
         }
         Insert: {
-          id?: string
-          tenant_id: string
-          name: string
-          focus?: string | null
-          status?: "configuring" | "active" | "paused" | "archived"
-          operation_mode?: "manual" | "assisted" | "automatic"
           created_at?: string
-          updated_at?: string
+          domain: string
+          frequency_score?: number
+          id?: string
+          last_seen?: string
+          tenant_id: string
         }
         Update: {
-          id?: string
-          tenant_id?: string
-          name?: string
-          focus?: string | null
-          status?: "configuring" | "active" | "paused" | "archived"
-          operation_mode?: "manual" | "assisted" | "automatic"
           created_at?: string
-          updated_at?: string
+          domain?: string
+          frequency_score?: number
+          id?: string
+          last_seen?: string
+          tenant_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "strategies_tenant_id_fkey"
+            foreignKeyName: "workspace_competitors_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -910,4 +1369,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-

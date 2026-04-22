@@ -1,0 +1,54 @@
+export async function createStrategy(data: any) {
+  const { tenant } = await getAuthContext()
+  if (!tenant) throw new Error("Não autenticado.")
+  const db = await getDb()
+
+  const { data: strat, error } = await (db as any)
+    .from("strategies")
+    .insert({ tenant_id: tenant.id, ...data })
+    .select()
+    .single()
+  
+  if (error) return { error: error.message }
+  revalidateStrategies()
+  return { success: "Estratégia criada.", data: strat }
+}
+
+export async function duplicateStrategy(id: string) {
+  const { tenant } = await getAuthContext()
+  if (!tenant) throw new Error("Não autenticado.")
+  const db = await getDb()
+
+  const { data: strat } = await (db as any).from("strategies").select("*").eq("id", id).single()
+  if (!strat) return { error: "Estratégia não encontrada." }
+
+  delete strat.id
+  strat.name = strat.name + " (Cópia)"
+
+  const { error } = await (db as any).from("strategies").insert(strat)
+  if (error) return { error: error.message }
+  revalidateStrategies()
+  return { success: "Estratégia duplicada." }
+}
+
+export async function archiveStrategy(id: string) {
+  const { tenant } = await getAuthContext()
+  if (!tenant) throw new Error("Não autenticado.")
+  const db = await getDb()
+
+  const { error } = await (db as any).from("strategies").update({ status: "archived" }).eq("id", id).eq("tenant_id", tenant.id)
+  if (error) return { error: error.message }
+  revalidateStrategies()
+  return { success: "Estratégia arquivada." }
+}
+
+export async function updateStrategy(id: string, data: any) {
+  const { tenant } = await getAuthContext()
+  if (!tenant) throw new Error("Não autenticado.")
+  const db = await getDb()
+
+  const { error } = await (db as any).from("strategies").update(data).eq("id", id).eq("tenant_id", tenant.id)
+  if (error) return { error: error.message }
+  revalidateStrategies()
+  return { success: "Estratégia atualizada." }
+}

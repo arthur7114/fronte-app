@@ -1,5 +1,1 @@
-import { redirect } from "next/navigation";
-
-export default function LegacyArticlesPage() {
-  redirect("/dashboard/artigos");
-}
+export { default, metadata } from "@/app/dashboard/artigos/page";

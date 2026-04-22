@@ -98,7 +98,7 @@ export function SiteSetupPanel({
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard/configuracoes?section=site">
+            <Link href="/app/configuracoes/site">
               <Settings className="mr-2 h-4 w-4" />
               Configuracoes
             </Link>
@@ -113,7 +113,7 @@ export function SiteSetupPanel({
         </CardHeader>
         <CardContent className="space-y-4">
           <Link
-            href="/dashboard/artigos/novo"
+            href="/app/artigos/new"
             className="flex items-center justify-between rounded-lg border p-4 transition hover:bg-muted"
           >
             <div className="flex flex-col">
@@ -125,7 +125,7 @@ export function SiteSetupPanel({
             <Plus className="h-5 w-5 text-muted-foreground" />
           </Link>
           <Link
-            href="/dashboard/estrategia"
+            href="/app/estrategias"
             className="flex items-center justify-between rounded-lg border p-4 transition hover:bg-muted"
           >
             <div className="flex flex-col">

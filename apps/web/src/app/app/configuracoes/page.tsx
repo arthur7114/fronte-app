@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function LegacySettingsPage() {
-  redirect("/dashboard/configuracoes");
+export default function SettingsPage() {
+  redirect("/app/configuracoes/account");
 }
