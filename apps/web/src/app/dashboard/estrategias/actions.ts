@@ -347,7 +347,6 @@ export async function duplicateStrategy(id: string) {
   revalidateStrategies()
   return { success: "Estratégia duplicada.", strategyId: newStrat?.id }
 }
-}
 
 export async function archiveStrategy(id: string) {
   const { tenant } = await getAuthContext()
