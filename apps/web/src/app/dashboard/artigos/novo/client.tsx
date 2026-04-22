@@ -177,14 +177,14 @@ export function ArticleWizardClient({ strategies }: { strategies: any[] }) {
           const isPast = stepIndex > idx
           return (
             <div key={s.id} className="flex flex-col items-center gap-2 flex-1">
-              <div className={\`h-10 w-10 rounded-full flex items-center justify-center border-2 
-                \${isActive ? "border-primary text-primary" : ""}
-                \${isPast ? "bg-primary text-primary-foreground border-primary" : ""}
-                \${!isActive && !isPast ? "border-muted text-muted-foreground" : ""}
-              \`}>
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center border-2 
+                ${isActive ? "border-primary text-primary" : ""}
+                ${isPast ? "bg-primary text-primary-foreground border-primary" : ""}
+                ${!isActive && !isPast ? "border-muted text-muted-foreground" : ""}
+              `}>
                 <s.icon className="h-5 w-5" />
               </div>
-              <span className={\`text-sm font-medium \${isActive ? "text-foreground" : "text-muted-foreground"}\`}>
+              <span className={`text-sm font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
                 {s.label}
               </span>
             </div>
@@ -434,7 +434,7 @@ export function ArticleWizardClient({ strategies }: { strategies: any[] }) {
           </CardContent>
           {!isSubmitting && step === "done" && (
              <CardFooter className="flex justify-end border-t p-6 gap-3">
-               <Button onClick={() => router.push(\`/dashboard/artigos/\${postId}\`)} className="gap-2">
+               <Button onClick={() => router.push(`/dashboard/artigos/${postId}`)} className="gap-2">
                  Abrir no Editor
                  <ArrowRight className="h-4 w-4" />
                </Button>

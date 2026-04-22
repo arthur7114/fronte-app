@@ -134,11 +134,11 @@ export async function runResearchPhase(generationId: string, tenantId: string) {
 
     const researchAiResult = await callOpenAiJson<ResearchResult>({
       messages: [{ role: "user", content: researchPrompt }],
-      schemaHint: \`{
+      schemaHint: `{
         "queries": ["string"],
         "key_findings": ["string"],
         "competitor_outlines": ["string"]
-      }\`,
+      }`,
     })
 
     // Save
@@ -194,11 +194,11 @@ export async function runStructurePhase(generationId: string, tenantId: string) 
 
     const structureAiResult = await callOpenAiJson<StructureResult>({
       messages: [{ role: "user", content: structurePrompt }],
-      schemaHint: \`{
+      schemaHint: `{
         "title": "string",
         "meta_description": "string",
         "headings": [{"level": 2, "text": "string", "intent": "string"}]
-      }\`,
+      }`,
     })
 
     // Save
@@ -270,7 +270,7 @@ export async function runWritePhase(generationId: string, tenantId: string) {
     // but wrapping it in JSON ensures it doesn't break.
     const writeAiResult = await callOpenAiJson<WriteResult>({
       messages: [{ role: "user", content: writePrompt }],
-      schemaHint: \`{"content": "string (markdown)"}\`,
+      schemaHint: `{"content": "string (markdown)"}`,
     })
 
     // Save
@@ -337,13 +337,13 @@ export async function runReviewPhase(generationId: string, tenantId: string) {
 
     const reviewAiResult = await callOpenAiJson<ReviewResult>({
       messages: [{ role: "user", content: reviewPrompt }],
-      schemaHint: \`{
+      schemaHint: `{
         "seo_score": 0,
         "readability_score": 0,
         "feedback": ["string"],
         "approved": true,
         "final_content": "string (markdown)"
-      }\`,
+      }`,
     })
 
     // Save

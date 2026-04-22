@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:dataforseo.com)",
+      "WebFetch(domain:docs.dataforseo.com)"
+    ]
+  }
+}

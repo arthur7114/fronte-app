@@ -1,4 +1,9 @@
-import { getDb } from "@super/db"
+import { getOptionalAdminSupabaseClient } from "./supabase/admin"
+import { getServerSupabaseClient } from "./supabase/server"
+
+function getDb() {
+  return getOptionalAdminSupabaseClient() ?? getServerSupabaseClient()
+}
 
 export interface SerperResult {
   title: string

@@ -240,6 +240,7 @@ export type Database = {
           id: string
           keywords_seed: string[] | null
           language: string
+          operation_mode: string
           tenant_id: string
           updated_at: string
         }
@@ -250,6 +251,7 @@ export type Database = {
           id?: string
           keywords_seed?: string[] | null
           language?: string
+          operation_mode?: string
           tenant_id: string
           updated_at?: string
         }
@@ -260,6 +262,7 @@ export type Database = {
           id?: string
           keywords_seed?: string[] | null
           language?: string
+          operation_mode?: string
           tenant_id?: string
           updated_at?: string
         }
@@ -931,13 +934,66 @@ export type Database = {
           },
         ]
       }
+      site_integrations: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          provider: string
+          site_id: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          provider: string
+          site_id: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          provider?: string
+          site_id?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_integrations_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_integrations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sites: {
         Row: {
           created_at: string
           custom_domain: string | null
+          custom_domain_status: string
+          font_family: string
           id: string
           language: string
+          logo_path: string | null
+          logo_url: string | null
           name: string
+          primary_color: string
           subdomain: string
           tenant_id: string
           theme_id: string | null
@@ -945,9 +1001,14 @@ export type Database = {
         Insert: {
           created_at?: string
           custom_domain?: string | null
+          custom_domain_status?: string
+          font_family?: string
           id?: string
           language?: string
+          logo_path?: string | null
+          logo_url?: string | null
           name: string
+          primary_color?: string
           subdomain: string
           tenant_id: string
           theme_id?: string | null
@@ -955,9 +1016,14 @@ export type Database = {
         Update: {
           created_at?: string
           custom_domain?: string | null
+          custom_domain_status?: string
+          font_family?: string
           id?: string
           language?: string
+          logo_path?: string | null
+          logo_url?: string | null
           name?: string
+          primary_color?: string
           subdomain?: string
           tenant_id?: string
           theme_id?: string | null
@@ -975,6 +1041,7 @@ export type Database = {
       strategies: {
         Row: {
           audience: string | null
+          cadence: number
           color: string | null
           created_at: string
           description: string | null
@@ -991,6 +1058,7 @@ export type Database = {
         }
         Insert: {
           audience?: string | null
+          cadence?: number
           color?: string | null
           created_at?: string
           description?: string | null
@@ -1007,6 +1075,7 @@ export type Database = {
         }
         Update: {
           audience?: string | null
+          cadence?: number
           color?: string | null
           created_at?: string
           description?: string | null

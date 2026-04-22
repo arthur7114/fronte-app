@@ -333,19 +333,20 @@ export async function createStrategy(data: any) {
 
 export async function duplicateStrategy(id: string) {
   const { tenant } = await getAuthContext()
-  if (!tenant) throw new Error("Nao autenticado.")
+  if (!tenant) throw new Error("Não autenticado.")
   const db = await getDb()
 
   const { data: strat } = await (db as any).from("strategies").select("*").eq("id", id).single()
-  if (!strat) return { error: "Estrategia nao encontrada." }
+  if (!strat) return { error: "Estratégia não encontrada." }
 
   delete strat.id
-  strat.name = strat.name + " (Copia)"
+  strat.name = strat.name + " (Cópia)"
 
   const { data: newStrat, error } = await (db as any).from("strategies").insert(strat).select().single()
   if (error) return { error: error.message }
   revalidateStrategies()
-  return { success: "Estrategia duplicada.", strategyId: newStrat?.id }
+  return { success: "Estratégia duplicada.", strategyId: newStrat?.id }
+}
 }
 
 export async function archiveStrategy(id: string) {

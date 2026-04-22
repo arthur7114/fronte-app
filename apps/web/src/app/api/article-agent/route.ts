@@ -12,7 +12,7 @@ export const maxDuration = 60
 
 export async function POST(req: Request) {
   try {
-    const supabase = getOptionalAdminSupabaseClient() ?? getServerSupabaseClient()
+    const supabase = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient())
     const { data: authData, error: authError } = await supabase.auth.getUser()
 
     if (authError || !authData.user) {
