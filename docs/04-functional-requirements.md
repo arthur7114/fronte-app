@@ -42,6 +42,7 @@
 - incluir fila de producao e geracao em massa conforme prototipo
 - organizar agenda em `/dashboard/calendario`
 - manter `/dashboard/artigos/novo` e `/dashboard/artigos/[id]` como compatibilidade quando o prototipo consolidar a experiencia na pagina principal
+- publicar automaticamente posts agendados quando `scheduled_for` vencer, usando a integracao CMS configurada do site
 
 ## 7. Blog publico e blog do dashboard
 

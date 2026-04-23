@@ -33,7 +33,7 @@ const MUTATING_TOOLS = new Set<AssistantToolName>([
 ])
 
 const PUBLISHING_JOB_TYPES = new Set(["publish_post"])
-const PUBLISHING_POST_STATUSES = new Set(["scheduled", "published"])
+const PUBLISHING_POST_STATUSES = new Set(["scheduled", "publishing", "published"])
 
 const ASSISTANT_TOOLS = [
   {

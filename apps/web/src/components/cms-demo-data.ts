@@ -23,8 +23,12 @@ export const STATUS_LABELS: Record<PostStatus, string> = {
   draft: "Rascunho",
   in_review: "Em revisao",
   approved: "Aprovado",
+  generating: "Gerando",
+  queued: "Na fila",
   scheduled: "Agendado",
+  publishing: "Publicando",
   published: "Publicado",
+  failed: "Falhou",
   rejected: "Rejeitado",
 };
 

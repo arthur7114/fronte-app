@@ -11,6 +11,11 @@ export type KeywordItem = {
   difficulty: number | "baixa" | "média" | "alta" // Support both score and label
   traffic?: string
   search_volume?: string
+  search_volume_int?: number | null
+  cpc?: number | null
+  competition_level?: string | null
+  search_intent?: string | null
+  source?: string
   estimated_potential?: string
   stage: "Consciência" | "Consideração" | "Decisão" | string
   type: "Long tail" | "Short tail" | string

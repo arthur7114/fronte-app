@@ -23,7 +23,18 @@ const STRATEGY_STATUSES = z.enum(["configuring", "active", "paused", "archived"]
 const KEYWORD_STATUSES = z.enum(["pending", "approved", "rejected"]);
 const TOPIC_STATUSES = z.enum(["pending", "approved", "rejected"]);
 const BRIEF_STATUSES = z.enum(["pending", "approved"]);
-const POST_STATUSES = z.enum(["draft", "in_review", "approved", "scheduled", "published", "rejected"]);
+const POST_STATUSES = z.enum([
+  "draft",
+  "in_review",
+  "approved",
+  "generating",
+  "queued",
+  "scheduled",
+  "publishing",
+  "published",
+  "failed",
+  "rejected",
+]);
 const JOB_TYPES = z.enum(["research_topics", "generate_keyword_strategy", "generate_brief", "generate_post", "publish_post"]);
 const CADENCES = new Set([4, 8, 12, 20]);
 

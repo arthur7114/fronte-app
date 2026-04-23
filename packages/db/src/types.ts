@@ -514,6 +514,8 @@ export type Database = {
       }
       keyword_candidates: {
         Row: {
+          competition_level: string | null
+          cpc: number | null
           created_at: string
           difficulty: number | null
           estimated_potential: string | null
@@ -522,7 +524,10 @@ export type Database = {
           keyword: string
           motivation: string | null
           priority: string
+          search_intent: string | null
           search_volume: string | null
+          search_volume_int: number | null
+          source: string
           status: string
           strategy_id: string | null
           tail_type: string
@@ -530,22 +535,29 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          competition_level?: string | null
+          cpc?: number | null
           created_at?: string
           difficulty?: number | null
           estimated_potential?: string | null
           id?: string
-          journey_stage: string
+          journey_stage?: string
           keyword: string
           motivation?: string | null
-          priority: string
+          priority?: string
+          search_intent?: string | null
           search_volume?: string | null
+          search_volume_int?: number | null
+          source?: string
           status?: string
           strategy_id?: string | null
-          tail_type: string
+          tail_type?: string
           tenant_id: string
           updated_at?: string
         }
         Update: {
+          competition_level?: string | null
+          cpc?: number | null
           created_at?: string
           difficulty?: number | null
           estimated_potential?: string | null
@@ -554,7 +566,10 @@ export type Database = {
           keyword?: string
           motivation?: string | null
           priority?: string
+          search_intent?: string | null
           search_volume?: string | null
+          search_volume_int?: number | null
+          source?: string
           status?: string
           strategy_id?: string | null
           tail_type?: string

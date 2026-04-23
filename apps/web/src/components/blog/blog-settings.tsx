@@ -47,9 +47,13 @@ const integrations = [
 
 const initialState: SiteState = {}
 
+type SiteIntegration = Omit<Tables<"site_integrations">, "config"> & {
+  config: Record<string, unknown>
+}
+
 type BlogSettingsProps = {
   site: Tables<"sites">
-  integrations: any[]
+  integrations: SiteIntegration[]
 }
 
 function statusLabel(status: string) {
@@ -64,12 +68,10 @@ function IntegrationDialog({
   current,
 }: {
   integration: (typeof integrations)[number]
-  current?: any
+  current?: SiteIntegration
 }) {
   const [state, formAction, pending] = useActionState(saveSiteIntegration, initialState)
-  const config = current?.config && typeof current.config === "object" && !Array.isArray(current.config)
-    ? current.config as Record<string, unknown>
-    : {}
+  const config = current?.config ?? {}
 
   return (
     <Dialog>
@@ -82,7 +84,7 @@ function IntegrationDialog({
         <DialogHeader>
           <DialogTitle>{integration.name}</DialogTitle>
           <DialogDescription>
-            Salve a configuracao da integracao. A conexao real com APIs externas fica para uma etapa futura.
+            Salve a configuracao usada pela publicacao automatica em APIs externas.
           </DialogDescription>
         </DialogHeader>
 
@@ -106,7 +108,7 @@ function IntegrationDialog({
               placeholder={config.has_api_key ? "Chave ja informada" : "Opcional"}
             />
             <p className="text-xs text-muted-foreground">
-              Nesta fase salvamos apenas que a chave foi informada, nao o valor sensivel.
+              Se ja houver uma chave salva, deixe em branco para mante-la.
             </p>
           </div>
           <div className="space-y-2">
@@ -198,7 +200,7 @@ export function BlogSettings({ site, integrations: savedIntegrations }: BlogSett
                     </p>
                   </div>
                 </div>
-                <Badge variant="outline">{statusLabel((site as any).custom_domain_status)}</Badge>
+                <Badge variant="outline">{statusLabel(site.custom_domain_status)}</Badge>
               </div>
               <Input
                 name="custom_domain"
@@ -262,7 +264,7 @@ export function BlogSettings({ site, integrations: savedIntegrations }: BlogSett
           <div className="mt-4 flex items-start gap-2 rounded-lg bg-amber-50 p-4">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
             <p className="text-xs text-amber-700">
-              As integracoes ficam salvas como configuracao. Publicacao real em APIs externas sera implementada depois.
+              Posts agendados usam a integracao configurada quando o cron de publicacao estiver ativo.
             </p>
           </div>
         </div>

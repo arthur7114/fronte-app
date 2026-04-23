@@ -1,0 +1,9 @@
+-- Template de configuracao para o job de publicacao agendada.
+-- Execute no Supabase Dashboard -> SQL Editor ou via conexao administrativa.
+--
+-- O valor de app.supabase_functions_url deve incluir o prefixo /functions/v1.
+-- Exemplo:
+-- ALTER DATABASE postgres SET app.supabase_functions_url = 'https://PROJECT_REF.supabase.co/functions/v1';
+-- ALTER DATABASE postgres SET app.service_role_key = '<SUPABASE_SERVICE_ROLE_KEY>';
+--
+-- Reinicie conexoes ativas apos alterar settings de database para garantir que o cron veja os valores.

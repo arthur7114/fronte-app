@@ -1,4 +1,13 @@
 import { callOpenAiJson } from "./ai"
+import {
+  getKeywordMetrics,
+  getKeywordSuggestions,
+  getBulkKeywordDifficulty,
+  isDataForSeoConfigured,
+  volumeTier,
+  difficultyTier,
+  type KeywordSuggestion,
+} from "./dataforseo"
 import { fetchSerpWithCache } from "./serper"
 import { getOptionalAdminSupabaseClient } from "./supabase/admin"
 import { getServerSupabaseClient } from "./supabase/server"
@@ -19,10 +28,25 @@ export interface ArticleBriefing {
   additional_instructions?: string
 }
 
+export interface KeywordData {
+  keyword: string
+  search_volume: number
+  volume_tier: "alto" | "médio" | "baixo"
+  keyword_difficulty: number
+  difficulty_tier: "fácil" | "médio" | "difícil"
+  cpc: number
+  competition_level: "LOW" | "MEDIUM" | "HIGH"
+  search_intent: string
+}
+
 export interface ResearchResult {
   queries: string[]
   key_findings: string[]
   competitor_outlines: any[]
+  keyword_data?: {
+    primary: KeywordData | null
+    suggestions: KeywordData[]
+  }
 }
 
 export interface StructureResult {
@@ -108,19 +132,98 @@ export async function runResearchPhase(generationId: string, tenantId: string) {
     .eq("id", generationId)
 
   try {
-    // 1. Figure out search query
     const queryToSearch = gen.primary_keyword || gen.topic
 
-    // 2. Do real SERP research
+    // 1. SERP snapshot (Serper.dev) — competitor titles + snippets
     const serpData = await fetchSerpWithCache(queryToSearch, tenantId)
 
-    // 3. Extract insights using AI
+    // 2. DataForSEO — keyword metrics, suggestions, difficulty (runs in parallel)
+    let keywordData: ResearchResult["keyword_data"] | undefined
+    if (isDataForSeoConfigured()) {
+      const [metricsRaw, suggestions] = await Promise.all([
+        getKeywordMetrics([queryToSearch]),
+        getKeywordSuggestions(queryToSearch, 15),
+      ])
+
+      const primaryRaw = metricsRaw[0] ?? null
+      const suggestionKeywords = suggestions.map((s) => s.keyword)
+
+      // Enrich suggestions with difficulty scores in one batch call
+      const difficulties = suggestionKeywords.length
+        ? await getBulkKeywordDifficulty(suggestionKeywords)
+        : []
+      const difficultyMap = new Map(difficulties.map((d) => [d.keyword, d.difficulty]))
+
+      const toKeywordData = (
+        keyword: string,
+        volume: number,
+        difficulty: number,
+        cpc: number,
+        competition_level: KeywordSuggestion["competition_level"],
+        search_intent: string
+      ): KeywordData => ({
+        keyword,
+        search_volume: volume,
+        volume_tier: volumeTier(volume),
+        keyword_difficulty: difficulty,
+        difficulty_tier: difficultyTier(difficulty),
+        cpc,
+        competition_level,
+        search_intent,
+      })
+
+      keywordData = {
+        primary: primaryRaw
+          ? toKeywordData(
+              primaryRaw.keyword,
+              primaryRaw.search_volume,
+              difficultyMap.get(primaryRaw.keyword) ?? 0,
+              primaryRaw.cpc,
+              primaryRaw.competition_level,
+              "informational"
+            )
+          : null,
+        suggestions: suggestions.map((s) =>
+          toKeywordData(
+            s.keyword,
+            s.search_volume,
+            difficultyMap.get(s.keyword) ?? s.keyword_difficulty,
+            s.cpc,
+            s.competition_level,
+            s.search_intent
+          )
+        ),
+      }
+    }
+
+    // 3. AI analysis — now enriched with real keyword data
+    const keywordContext = keywordData?.primary
+      ? `
+Primary keyword metrics:
+- Search volume: ${keywordData.primary.search_volume.toLocaleString("pt-BR")}/mês (${keywordData.primary.volume_tier})
+- Keyword difficulty: ${keywordData.primary.keyword_difficulty}/100 (${keywordData.primary.difficulty_tier})
+- CPC: R$ ${keywordData.primary.cpc.toFixed(2)}
+- Search intent: ${keywordData.primary.search_intent}
+
+Top related keywords by volume:
+${
+  keywordData.suggestions
+    .slice(0, 8)
+    .map(
+      (s) =>
+        `- "${s.keyword}": ${s.search_volume.toLocaleString("pt-BR")}/mês, dificuldade ${s.keyword_difficulty}/100, intenção: ${s.search_intent}`
+    )
+    .join("\n")
+}`
+      : ""
+
     const researchPrompt = `
-      You are an expert SEO researcher.
+      You are an expert SEO researcher writing in Brazilian Portuguese.
       Topic: ${gen.topic}
       Primary Keyword: ${gen.primary_keyword || "N/A"}
-      
-      Below are the top Google search results for this keyword:
+      ${keywordContext}
+
+      Top Google search results for this keyword:
       ${
         serpData?.results
           ?.slice(0, 10)
@@ -128,11 +231,14 @@ export async function runResearchPhase(generationId: string, tenantId: string) {
           .join("\n") || "No SERP data available."
       }
 
-      Analyze the competitor content and identify what users are looking for.
-      Provide key findings and a summary of what the competitor outlines likely look like.
+      Based on the keyword data and competitor SERP results:
+      1. Identify what users are really looking for (search intent signals)
+      2. Extract key content gaps not well covered by competitors
+      3. Summarize the typical structure of top-ranking content
+      4. Recommend the best angle for this article given difficulty and volume
     `
 
-    const researchAiResult = await callOpenAiJson<ResearchResult>({
+    const researchAiResult = await callOpenAiJson<Omit<ResearchResult, "keyword_data">>({
       messages: [{ role: "user", content: researchPrompt }],
       schemaHint: `{
         "queries": ["string"],
@@ -141,13 +247,15 @@ export async function runResearchPhase(generationId: string, tenantId: string) {
       }`,
     })
 
+    const fullResult: ResearchResult = { ...researchAiResult, keyword_data: keywordData }
+
     // Save
     await (db as any)
       .from("article_generations")
-      .update({ research_result: researchAiResult })
+      .update({ research_result: fullResult })
       .eq("id", generationId)
 
-    return researchAiResult
+    return fullResult
   } catch (error: any) {
     await markAsFailed(generationId, error.message)
     throw error

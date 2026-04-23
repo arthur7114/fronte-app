@@ -24,6 +24,7 @@ import { StrategyJobBanner } from "@/components/strategy/strategy-job-banner"
 import { StrategyForm, type StrategyDraft, type OperationMode } from "@/components/strategy/strategy-form"
 import { StrategyPreview } from "@/components/strategy/strategy-preview"
 import { CompetitorsView } from "@/components/content-plan/competitors-view"
+import { TrendsTab } from "@/components/content-plan/trends-tab"
 import type { Tables } from "@super/db"
 import {
   Archive,
@@ -307,6 +308,10 @@ export function StrategyDetailClient({
               {articles.length}
             </span>
           </TabsTrigger>
+          <TabsTrigger value="tendencias" className="gap-1.5">
+            <Sparkles className="h-3.5 w-3.5" />
+            Tendências
+          </TabsTrigger>
           <TabsTrigger value="competitors" className="gap-1.5">
             <TrendingUp className="h-3.5 w-3.5" />
             Concorrência
@@ -327,6 +332,10 @@ export function StrategyDetailClient({
             strategyId={strategy.id}
             strategyName={strategy.name}
           />
+        </TabsContent>
+
+        <TabsContent value="tendencias" className="m-0">
+          <TrendsTab strategyId={strategy.id} primaryKeyword={strategy.name} />
         </TabsContent>
 
         <TabsContent value="topics" className="m-0">

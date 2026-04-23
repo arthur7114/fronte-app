@@ -24,14 +24,28 @@ export const USER_ROLES: readonly UserRole[] = ["owner", "admin", "editor"] as c
 /**
  * Post editorial status.
  */
-export type PostStatus = "draft" | "in_review" | "approved" | "scheduled" | "published" | "rejected";
+export type PostStatus =
+    | "draft"
+    | "in_review"
+    | "approved"
+    | "generating"
+    | "queued"
+    | "scheduled"
+    | "publishing"
+    | "published"
+    | "failed"
+    | "rejected";
 
 export const POST_STATUSES: readonly PostStatus[] = [
     "draft",
     "in_review",
     "approved",
+    "generating",
+    "queued",
     "scheduled",
+    "publishing",
     "published",
+    "failed",
     "rejected",
 ] as const;
 

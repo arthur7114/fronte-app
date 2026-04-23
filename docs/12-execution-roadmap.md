@@ -138,3 +138,20 @@ Foco na qualidade, metodologia e motor por trás da execução das estratégias 
 - `npm --workspace @super/web run build`
 - lint de escopo alterado
 - registrar falhas de lint global se forem baseline legado fora do escopo
+
+## Atualizacao registrada - 2026-04-22
+
+- Fase 7 - Publicacao agendada automatica implementada.
+- `pg_cron` + `pg_net` disparam `publish-scheduled-posts` a cada minuto para posts `scheduled` vencidos.
+- A Edge Function publica em WordPress, Webflow ou webhook customizado usando `site_integrations`.
+- O status intermediario `publishing` evita duplo disparo; falhas marcam `posts.status = failed` e registram erro em `automation_jobs`.
+- As chaves de integracao CMS ficam no backend e sao removidas antes de renderizar a UI.
+
+## Validacao registrada - 2026-04-22
+
+- `npx tsc -p apps/web/tsconfig.json --noEmit` passou.
+- `npx tsc -p packages/strategy-mcp/tsconfig.json --noEmit` passou.
+- `npx eslint` nos arquivos web alterados da Fase 7 passou.
+- `npm --workspace @super/web run build` passou.
+- `npm --workspace @super/web run lint` falhou por baseline global preexistente fora do escopo da Fase 7.
+- Validacao Supabase local nao executada: `supabase`, `deno`, `psql` e `python` nao estao disponiveis neste ambiente.

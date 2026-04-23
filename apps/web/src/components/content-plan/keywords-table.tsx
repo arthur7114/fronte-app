@@ -15,8 +15,8 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Target, ArrowUpDown, Search, Filter, Download, Plus, Sparkles,
-  ShieldBan, Trash2, ShieldOff, MoreHorizontal, CheckCircle2, XCircle,
+  Target, ArrowUpDown, Search, Filter, Download, Sparkles,
+  ShieldBan, Trash2, ShieldOff, MoreHorizontal, CheckCircle2, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { KeywordItem } from "@/lib/strategies";
@@ -43,6 +43,42 @@ const stageColors: Record<string, string> = {
   consideration: "bg-purple-100 text-purple-700",
   decision: "bg-green-100 text-green-700",
 };
+
+type EnrichedKwData = {
+  search_volume_int?: number
+  difficulty?: number
+  cpc?: number
+  competition_level?: string
+  search_intent?: string
+}
+
+const intentLabels: Record<string, string> = {
+  informational: "informacional",
+  navigational: "navegacional",
+  commercial: "comercial",
+  transactional: "transacional",
+}
+
+function getVolumeBadge(vol: number | null | undefined) {
+  if (!vol) return null;
+  const fmt = new Intl.NumberFormat("pt-BR").format(vol);
+  let color = "bg-yellow-100 text-yellow-700";
+  if (vol >= 10000) color = "bg-green-100 text-green-700";
+  else if (vol >= 1000) color = "bg-blue-100 text-blue-700";
+  return <Badge variant="secondary" className={color}>{fmt}/mês</Badge>;
+}
+
+function getCpcBadge(cpc: number | null | undefined) {
+  if (!cpc) return null;
+  const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cpc);
+  return <Badge variant="secondary" className="bg-purple-100 text-purple-700">{fmt}</Badge>;
+}
+
+function getIntentBadge(intent: string | null | undefined) {
+  if (!intent) return null;
+  const label = intentLabels[intent] ?? intent;
+  return <Badge variant="secondary" className="bg-sky-100 text-sky-700 capitalize">{label}</Badge>;
+}
 
 function getDifficultyBadge(difficulty: number | string | undefined) {
   if (typeof difficulty === "number") {
@@ -79,6 +115,38 @@ export function KeywordsTable({
   const [isPending, startTransition] = useTransition();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [keywordCount, setKeywordCount] = useState(10);
+  const [enrichingId, setEnrichingId] = useState<string | null>(null);
+  const [enrichedData, setEnrichedData] = useState<Record<string, EnrichedKwData>>({});
+
+  const handleEnrich = async (kw: KeywordItem) => {
+    if (!strategyId || enrichingId) return;
+    setEnrichingId(kw.id);
+    try {
+      const res = await fetch("/api/dataforseo/keywords", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword: kw.keyword, strategy_id: strategyId, save: true }),
+      });
+      const data = await res.json();
+      if (data.primary) {
+        setEnrichedData((prev) => ({
+          ...prev,
+          [kw.id]: {
+            search_volume_int: data.primary.search_volume,
+            difficulty: data.primary.keyword_difficulty,
+            cpc: data.primary.cpc,
+            competition_level: data.primary.competition_level,
+            search_intent: data.primary.search_intent,
+          },
+        }));
+        toast.success("Dados DataForSEO carregados!");
+      }
+    } catch {
+      toast.error("Erro ao enriquecer keyword");
+    } finally {
+      setEnrichingId(null);
+    }
+  };
 
   const handleSelectAll = (checked: boolean, list: KeywordItem[]) => {
     setSelectedItems(checked ? list.map((i) => i.id) : []);
@@ -184,6 +252,8 @@ export function KeywordsTable({
               emptyHint="Peça à IA para sugerir oportunidades para esta estratégia."
               selectedItems={selectedItems} onSelect={handleSelect}
               onSelectAll={(c) => handleSelectAll(c, activeList)}
+              enrichedData={enrichedData} enrichingId={enrichingId}
+              onEnrich={strategyId ? handleEnrich : undefined}
             />
           </TabsContent>
 
@@ -235,6 +305,7 @@ export function KeywordsTable({
 function KeywordsContent({
   keywords, onReject, emptyHint, rejectedView = false,
   selectedItems, onSelect, onSelectAll,
+  enrichedData, enrichingId, onEnrich,
 }: {
   keywords: KeywordItem[];
   onReject?: (kw: KeywordItem) => void;
@@ -243,6 +314,9 @@ function KeywordsContent({
   selectedItems?: string[];
   onSelect?: (id: string, checked: boolean) => void;
   onSelectAll?: (checked: boolean) => void;
+  enrichedData?: Record<string, EnrichedKwData>;
+  enrichingId?: string | null;
+  onEnrich?: (kw: KeywordItem) => void;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -281,74 +355,105 @@ function KeywordsContent({
             </TableHead>
             <TableHead>Dificuldade</TableHead>
             <TableHead>Volume</TableHead>
+            <TableHead>CPC</TableHead>
+            <TableHead>Intenção</TableHead>
             <TableHead>Potencial</TableHead>
             <TableHead>Estágio</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {keywords.map((kw) => (
-            <TableRow key={kw.id} className="group hover:bg-muted/50 transition-colors">
-              <TableCell><Checkbox checked={selectedItems?.includes(kw.id)} onCheckedChange={(c) => onSelect?.(kw.id, !!c)} /></TableCell>
-              <TableCell className="font-medium">
-                <div className="flex flex-col">
-                  <span>{kw.keyword}</span>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{kw.type}</span>
-                </div>
-              </TableCell>
-              <TableCell>{getDifficultyBadge(kw.difficulty)}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1.5 text-sm font-medium">
-                  {kw.search_volume || kw.traffic || "---"}
-                </div>
-              </TableCell>
-              <TableCell className="max-w-[200px]">
-                <p className="truncate text-xs text-muted-foreground" title={kw.estimated_potential || ""}>
-                  {kw.estimated_potential || "Analisando..."}
-                </p>
-              </TableCell>
-              <TableCell>
-                <Badge variant="secondary" className={cn("capitalize text-[10px] px-1.5 py-0", stageColors[String(kw.stage).toLowerCase()] || "bg-muted text-muted-foreground")}>
-                  {kw.stage}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDeleteOne(kw.id)}
-                    disabled={isPending}
-                    title="Excluir"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
+          {keywords.map((kw) => {
+            const enriched = enrichedData?.[kw.id];
+            const volumeInt = enriched?.search_volume_int ?? kw.search_volume_int;
+            const difficulty = enriched?.difficulty ?? kw.difficulty;
+            const cpc = enriched?.cpc ?? kw.cpc;
+            const intent = enriched?.search_intent ?? kw.search_intent;
+            return (
+              <TableRow key={kw.id} className="group hover:bg-muted/50 transition-colors">
+                <TableCell><Checkbox checked={selectedItems?.includes(kw.id)} onCheckedChange={(c) => onSelect?.(kw.id, !!c)} /></TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex flex-col">
+                    <span>{kw.keyword}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{kw.type}</span>
+                  </div>
+                </TableCell>
+                <TableCell>{getDifficultyBadge(difficulty)}</TableCell>
+                <TableCell>
+                  {volumeInt
+                    ? getVolumeBadge(volumeInt)
+                    : <span className="text-sm font-medium text-muted-foreground">{kw.search_volume || kw.traffic || "---"}</span>}
+                </TableCell>
+                <TableCell>{getCpcBadge(cpc)}</TableCell>
+                <TableCell>{getIntentBadge(intent)}</TableCell>
+                <TableCell className="max-w-[200px]">
+                  <p className="truncate text-xs text-muted-foreground" title={kw.estimated_potential || ""}>
+                    {kw.estimated_potential || "Analisando..."}
+                  </p>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary" className={cn("capitalize text-[10px] px-1.5 py-0", stageColors[String(kw.stage).toLowerCase()] || "bg-muted text-muted-foreground")}>
+                    {kw.stage}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {onEnrich && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={() => onEnrich(kw)}
+                        disabled={!!enrichingId}
+                        title="Enriquecer com DataForSEO"
+                      >
+                        {enrichingId === kw.id
+                          ? <Loader2 className="h-4 w-4 animate-spin" />
+                          : <Sparkles className="h-4 w-4" />}
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      {kw.status === "pending" && (
-                        <DropdownMenuItem onClick={() => massApproveKeywords([kw.id]).then(r => r.error ? toast.error(r.error) : toast.success("Aprovada!"))}>
-                          <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />Aprovar
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleDeleteOne(kw.id)}
+                      disabled={isPending}
+                      title="Excluir"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        {kw.status === "pending" && (
+                          <DropdownMenuItem onClick={() => massApproveKeywords([kw.id]).then(r => r.error ? toast.error(r.error) : toast.success("Aprovada!"))}>
+                            <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />Aprovar
+                          </DropdownMenuItem>
+                        )}
+                        {onEnrich && (
+                          <DropdownMenuItem onClick={() => onEnrich(kw)} disabled={!!enrichingId}>
+                            <Sparkles className="mr-2 h-4 w-4 text-primary" />
+                            {enrichingId === kw.id ? "Enriquecendo..." : "Enriquecer com DataForSEO"}
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => onReject?.(kw)}>
+                          <ShieldBan className="mr-2 h-4 w-4 text-amber-600" />Blacklist / Reprovar
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem onClick={() => onReject?.(kw)}>
-                        <ShieldBan className="mr-2 h-4 w-4 text-amber-600" />Blacklist / Reprovar
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteOne(kw.id)} disabled={isPending}>
-                        <Trash2 className="mr-2 h-4 w-4" />Excluir definitivamente
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteOne(kw.id)} disabled={isPending}>
+                          <Trash2 className="mr-2 h-4 w-4" />Excluir definitivamente
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

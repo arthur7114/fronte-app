@@ -356,6 +356,41 @@ export async function saveSiteIntegration(
 
   const now = new Date().toISOString();
   const admin = getAdminSupabaseClient();
+  const existingResult = await admin
+    .from("site_integrations")
+    .select("config")
+    .eq("tenant_id", context.tenant.id)
+    .eq("site_id", context.site.id)
+    .eq("provider", provider)
+    .maybeSingle();
+
+  if (existingResult.error) {
+    return { error: "Nao foi possivel carregar a integracao atual." };
+  }
+
+  const existingConfig =
+    existingResult.data?.config &&
+    typeof existingResult.data.config === "object" &&
+    !Array.isArray(existingResult.data.config)
+      ? existingResult.data.config as Record<string, unknown>
+      : {};
+  const existingApiKey = typeof existingConfig.api_key === "string" ? existingConfig.api_key : "";
+  const nextApiKey = apiKey || existingApiKey;
+
+  if ((provider === "wordpress" || provider === "webflow") && !nextApiKey) {
+    return { error: "Informe a chave/API token para esta integracao." };
+  }
+
+  const config: Record<string, string | boolean> = {
+    endpoint,
+    has_api_key: Boolean(nextApiKey),
+    notes,
+  };
+
+  if (nextApiKey) {
+    config.api_key = nextApiKey;
+  }
+
   const result = await admin
     .from("site_integrations")
     .upsert(
@@ -364,11 +399,7 @@ export async function saveSiteIntegration(
         site_id: context.site.id,
         provider,
         status: "configured",
-        config: {
-          endpoint,
-          has_api_key: Boolean(apiKey),
-          notes,
-        },
+        config,
         updated_at: now,
       },
       { onConflict: "site_id,provider" },

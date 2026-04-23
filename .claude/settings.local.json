@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:dataforseo.com)",
-      "WebFetch(domain:docs.dataforseo.com)"
+      "WebFetch(domain:docs.dataforseo.com)",
+      "Bash(npx tsc *)",
+      "Bash(npx supabase *)",
+      "Bash(npm --workspace @super/web run build)",
+      "Skill(update-config)",
+      "Skill(update-config:*)"
     ]
   }
 }

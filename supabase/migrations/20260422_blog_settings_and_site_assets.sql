@@ -44,16 +44,8 @@ ALTER TABLE public.site_integrations ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can view site_integrations for their tenant"
   ON public.site_integrations;
-CREATE POLICY "Users can view site_integrations for their tenant"
-  ON public.site_integrations FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM public.memberships m
-      WHERE m.tenant_id = site_integrations.tenant_id
-        AND m.user_id = auth.uid()
-    )
-  );
+-- As configs podem conter api_key de CMS. Leitura deve passar pelo backend/admin,
+-- que remove segredos antes de renderizar UI.
 
 DROP POLICY IF EXISTS "Users can insert site_integrations for their tenant"
   ON public.site_integrations;

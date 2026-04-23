@@ -82,6 +82,9 @@ O modelo multi-strategy permanece.
 - a UX deve filtrar ou agrupar artigos por estrategia
 - o vinculo forte (`strategy_id`) em `posts` é **obrigatório** para garantir rastreabilidade total do motor de execução.
 
+- publicacao agendada usa `status = scheduled` + `scheduled_for`; o cron muda temporariamente para `publishing` e finaliza em `published` ou `failed`.
+- `site_integrations` guarda a configuracao de destino CMS por site/tenant para publicacao externa.
+
 ## Gaps de modelo (Resolvidos / Planejados)
 
 A maioria das superfícies do protótipo já possui modelo de dados oficial no Supabase:

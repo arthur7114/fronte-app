@@ -4,9 +4,13 @@ export const POST_STATUS_LABELS: Record<PostStatus, string> = {
   draft: "Rascunho",
   in_review: "Em aprovacao",
   approved: "Aprovado",
-  rejected: "Rejeitado",
+  generating: "Gerando",
+  queued: "Na fila",
   scheduled: "Agendado",
+  publishing: "Publicando",
   published: "Publicado",
+  failed: "Falhou",
+  rejected: "Rejeitado",
 };
 
 export function normalizePostSlug(input: string) {

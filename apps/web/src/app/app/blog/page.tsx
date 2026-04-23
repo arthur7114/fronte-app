@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import type { Tables } from "@super/db"
 import { BlogCustomization } from "@/components/blog/blog-customization"
 import { BlogPreview } from "@/components/blog/blog-preview"
 import { BlogSettings } from "@/components/blog/blog-settings"
@@ -6,6 +7,10 @@ import { TemplateSelector } from "@/components/blog/template-selector"
 import { getAuthContext } from "@/lib/auth-context"
 import { getAllPublicPosts } from "@/lib/blog-public-server"
 import { getAdminSupabaseClient } from "@/lib/supabase/admin"
+
+type PublicSiteIntegration = Omit<Tables<"site_integrations">, "config"> & {
+  config: Record<string, unknown>
+}
 
 export default async function MeuBlogPage() {
   const { user, membership, tenant, site } = await getAuthContext()
@@ -33,7 +38,21 @@ export default async function MeuBlogPage() {
       .order("provider", { ascending: true }),
   ])
 
-  const integrations = integrationsResult.data ?? []
+  const integrations: PublicSiteIntegration[] = (integrationsResult.data ?? []).map((integration) => {
+    if (!integration.config || typeof integration.config !== "object" || Array.isArray(integration.config)) {
+      return {
+        ...integration,
+        config: {},
+      }
+    }
+
+    const publicConfig = { ...(integration.config as Record<string, unknown>) }
+    delete publicConfig.api_key
+    return {
+      ...integration,
+      config: publicConfig,
+    }
+  })
 
   return (
     <div className="space-y-8">
