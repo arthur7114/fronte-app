@@ -23,27 +23,8 @@ type StoreState = {
 }
 
 const state: StoreState = {
-  banned: [
-    {
-      id: "b-seed-1",
-      kind: "keyword",
-      term: "aparelho ortodôntico invisível",
-      note: "Custo alto para o público da clínica; já rejeitado anteriormente.",
-      scope: "strategy",
-      strategyId: "s1",
-      strategyName: "Estratégia SEO Blog",
-      bannedAt: "2026-04-05",
-    },
-    {
-      id: "b-seed-2",
-      kind: "keyword",
-      term: "tratamento de canal dolorido",
-      note: "Termo sensível que pode afastar novos pacientes do nosso posicionamento.",
-      scope: "workspace",
-      bannedAt: "2026-03-22",
-    },
-  ],
-  rejectedIds: new Set<string>(["k5"]),
+  banned: [],
+  rejectedIds: new Set<string>(),
 }
 
 const listeners = new Set<() => void>()
