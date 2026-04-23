@@ -2,6 +2,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { normalizeCandidateStatus } from "@super/shared"
 import { getAuthContext } from "@/lib/auth-context"
 import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin"
 import { getServerSupabaseClient } from "@/lib/supabase/server"
@@ -91,6 +92,9 @@ const ASSISTANT_TOOLS = [
             enum: ["generate_keyword_strategy", "research_topics", "generate_brief", "generate_post", "publish_post"],
           },
           keyword_count: { type: "number", minimum: 1, maximum: 50 },
+          topic_count: { type: "number", minimum: 1, maximum: 50 },
+          keyword_ids: { type: "array", items: { type: "string" } },
+          scope: { type: "string", enum: ["all_approved", "selected_keywords", "without_approved_topics"] },
           topic_candidate_id: { type: "string" },
           content_brief_id: { type: "string" },
           post_id: { type: "string" },
@@ -104,12 +108,12 @@ const ASSISTANT_TOOLS = [
     type: "function",
     function: {
       name: "strategy_set_keyword_status",
-      description: "Aprova, rejeita ou volta uma keyword da estrategia para pendente.",
+      description: "Aprova, descarta ou volta uma keyword da estrategia para sugestao.",
       parameters: {
         type: "object",
         properties: {
           keyword_id: { type: "string" },
-          status: { type: "string", enum: ["pending", "approved", "rejected"] },
+          status: { type: "string", enum: ["suggested", "approved", "rejected"] },
         },
         required: ["keyword_id", "status"],
       },
@@ -119,13 +123,12 @@ const ASSISTANT_TOOLS = [
     type: "function",
     function: {
       name: "strategy_set_topic_status",
-      description: "Aprova ou rejeita um topico da estrategia. Ao aprovar, pode enfileirar o brief.",
+      description: "Aprova ou descarta um topico da estrategia sem gerar artigo.",
       parameters: {
         type: "object",
         properties: {
           topic_id: { type: "string" },
-          status: { type: "string", enum: ["pending", "approved", "rejected"] },
-          queue_brief_job: { type: "boolean" },
+          status: { type: "string", enum: ["suggested", "approved", "rejected"] },
         },
         required: ["topic_id", "status"],
       },
@@ -409,9 +412,9 @@ async function getStrategyContext(db: any, tenantId: string, strategyId: string,
     counts: {
       scheduled_posts: (posts.data ?? []).filter((post: any) => post.status === "scheduled" || post.scheduled_for || (post.published_at && new Date(post.published_at).getTime() > Date.now())).length,
       pending_jobs: (jobs.data ?? []).filter((job: any) => job.status === "pending" || job.status === "running").length,
-      pending_keywords: (keywords.data ?? []).filter((item: any) => item.status === "pending").length,
+      suggested_keywords: (keywords.data ?? []).filter((item: any) => normalizeCandidateStatus(item.status) === "suggested").length,
       approved_keywords: (keywords.data ?? []).filter((item: any) => item.status === "approved").length,
-      pending_topics: (topics.data ?? []).filter((item: any) => item.status === "pending").length,
+      suggested_topics: (topics.data ?? []).filter((item: any) => normalizeCandidateStatus(item.status) === "suggested").length,
       approved_topics: (topics.data ?? []).filter((item: any) => item.status === "approved").length,
     },
   }
@@ -558,6 +561,13 @@ async function executeAssistantTool(db: any, tenantId: string, strategyId: strin
     if (jobType === "generate_keyword_strategy") {
       job.priority = 5
       job.payload_json = { ...payloadBase, keyword_count: Math.max(1, Math.min(50, Number(args.keyword_count) || 10)) }
+    } else if (jobType === "research_topics") {
+      job.payload_json = {
+        ...payloadBase,
+        topic_count: Math.max(1, Math.min(50, Number(args.topic_count) || 10)),
+        keyword_ids: Array.isArray(args.keyword_ids) ? args.keyword_ids : undefined,
+        scope: args.scope,
+      }
     } else if (jobType === "generate_brief") {
       if (!args.topic_candidate_id) throw new Error("topic_candidate_id e obrigatorio para gerar brief.")
       const { data: topic, error } = await db.from("topic_candidates").select("id, status, strategy_id").eq("id", args.topic_candidate_id).eq("tenant_id", tenantId).single()
@@ -588,7 +598,7 @@ async function executeAssistantTool(db: any, tenantId: string, strategyId: strin
   if (toolName === "strategy_set_keyword_status") {
     const { data, error } = await db
       .from("keyword_candidates")
-      .update({ status: args.status, updated_at: new Date().toISOString() })
+      .update({ status: normalizeCandidateStatus(args.status), updated_at: new Date().toISOString() })
       .eq("id", args.keyword_id)
       .eq("tenant_id", tenantId)
       .eq("strategy_id", strategyId)
@@ -601,16 +611,13 @@ async function executeAssistantTool(db: any, tenantId: string, strategyId: strin
   if (toolName === "strategy_set_topic_status") {
     const { data, error } = await db
       .from("topic_candidates")
-      .update({ status: args.status })
+      .update({ status: normalizeCandidateStatus(args.status) })
       .eq("id", args.topic_id)
       .eq("tenant_id", tenantId)
       .eq("strategy_id", strategyId)
       .select("*")
       .single()
     if (error) throw new Error(error.message)
-    if (args.status === "approved" && args.queue_brief_job !== false) {
-      await executeAssistantTool(db, tenantId, strategyId, "strategy_queue_job", { job_type: "generate_brief", topic_candidate_id: args.topic_id })
-    }
     return { ok: true, topic: data }
   }
 

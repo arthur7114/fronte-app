@@ -1,6 +1,7 @@
 "use client";
 
 import type { Tables } from "@super/db";
+import { normalizeCandidateStatus } from "@super/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,13 +38,13 @@ export function ApprovalCenterPanel({
   posts: Tables<"posts">[];
   strategies: Tables<"strategies">[];
 }) {
-  const pendingKeywords = keywords.filter(k => k.status === "pending");
-  const pendingTopics = topics.filter(t => t.status === "pending");
+  const suggestedKeywords = keywords.filter(k => normalizeCandidateStatus(k.status) === "suggested");
+  const suggestedTopics = topics.filter(t => normalizeCandidateStatus(t.status) === "suggested");
   // Post pending review? Let's assume posts with status draft/review
   const pendingPosts = posts.filter(p => !p.published_at);
 
   const items: PendingItem[] = [
-    ...pendingKeywords.map(k => ({
+    ...suggestedKeywords.map(k => ({
       id: k.id,
       type: "keyword" as const,
       title: k.keyword,
@@ -52,7 +53,7 @@ export function ApprovalCenterPanel({
       date: k.created_at,
       urgency: 30,
     })),
-    ...pendingTopics.map(t => ({
+    ...suggestedTopics.map(t => ({
       id: t.id,
       type: "tema" as const,
       title: t.topic,
@@ -76,8 +77,8 @@ export function ApprovalCenterPanel({
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard title="Artigos em Revisão" count={pendingPosts.length} color="text-primary" />
-        <StatCard title="Temas Pendentes" count={pendingTopics.length} color="text-amber-600" />
-        <StatCard title="Keywords Estratégicas" count={pendingKeywords.length} color="text-blue-600" />
+        <StatCard title="Temas sugeridos" count={suggestedTopics.length} color="text-amber-600" />
+        <StatCard title="Keywords sugeridas" count={suggestedKeywords.length} color="text-blue-600" />
       </div>
 
       <Card className="border-none shadow-xl shadow-black/5">

@@ -73,6 +73,9 @@ export type JobPayload = {
   business_briefing_id?: string | null;
   strategy_id?: string | null;
   keyword_count?: number;
+  topic_count?: number;
+  keyword_ids?: string[];
+  scope?: "all_approved" | "selected_keywords" | "without_approved_topics";
 };
 
 export type JobResultJson = Json;

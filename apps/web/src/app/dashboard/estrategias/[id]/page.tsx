@@ -5,12 +5,11 @@ import { getAuthContext } from "@/lib/auth-context"
 import {
   getStrategyFromDb,
   getStrategyStatsFromDb,
-  listArticlesFromDb,
+  countPostsForStrategyFromDb,
 } from "@/lib/strategies-server"
 import {
   listKeywordCandidatesForTenant,
   listTopicCandidatesForTenant,
-  listWorkspaceCompetitorsForTenant,
 } from "@/lib/automation-data"
 import { StrategyDetailClient } from "./client"
 
@@ -45,14 +44,13 @@ export default async function StrategyDetailPage({ params }: PageProps) {
     )
   }
 
-  const [stats, keywords, topics, articles, competitors] = await Promise.all([
+  const [stats, keywords, topics, postsCount] = await Promise.all([
     getStrategyStatsFromDb(tenant.id, id),
     listKeywordCandidatesForTenant(tenant.id, id),
     listTopicCandidatesForTenant(tenant.id).then((result) =>
       result.filter((topic) => topic.strategy_id === id),
     ),
-    listArticlesFromDb(tenant.id, id),
-    listWorkspaceCompetitorsForTenant(tenant.id),
+    countPostsForStrategyFromDb(tenant.id, id),
   ])
 
   return (
@@ -61,8 +59,7 @@ export default async function StrategyDetailPage({ params }: PageProps) {
       stats={stats}
       keywords={keywords}
       topics={topics}
-      articles={articles}
-      competitors={competitors}
+      postsCount={postsCount}
     />
   )
 }

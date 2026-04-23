@@ -16,9 +16,9 @@ import { SITE_LANGUAGE_OPTIONS } from "@/lib/site";
 export type OperationMode = "manual" | "assisted" | "automatic";
 
 export const TOPIC_STATUS_LABELS: Record<TopicCandidateStatus, string> = {
-  pending: "Pendente",
+  suggested: "Sugestão",
   approved: "Aprovado",
-  rejected: "Rejeitado",
+  rejected: "Descartado",
 };
 
 export const BRIEF_STATUS_LABELS: Record<ContentBriefStatus, string> = {

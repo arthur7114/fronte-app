@@ -1,7 +1,14 @@
 import dotenv from "dotenv";
 import path from "node:path";
 import { createAdminClient, type Tables, type TablesInsert, type TablesUpdate } from "@super/db";
-import { APP_DEFAULTS, type ContentBriefStatus, type PostStatus, type TopicCandidateStatus } from "@super/shared";
+import {
+  APP_DEFAULTS,
+  normalizeCandidateStatus,
+  type ContentBriefStatus,
+  type KeywordStatus,
+  type PostStatus,
+  type TopicCandidateStatus,
+} from "@super/shared";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -20,8 +27,8 @@ type SupportedJobType =
 const STRATEGY_TYPES = z.enum(["seo", "local", "blog", "conversao"]);
 const OPERATION_MODES = z.enum(["manual", "assisted", "automatic"]);
 const STRATEGY_STATUSES = z.enum(["configuring", "active", "paused", "archived"]);
-const KEYWORD_STATUSES = z.enum(["pending", "approved", "rejected"]);
-const TOPIC_STATUSES = z.enum(["pending", "approved", "rejected"]);
+const KEYWORD_STATUSES = z.enum(["suggested", "approved", "rejected", "pending"]).transform(normalizeCandidateStatus);
+const TOPIC_STATUSES = z.enum(["suggested", "approved", "rejected", "pending"]).transform(normalizeCandidateStatus);
 const BRIEF_STATUSES = z.enum(["pending", "approved"]);
 const POST_STATUSES = z.enum([
   "draft",
@@ -411,6 +418,9 @@ async function updateStrategy(strategyId: string, patch: Record<string, unknown>
 async function queueJob(strategyId: string, input: {
   jobType: SupportedJobType;
   keywordCount?: number;
+  topicCount?: number;
+  keywordIds?: string[];
+  scope?: "all_approved" | "selected_keywords" | "without_approved_topics";
   topicCandidateId?: string;
   contentBriefId?: string;
   postId?: string;
@@ -457,7 +467,12 @@ async function queueJob(strategyId: string, input: {
         status: "pending",
         max_attempts: APP_DEFAULTS.maxJobAttempts,
         priority: 10,
-        payload_json: payloadBase,
+        payload_json: {
+          ...payloadBase,
+          topic_count: input.topicCount,
+          keyword_ids: input.keywordIds,
+          scope: input.scope,
+        },
       };
       break;
     case "generate_brief": {
@@ -597,7 +612,7 @@ async function queueJob(strategyId: string, input: {
   return result.data;
 }
 
-async function updateKeywordStatus(strategyId: string, keywordId: string, status: TopicCandidateStatus | "pending") {
+async function updateKeywordStatus(strategyId: string, keywordId: string, status: KeywordStatus) {
   const scope = await getStrategyScope(strategyId);
   assertMutationAllowed(scope);
   const keywordResult = await client
@@ -641,7 +656,7 @@ async function updateKeywordStatus(strategyId: string, keywordId: string, status
   return result.data;
 }
 
-async function updateTopicStatus(strategyId: string, topicId: string, status: TopicCandidateStatus, queueBriefJob: boolean) {
+async function updateTopicStatus(strategyId: string, topicId: string, status: TopicCandidateStatus) {
   const scope = await getStrategyScope(strategyId);
   assertMutationAllowed(scope);
   const topicResult = await client
@@ -679,13 +694,6 @@ async function updateTopicStatus(strategyId: string, topicId: string, status: To
 
   if (!result.data) {
     throw new Error("Topic update produced no row.");
-  }
-
-  if (status === "approved" && queueBriefJob) {
-    await queueJob(strategyId, {
-      jobType: "generate_brief",
-      topicCandidateId: topicId,
-    });
   }
 
   return result.data;
@@ -1062,6 +1070,9 @@ export function createStrategyMcpServer() {
       strategy_id: z.string().min(1),
       job_type: JOB_TYPES,
       keyword_count: z.number().int().min(1).max(50).optional(),
+      topic_count: z.number().int().min(1).max(50).optional(),
+      keyword_ids: z.array(z.string().min(1)).optional(),
+      scope: z.enum(["all_approved", "selected_keywords", "without_approved_topics"]).optional(),
       topic_candidate_id: z.string().min(1).optional(),
       content_brief_id: z.string().min(1).optional(),
       post_id: z.string().min(1).optional(),
@@ -1071,6 +1082,9 @@ export function createStrategyMcpServer() {
       const result = await queueJob(input.strategy_id, {
         jobType: input.job_type as SupportedJobType,
         keywordCount: input.keyword_count,
+        topicCount: input.topic_count,
+        keywordIds: input.keyword_ids,
+        scope: input.scope,
         topicCandidateId: input.topic_candidate_id,
         contentBriefId: input.content_brief_id,
         postId: input.post_id,
@@ -1106,10 +1120,9 @@ export function createStrategyMcpServer() {
       strategy_id: z.string().min(1),
       topic_id: z.string().min(1),
       status: TOPIC_STATUSES,
-      queue_brief_job: z.boolean().optional(),
     },
-    async ({ strategy_id, topic_id, status, queue_brief_job }) => {
-      const updated = await updateTopicStatus(strategy_id, topic_id, status, queue_brief_job ?? true);
+    async ({ strategy_id, topic_id, status }) => {
+      const updated = await updateTopicStatus(strategy_id, topic_id, status);
       return jsonBlock({
         ok: true,
         topic: updated,

@@ -63,6 +63,11 @@ export async function listArticlesFromDb(tenantId: string, strategyId?: string):
   return filtered.map(adaptPost)
 }
 
+export async function countPostsForStrategyFromDb(tenantId: string, strategyId: string): Promise<number> {
+  const posts = await listPostsForTenant(tenantId)
+  return posts.filter((post) => post.strategy_id === strategyId).length
+}
+
 export async function getArticleStatsFromDb(tenantId: string) {
   const posts = await listPostsForTenant(tenantId)
   return {

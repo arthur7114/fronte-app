@@ -18,7 +18,9 @@ export function buildResearchPrompt(
   briefing: Tables<"business_briefings"> | null | undefined,
   approvedKeywords: Tables<"keyword_candidates">[],
   strategy?: StrategyContext | null,
+  topicCount?: number,
 ) {
+  const count = topicCount || 10;
   const lines = [
     "VOCÊ É UM EDITOR-CHEFE E ESPECIALISTA EM ESTRATÉGIA DE CONTEÚDO.",
     `Tenant site: ${site.name}`,
@@ -64,7 +66,7 @@ export function buildResearchPrompt(
   lines.push(
     "",
     "INSTRUÇÕES PARA O PLANO EDITORIAL:",
-    "1. Gere tópicos de conteúdo (títulos de posts) EXCLUSIVAMENTE focados nas palavras-chave aprovadas acima ou no contexto do negócio.",
+    `1. Gere exatamente ${count} tópicos de conteúdo (títulos de posts) EXCLUSIVAMENTE focados nas palavras-chave aprovadas acima ou no contexto do negócio.`,
     "2. Priorize keywords com intenção informacional (informational) e dificuldade < 40 — são mais rápidas de ranquear e têm maior potencial de tráfego orgânico para sites novos.",
     "3. Para keywords de alta dificuldade (≥ 60), crie tópicos de cauda longa relacionados que sejam mais específicos e competitivos.",
     "4. Para cada tópico, forneça um 'justification' (Racional Estratégico) explicando por que este post ajudará no ROI e qual o objetivo dele.",

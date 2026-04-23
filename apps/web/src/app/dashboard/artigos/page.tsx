@@ -8,11 +8,16 @@ export const metadata = {
   description: "Todos os artigos gerados por IA, agrupados por estratégia.",
 }
 
-export default async function ArtigosPage() {
+interface ArtigosPageProps {
+  searchParams?: Promise<{ strategy?: string }>
+}
+
+export default async function ArtigosPage({ searchParams }: ArtigosPageProps) {
   const { tenant } = await getAuthContext()
+  const params = await searchParams
 
   if (!tenant) {
-  redirect("/login")
+    redirect("/login")
   }
 
   const [articles, strategies] = await Promise.all([
@@ -20,5 +25,5 @@ export default async function ArtigosPage() {
     listStrategiesFromDb(tenant.id),
   ])
 
-  return <ArtigosClient articles={articles} strategies={strategies} />
+  return <ArtigosClient articles={articles} strategies={strategies} initialStrategyId={params?.strategy} />
 }

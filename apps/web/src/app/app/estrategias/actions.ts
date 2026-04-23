@@ -207,6 +207,12 @@ export async function enqueueTopicResearch(
   }
 
   const strategyId = formData.get("strategy_id")?.toString();
+  const topicCount = Number(formData.get("topic_count") ?? 10);
+  const keywordIds = String(formData.get("keyword_ids") ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  const scope = String(formData.get("scope") ?? "") || undefined;
 
   const result = (await workspace.admin
     .from("automation_jobs")
@@ -222,6 +228,9 @@ export async function enqueueTopicResearch(
         site_id: workspace.site.id,
         automation_config_id: automationConfig.id,
         strategy_id: strategyId || null,
+        topic_count: Number.isFinite(topicCount) ? Math.max(1, Math.min(50, topicCount)) : 10,
+        keyword_ids: keywordIds.length > 0 ? keywordIds : undefined,
+        scope,
       },
     } satisfies TablesInsert<"automation_jobs">)
     .select("id")
@@ -326,34 +335,9 @@ export async function moderateTopicCandidate(
       return { error: "Nao foi possivel aprovar esse tema agora.", topicId };
     }
 
-    const jobResult = (await workspace.admin
-      .from("automation_jobs")
-      .insert({
-        tenant_id: workspace.tenant.id,
-        site_id: workspace.site.id,
-        type: "generate_brief",
-        status: "pending",
-        max_attempts: APP_DEFAULTS.maxJobAttempts,
-        priority: 20,
-        payload_json: {
-          tenant_id: workspace.tenant.id,
-          site_id: workspace.site.id,
-          topic_candidate_id: topicId,
-        },
-      } satisfies TablesInsert<"automation_jobs">)
-      .select("id")
-      .single()) as {
-      data: { id: string } | null;
-      error: { message: string } | null;
-    };
-
-    if (jobResult.error || !jobResult.data) {
-      return { error: "O tema foi aprovado, mas o job de briefing nao foi criado.", topicId };
-    }
-
     revalidateAutomationPaths(workspace.site.subdomain);
 
-    return { success: "Tema aprovado e job de briefing enfileirado.", topicId };
+    return { success: "Tema aprovado.", topicId };
   }
 
   if (intent === "reject") {

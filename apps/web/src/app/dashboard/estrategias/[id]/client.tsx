@@ -2,20 +2,20 @@
 
 import { useMemo, useState, useTransition } from "react"
 import type { KeyboardEvent } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { Tables } from "@super/db"
+import { normalizeCandidateStatus } from "@super/shared"
 import {
   Archive,
   ArrowLeft,
   ClipboardList,
   Copy,
   FileText,
-  Gauge,
   Hash,
   Lightbulb,
   MapPin,
-  MessageSquare,
   MoreVertical,
   PauseCircle,
   PlayCircle,
@@ -23,13 +23,8 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react"
-import { ArticlesTable } from "@/components/articles/articles-table"
-import { GenerateArticleDialog } from "@/components/articles/generate-article-dialog"
-import { ProductionQueue } from "@/components/articles/production-queue"
-import { CompetitorResearch } from "@/components/competitors/competitor-research"
 import { KeywordsTable } from "@/components/content-plan/keywords-table"
 import { TopicsTable } from "@/components/content-plan/topics-table"
-import { StrategyAssistant } from "@/components/strategy/strategy-assistant"
 import { StrategyBriefing } from "@/components/strategy/strategy-briefing"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -42,15 +37,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
-import type { ArticleItem, KeywordItem, Strategy, TopicItem } from "@/lib/strategies"
+import type { KeywordItem, Strategy, TopicItem } from "@/lib/strategies"
 import type { StrategyStatsMap } from "../client"
 import { archiveStrategy, duplicateStrategy } from "../actions"
 
-type StrategyTab = "briefing" | "chat" | "competitors" | "keywords" | "topics" | "articles"
-type ArticlesFilter = "all" | "draft" | "review" | "scheduled" | "published"
+type StrategyTab = "briefing" | "keywords" | "topics"
 type KeywordCandidate = Tables<"keyword_candidates">
 type TopicCandidate = Tables<"topic_candidates">
-type Competitor = Tables<"workspace_competitors">
 
 const TYPE_META: Record<
   Strategy["type"],
@@ -89,15 +82,8 @@ function normalizeStage(stage: string | null | undefined): TopicItem["stage"] {
   return STAGE_LABELS[stage.toLowerCase()] ?? "Consciência"
 }
 
-function normalizeCandidateStatus(status: string): KeywordItem["status"] {
-  if (status === "approved" || status === "rejected" || status === "pending") {
-    return status
-  }
-  return "pending"
-}
-
 function normalizeTopicStatus(status: string): TopicItem["status"] {
-  return status === "approved" ? "approved" : "pending"
+  return normalizeCandidateStatus(status)
 }
 
 function getPriority(score: number | null): TopicItem["priority"] {
@@ -145,8 +131,7 @@ interface StrategyDetailClientProps {
   stats: StrategyStatsMap[string]
   keywords: KeywordCandidate[]
   topics: TopicCandidate[]
-  articles: ArticleItem[]
-  competitors?: Competitor[]
+  postsCount: number
 }
 
 export function StrategyDetailClient({
@@ -154,24 +139,16 @@ export function StrategyDetailClient({
   stats,
   keywords,
   topics,
-  articles,
-  competitors = [],
+  postsCount,
 }: StrategyDetailClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [activeTab, setActiveTab] = useState<StrategyTab>("briefing")
-  const [articlesFilter, setArticlesFilter] = useState<ArticlesFilter>("all")
-  const [generateOpen, setGenerateOpen] = useState(false)
 
   const keywordItems = useMemo(() => keywords.map(adaptKeyword), [keywords])
   const topicItems = useMemo(() => topics.map(adaptTopic), [topics])
   const meta = TYPE_META[strategy.type] || TYPE_META.seo
   const Icon = meta.icon
-  const inProduction = articles.filter(
-    (article) => article.status === "generating" || article.status === "queued",
-  )
-  const reviewCount = articles.filter((article) => article.status === "review").length
-  const draftCount = articles.filter((article) => article.status === "draft").length
   const approvedTopics = topicItems.filter((topic) => topic.status === "approved").length
 
   const handleDuplicate = () => {
@@ -198,11 +175,6 @@ export function StrategyDetailClient({
       toast.success(result.success)
       router.push("/dashboard/estrategias")
     })
-  }
-
-  const openArticlesWithFilter = (filter: ArticlesFilter) => {
-    setArticlesFilter(filter)
-    setActiveTab("articles")
   }
 
   return (
@@ -244,10 +216,14 @@ export function StrategyDetailClient({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <Button className="gap-2" onClick={() => setGenerateOpen(true)}>
-            <Sparkles className="h-4 w-4" />
-            Gerar artigo
-          </Button>
+          {postsCount > 0 && (
+            <Button asChild variant="outline" className="gap-2">
+              <Link href={`/dashboard/artigos?strategy=${strategy.id}`}>
+                <FileText className="h-4 w-4" />
+                Ver artigos desta estratégia
+              </Link>
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Mais ações">
@@ -286,7 +262,7 @@ export function StrategyDetailClient({
         </div>
       </header>
 
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-2">
         <Stat
           label="Palavras-chave"
           value={stats.keywords}
@@ -299,29 +275,7 @@ export function StrategyDetailClient({
           hint={`${approvedTopics} prontos`}
           onClick={() => setActiveTab("topics")}
         />
-        <Stat
-          label="Em revisão"
-          value={reviewCount}
-          hint={`${draftCount} rascunhos`}
-          accent={reviewCount > 0}
-          onClick={() => openArticlesWithFilter("review")}
-        />
-        <Stat
-          label="Publicados"
-          value={stats.published}
-          hint="últimos 30 dias"
-          onClick={() => openArticlesWithFilter("published")}
-        />
       </dl>
-
-      {inProduction.length > 0 && (
-        <ProductionQueue
-          items={inProduction}
-          title="Em produção nesta estratégia"
-          description="Artigos sendo gerados pela IA ou aguardando na fila."
-          showStrategy={false}
-        />
-      )}
 
       <Tabs
         value={activeTab}
@@ -333,14 +287,6 @@ export function StrategyDetailClient({
             <ClipboardList className="h-3.5 w-3.5" />
             Briefing
           </TabsTrigger>
-          <TabsTrigger value="chat" className="gap-1.5">
-            <MessageSquare className="h-3.5 w-3.5" />
-            Conversar com IA
-          </TabsTrigger>
-          <TabsTrigger value="competitors" className="gap-1.5">
-            <Gauge className="h-3.5 w-3.5" />
-            Concorrentes
-          </TabsTrigger>
           <TabsTrigger value="keywords" className="gap-1.5">
             <Hash className="h-3.5 w-3.5" />
             Palavras-chave
@@ -351,11 +297,6 @@ export function StrategyDetailClient({
             Tópicos
             <span className="ml-1 text-xs text-muted-foreground">{topicItems.length}</span>
           </TabsTrigger>
-          <TabsTrigger value="articles" className="gap-1.5">
-            <FileText className="h-3.5 w-3.5" />
-            Artigos
-            <span className="ml-1 text-xs text-muted-foreground">{articles.length}</span>
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="briefing" className="m-0">
@@ -363,19 +304,6 @@ export function StrategyDetailClient({
             strategy={strategy}
             keywords={keywordItems}
             topics={topicItems}
-            articles={articles}
-          />
-        </TabsContent>
-
-        <TabsContent value="chat" className="m-0">
-          <StrategyAssistant strategy={strategy} keywords={keywordItems} topics={topicItems} />
-        </TabsContent>
-
-        <TabsContent value="competitors" className="m-0">
-          <CompetitorResearch
-            strategy={strategy}
-            competitors={competitors}
-            onContinueToTopics={() => setActiveTab("topics")}
           />
         </TabsContent>
 
@@ -390,28 +318,13 @@ export function StrategyDetailClient({
         <TabsContent value="topics" className="m-0">
           <TopicsTable
             topics={topicItems}
+            keywords={keywordItems}
             strategyId={strategy.id}
             strategyName={strategy.name}
-            onGenerateArticle={() => setGenerateOpen(true)}
           />
         </TabsContent>
 
-        <TabsContent value="articles" className="m-0 space-y-4">
-          <ArticlesTable
-            articles={articles}
-            initialFilter={articlesFilter}
-            onSelectArticle={(articleId) => router.push(`/dashboard/artigos/${articleId}`)}
-            emptyLabel={`Nenhum artigo em ${strategy.name} ainda.`}
-          />
-        </TabsContent>
       </Tabs>
-
-      <GenerateArticleDialog
-        open={generateOpen}
-        onOpenChange={setGenerateOpen}
-        onGenerated={() => router.refresh()}
-        strategyId={strategy.id}
-      />
     </div>
   )
 }

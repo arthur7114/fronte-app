@@ -8,6 +8,7 @@ import {
 } from "@/app/app/estrategias/actions";
 import { useActionState, useState } from "react";
 import type { Tables } from "@super/db";
+import { normalizeCandidateStatus } from "@super/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ const initialModerationState: TopicModerationState = {};
 // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function statusBadge(status: string) {
-  switch (status) {
+  switch (normalizeCandidateStatus(status)) {
     case "approved":
       return (
         <Badge className="gap-1.5 bg-green-100 text-green-700 hover:bg-green-100">
@@ -49,14 +50,14 @@ function statusBadge(status: string) {
       return (
         <Badge className="gap-1.5 bg-red-100 text-red-700 hover:bg-red-100">
           <XCircle className="h-3.5 w-3.5" />
-          Rejeitado
+          Descartado
         </Badge>
       );
     default:
       return (
         <Badge className="gap-1.5 bg-amber-100 text-amber-700 hover:bg-amber-100">
           <Clock className="h-3.5 w-3.5" />
-          Pendente
+          Sugerido
         </Badge>
       );
   }
@@ -154,7 +155,8 @@ function TopicCard({
 }) {
   const feedbackMsg = modState.topicId === topic.id ? modState : null;
   const score = scoreLabel(topic.score);
-  const isPending_ = topic.status === "pending";
+  const topicStatus = normalizeCandidateStatus(topic.status);
+  const isSuggested = topicStatus === "suggested";
   const strategy = strategies.find((s) => s.id === topic.strategy_id);
 
   return (
@@ -164,8 +166,8 @@ function TopicCard({
       <div
         className={cn(
           "rounded-xl border border-border p-5 transition-all hover:shadow-sm",
-          topic.status === "approved" && "border-green-200 bg-green-50/30",
-          topic.status === "rejected" && "opacity-60",
+          topicStatus === "approved" && "border-green-200 bg-green-50/30",
+          topicStatus === "rejected" && "opacity-60",
         )}
       >
         <div className="flex items-start justify-between gap-4">
@@ -199,7 +201,7 @@ function TopicCard({
             </div>
 
             {/* Editable topic title */}
-            {isPending_ ? (
+            {isSuggested ? (
               <textarea
                 name="topic"
                 defaultValue={topic.topic}
@@ -279,8 +281,8 @@ function TopicCard({
           </div>
         )}
 
-        {/* Actions â€” only show for pending */}
-        {isPending_ && (
+        {/* Actions only show for suggestions */}
+        {isSuggested && (
           <div className="mt-4 flex gap-2 border-t border-border pt-4">
             <Button
               type="submit"
@@ -338,9 +340,9 @@ export function AutomationTopicsPanel({
     return t.strategy_id === activeStrategy;
   });
 
-  const pendingCount = filteredTopics.filter((t) => t.status === "pending").length;
-  const approvedCount = filteredTopics.filter((t) => t.status === "approved").length;
-  const rejectedCount = filteredTopics.filter((t) => t.status === "rejected").length;
+  const suggestedCount = filteredTopics.filter((t) => normalizeCandidateStatus(t.status) === "suggested").length;
+  const approvedCount = filteredTopics.filter((t) => normalizeCandidateStatus(t.status) === "approved").length;
+  const rejectedCount = filteredTopics.filter((t) => normalizeCandidateStatus(t.status) === "rejected").length;
 
   return (
     <div className="space-y-6">
@@ -349,10 +351,10 @@ export function AutomationTopicsPanel({
         <Card>
           <CardContent className="pt-5">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Aguardando Plano
+              Sugestões
             </p>
             <p className="mt-2 text-3xl font-semibold text-amber-600">
-              {pendingCount}
+              {suggestedCount}
             </p>
           </CardContent>
         </Card>
@@ -396,10 +398,10 @@ export function AutomationTopicsPanel({
               <Sparkles className="h-5 w-5 text-primary" />
               Sugestões de Plano Editorial
             </CardTitle>
-            {pendingCount > 0 && (
+            {suggestedCount > 0 && (
               <Badge className="gap-1.5 bg-amber-100 text-amber-700">
                 <Clock className="h-3.5 w-3.5" />
-                {pendingCount} aguardando
+                {suggestedCount} sugestões
               </Badge>
             )}
           </div>

@@ -41,6 +41,23 @@ function resolveOpenAiModel(preferences: Tables<"ai_preferences"> | null) {
   return resolveAiModel(preferences?.model?.trim() || WORKER_DEFAULTS.openAiModel);
 }
 
+function normalizeTopicCount(value: number | undefined) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return 10;
+  }
+
+  return Math.max(1, Math.min(50, Math.floor(value)));
+}
+
+function normalizeText(value: string | null | undefined) {
+  return (value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+}
+
 async function loadAutomationContext(client: ReturnType<typeof createAdminClient>, job: ClaimedJob) {
   const payload = asPayload(job);
 
@@ -215,6 +232,11 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
 
   // strategy_id is optional — null means legacy / no strategy
   const strategyId = context.payload.strategy_id ?? null;
+  const topicCount = normalizeTopicCount(context.payload.topic_count);
+  const keywordIds = Array.isArray(context.payload.keyword_ids)
+    ? [...new Set(context.payload.keyword_ids.filter((id) => typeof id === "string" && id.trim()).map((id) => id.trim()))]
+    : [];
+  const scope = context.payload.scope ?? (keywordIds.length > 0 ? "selected_keywords" : "all_approved");
 
   // Fetch approved keywords — scoped to strategy when present for more focused topic generation
   let keywordsQuery = client
@@ -228,8 +250,45 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
     keywordsQuery = keywordsQuery.eq("strategy_id", strategyId);
   }
 
+  if (keywordIds.length > 0) {
+    keywordsQuery = keywordsQuery.in("id", keywordIds);
+  }
+
   const approvedKeywordsResult = await keywordsQuery;
-  const approvedKeywords = approvedKeywordsResult.data ?? [];
+  if (approvedKeywordsResult.error) {
+    throw new Error(approvedKeywordsResult.error.message);
+  }
+
+  let approvedKeywords = approvedKeywordsResult.data ?? [];
+
+  if (scope === "without_approved_topics" && approvedKeywords.length > 0) {
+    let topicsQuery = client
+      .from("topic_candidates")
+      .select("topic, source")
+      .eq("tenant_id", context.payload.tenant_id)
+      .eq("status", "approved");
+
+    if (strategyId) {
+      topicsQuery = topicsQuery.eq("strategy_id", strategyId);
+    }
+
+    const approvedTopicsResult = await topicsQuery;
+    if (approvedTopicsResult.error) {
+      throw new Error(approvedTopicsResult.error.message);
+    }
+
+    const usedTerms = new Set(
+      (approvedTopicsResult.data ?? []).flatMap((topic) => [
+        normalizeText(topic.source),
+        normalizeText(topic.topic),
+      ]),
+    );
+
+    approvedKeywords = approvedKeywords.filter((keyword) => {
+      const normalizedKeyword = normalizeText(keyword.keyword);
+      return !usedTerms.has(normalizedKeyword) && !Array.from(usedTerms).some((term) => term.includes(normalizedKeyword));
+    });
+  }
 
   const model = resolveOpenAiModel(context.preferences);
 
@@ -238,7 +297,7 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
     messages: [
       {
         role: "user",
-        content: buildResearchPrompt(context.config, context.site, context.briefing, approvedKeywords, context.strategy),
+        content: buildResearchPrompt(context.config, context.site, context.briefing, approvedKeywords, context.strategy, topicCount),
       },
     ],
     schemaHint:
@@ -257,7 +316,7 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
   let currentDate = new Date();
   currentDate.setDate(currentDate.getDate() + 1);
 
-  for (const topic of aiResult.topics.slice(0, 10)) {
+  for (const topic of aiResult.topics.slice(0, topicCount)) {
     if (!topic.topic?.trim()) {
       continue;
     }
@@ -269,7 +328,7 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
         topic: topic.topic,
         score: topic.score ?? null,
         source: topic.source ?? "openai",
-        status: "pending",
+        status: "suggested",
         justification: topic.justification ?? null,
         journey_stage: topic.journey_stage ?? null,
         scheduled_date: currentDate.toISOString(),
@@ -292,39 +351,10 @@ async function processResearchTopics(client: ReturnType<typeof createAdminClient
     throw new Error("OpenAI returned empty topic suggestions.");
   }
 
-  // Auto-mode processing
-  if (context.strategy?.operation_mode === "automatic") {
-    const topTopicIds = topicCandidateIds.slice(0, 3);
-    
-    // Auto-approve the top topics
-    await client
-      .from("topic_candidates")
-      .update({ status: "approved" })
-      .in("id", topTopicIds);
-
-    // Schedule brief generation for each
-    for (const topicId of topTopicIds) {
-      await client.from("automation_jobs").insert({
-        tenant_id: context.payload.tenant_id,
-        site_id: context.payload.site_id,
-        type: "generate_brief",
-        status: "pending",
-        max_attempts: 3,
-        priority: 20, // same priority as UI dispatched
-        payload_json: {
-          tenant_id: context.payload.tenant_id,
-          site_id: context.payload.site_id,
-          topic_candidate_id: topicId,
-          strategy_id: strategyId,
-        },
-      } satisfies TablesInsert<"automation_jobs">);
-    }
-  }
-
   await finishJob(client, job.id, {
     status: "completed",
     finished_at: new Date().toISOString(),
-    result_json: { topic_candidate_ids: topicCandidateIds, strategy_id: strategyId },
+    result_json: { topic_candidate_ids: topicCandidateIds, strategy_id: strategyId, topic_count: topicCount, keyword_ids: keywordIds, scope },
     error_message: null,
   });
 }
@@ -393,7 +423,7 @@ async function processKeywordStrategy(client: ReturnType<typeof createAdminClien
         search_volume: item.search_volume,
         motivation: item.motivation,
         estimated_potential: item.estimated_potential,
-        status: "pending",
+        status: "suggested",
         updated_at: new Date().toISOString(),
         strategy_id: strategyId,
       })

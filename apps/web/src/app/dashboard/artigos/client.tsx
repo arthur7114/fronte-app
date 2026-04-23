@@ -21,11 +21,16 @@ import type { ArticleItem, Strategy } from "@/lib/strategies"
 export type ArtigosClientProps = {
   articles: ArticleItem[]
   strategies: Strategy[]
+  initialStrategyId?: string
 }
 
-export function ArtigosClient({ articles, strategies }: ArtigosClientProps) {
+export function ArtigosClient({ articles, strategies, initialStrategyId }: ArtigosClientProps) {
   const router = useRouter()
-  const [strategyFilter, setStrategyFilter] = useState<string>("all")
+  const [strategyFilter, setStrategyFilter] = useState<string>(
+    initialStrategyId && strategies.some((strategy) => strategy.id === initialStrategyId)
+      ? initialStrategyId
+      : "all",
+  )
   const [showGenerateDialog, setShowGenerateDialog] = useState(false)
 
   const filteredArticles = useMemo(() => {
@@ -43,6 +48,11 @@ export function ArtigosClient({ articles, strategies }: ArtigosClientProps) {
 
   const currentStrategy = strategies.find((s) => s.id === strategyFilter)
 
+  const handleStrategyFilterChange = (value: string) => {
+    setStrategyFilter(value)
+    router.replace(value === "all" ? "/dashboard/artigos" : `/dashboard/artigos?strategy=${value}`)
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -55,7 +65,7 @@ export function ArtigosClient({ articles, strategies }: ArtigosClientProps) {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {/* Strategy filter */}
-          <Select value={strategyFilter} onValueChange={setStrategyFilter}>
+          <Select value={strategyFilter} onValueChange={handleStrategyFilterChange}>
             <SelectTrigger className="w-[220px]">
               <Lightbulb className="mr-2 h-4 w-4 text-muted-foreground" />
               <SelectValue placeholder="Filtrar por estratégia" />

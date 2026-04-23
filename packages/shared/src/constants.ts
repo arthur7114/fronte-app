@@ -50,15 +50,32 @@ export const POST_STATUSES: readonly PostStatus[] = [
 ] as const;
 
 /**
- * Topic candidate moderation status.
+ * Candidate moderation status.
  */
-export type TopicCandidateStatus = "pending" | "approved" | "rejected";
+export type CandidateStatus = "suggested" | "approved" | "rejected";
+export type KeywordStatus = CandidateStatus;
+export type TopicStatus = CandidateStatus;
+export type LegacyCandidateStatus = CandidateStatus | "pending";
+export type KeywordCandidateStatus = KeywordStatus;
+export type TopicCandidateStatus = TopicStatus;
 
-export const TOPIC_CANDIDATE_STATUSES: readonly TopicCandidateStatus[] = [
-    "pending",
+export const CANDIDATE_STATUSES: readonly CandidateStatus[] = [
+    "suggested",
     "approved",
     "rejected",
 ] as const;
+
+export const KEYWORD_STATUSES = CANDIDATE_STATUSES;
+export const TOPIC_STATUSES = CANDIDATE_STATUSES;
+export const TOPIC_CANDIDATE_STATUSES = TOPIC_STATUSES;
+
+export function normalizeCandidateStatus(status: string | null | undefined): CandidateStatus {
+    if (status === "approved" || status === "rejected") {
+        return status;
+    }
+
+    return "suggested";
+}
 
 /**
  * Content brief lifecycle status.

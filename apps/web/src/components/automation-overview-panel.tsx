@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import type { Tables } from "@super/db";
-import { FREQUENCIES } from "@super/shared";
+import { FREQUENCIES, normalizeCandidateStatus } from "@super/shared";
 import {
   enqueueTopicResearch,
   saveAutomationSettings,
@@ -119,7 +119,7 @@ export function AutomationOverviewPanel({
 
   // Stats & Logic
   const approvedKeywords = keywords.filter((k) => k.status === "approved").length;
-  const pendingTopics = topics.filter((t) => t.status === "pending").length;
+  const suggestedTopics = topics.filter((t) => normalizeCandidateStatus(t.status) === "suggested").length;
   const approvedBriefs = briefs.filter((b) => b.status === "approved");
   const briefsToDraft = approvedBriefs;
 
@@ -435,14 +435,14 @@ export function AutomationOverviewPanel({
             <div className="group flex items-start gap-5">
               <div className={cn(
                 "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
-                pendingTopics > 0 ? "bg-blue-100 text-blue-600" : "bg-black/5 text-black group-hover:bg-primary group-hover:text-white"
+                suggestedTopics > 0 ? "bg-blue-100 text-blue-600" : "bg-black/5 text-black group-hover:bg-primary group-hover:text-white"
               )}>
                 <FileText className="h-5 w-5" />
               </div>
               <div className="flex-1 space-y-1">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-bold text-black">Temas & Estrutura</p>
-                  {pendingTopics > 0 && <span className="rounded bg-blue-600 px-1.5 py-0.5 text-[9px] font-bold text-white tracking-widest">{pendingTopics} NOVOS</span>}
+                  {suggestedTopics > 0 && <span className="rounded bg-blue-600 px-1.5 py-0.5 text-[9px] font-bold text-white tracking-widest">{suggestedTopics} NOVOS</span>}
                 </div>
                 <p className="text-xs leading-relaxed text-black/50">Transformamos keywords em ângulos de ataque e planos de conteúdo.</p>
                 <Link href={`/app/estrategias/${strategyId}/temas`} className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary hover:underline">
@@ -539,11 +539,11 @@ export function AutomationOverviewPanel({
                     </button>
                   </form>
                 </div>
-              ) : pendingTopics > 0 ? (
+              ) : suggestedTopics > 0 ? (
                 <div className="space-y-5">
                   <h4 className="text-2xl font-semibold tracking-tight">Novas Oportunidades</h4>
                   <p className="text-sm leading-relaxed text-white/60">
-                    Identificamos **{pendingTopics} temas** com alto potencial de ROI. Aprove estes temas para transformá-los em briefings.
+                    Identificamos **{suggestedTopics} temas** com alto potencial de ROI. Aprove estes temas para transformá-los em briefings.
                   </p>
                   <Link href="/app/estrategias/topics" className="flex items-center justify-center gap-2 w-full rounded-2xl bg-primary px-6 py-4 text-xs font-bold uppercase tracking-widest text-black transition-all hover:scale-[1.02] active:scale-95">
                     Ver Temas Sugeridos <ArrowRight className="h-4 w-4" />

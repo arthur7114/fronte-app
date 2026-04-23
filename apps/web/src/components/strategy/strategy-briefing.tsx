@@ -22,14 +22,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import type { ArticleItem, KeywordItem, Strategy, TopicItem } from "@/lib/strategies"
+import type { KeywordItem, Strategy, TopicItem } from "@/lib/strategies"
 import { updateStrategy } from "@/app/dashboard/estrategias/actions"
 
 type StrategyBriefingProps = {
   strategy: Strategy
   keywords: KeywordItem[]
   topics: TopicItem[]
-  articles: ArticleItem[]
 }
 
 type ChecklistItem = {
@@ -64,7 +63,6 @@ export function StrategyBriefing({
   strategy: initialStrategy,
   keywords,
   topics,
-  articles,
 }: StrategyBriefingProps) {
   const [strategy, setStrategy] = useState<Strategy>(initialStrategy)
   const [editingSection, setEditingSection] = useState<SectionId | null>(null)
@@ -369,11 +367,6 @@ export function StrategyBriefing({
             <dl className="space-y-1">
               <ReadRow label="Palavras-chave" value={`${keywords.length} cadastradas`} />
               <ReadRow label="Tópicos" value={`${topics.length} cadastrados`} />
-              <ReadRow label="Artigos" value={`${articles.length} vinculados`} />
-              <ReadRow
-                label="Publicados"
-                value={`${articles.filter((a) => a.status === "published").length} publicados`}
-              />
             </dl>
           </CardContent>
         </Card>

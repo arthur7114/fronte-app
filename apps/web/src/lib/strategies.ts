@@ -1,4 +1,5 @@
 import type { Tables } from "@super/db"
+import type { KeywordStatus, TopicStatus } from "@super/shared"
 
 export type StrategyStatus = "ativa" | "pausada" | "rascunho"
 export type StrategyType = "seo" | "local" | "blog" | "conversao"
@@ -19,7 +20,7 @@ export type KeywordItem = {
   estimated_potential?: string
   stage: "Consciência" | "Consideração" | "Decisão" | string
   type: "Long tail" | "Short tail" | string
-  status: "approved" | "pending" | "rejected"
+  status: KeywordStatus
 }
 
 export type TopicItem = {
@@ -30,7 +31,7 @@ export type TopicItem = {
   stage: "Consciência" | "Consideração" | "Decisão"
   priority: "alta" | "média" | "baixa"
   estimatedTraffic: string
-  status: "approved" | "pending"
+  status: TopicStatus
 }
 
 export type CalendarEvent = {
@@ -234,7 +235,7 @@ export const STRATEGIES: Strategy[] = [
 
 export const KEYWORDS: KeywordItem[] = [
   { id: "k1", strategyId: "s1", keyword: "clareamento dental preço", difficulty: "média", traffic: "2.8K", stage: "Consideração", type: "Long tail", status: "approved" },
-  { id: "k2", strategyId: "s1", keyword: "implante dentário", difficulty: "alta", traffic: "8.1K", stage: "Consciência", type: "Short tail", status: "pending" },
+  { id: "k2", strategyId: "s1", keyword: "implante dentário", difficulty: "alta", traffic: "8.1K", stage: "Consciência", type: "Short tail", status: "suggested" },
   { id: "k3", strategyId: "s1", keyword: "quanto custa um canal", difficulty: "baixa", traffic: "1.5K", stage: "Consideração", type: "Long tail", status: "approved" },
 ]
 

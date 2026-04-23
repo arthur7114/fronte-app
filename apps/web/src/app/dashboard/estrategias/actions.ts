@@ -25,6 +25,104 @@ function revalidateStrategies() {
   revalidatePath("/dashboard")
 }
 
+function slugifyTitle(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 80)
+}
+
+function normalizePostTitle(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+}
+
+async function getUniquePostSlug(db: any, tenantId: string, siteId: string, base: string) {
+  const baseSlug = base || `artigo-${Date.now().toString(36)}`
+  let slug = baseSlug
+  let index = 2
+
+  while (true) {
+    const { data, error } = await db
+      .from("posts")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("site_id", siteId)
+      .eq("slug", slug)
+      .maybeSingle()
+
+    if (error) throw new Error(error.message)
+    if (!data) return slug
+
+    slug = `${baseSlug}-${index}`
+    index += 1
+  }
+}
+
+async function ensurePostForTopic(input: {
+  db: any
+  tenantId: string
+  siteId: string
+  topic: any
+}) {
+  const normalizedTitle = normalizePostTitle(input.topic.topic)
+  let existingQuery = input.db
+    .from("posts")
+    .select("id, title, status")
+    .eq("tenant_id", input.tenantId)
+    .eq("site_id", input.siteId)
+
+  existingQuery = input.topic.strategy_id
+    ? existingQuery.eq("strategy_id", input.topic.strategy_id)
+    : existingQuery.is("strategy_id", null)
+
+  const { data: existingPosts, error: existingError } = await existingQuery
+  if (existingError) throw new Error(existingError.message)
+
+  const matchingPosts = (existingPosts ?? []).filter((post: any) => normalizePostTitle(post.title) === normalizedTitle)
+  const blockingPost = matchingPosts.find((post: any) => post.status !== "failed")
+
+  if (blockingPost) {
+    return { status: "existing" as const, postId: blockingPost.id }
+  }
+
+  const now = new Date().toISOString()
+  const baseSlug = slugifyTitle(input.topic.topic) || "artigo"
+  const slug = await getUniquePostSlug(input.db, input.tenantId, input.siteId, baseSlug)
+  const { data: post, error: insertError } = await input.db
+    .from("posts")
+    .insert({
+      tenant_id: input.tenantId,
+      site_id: input.siteId,
+      title: input.topic.topic,
+      slug,
+      content: input.topic.justification || "",
+      status: "draft",
+      strategy_id: input.topic.strategy_id || null,
+      scheduled_for: input.topic.scheduled_date || null,
+      created_at: now,
+      updated_at: now,
+    })
+    .select("id")
+    .single()
+
+  if (insertError || !post) {
+    throw new Error(insertError?.message ?? "Falha ao criar post.")
+  }
+
+  return { status: "created" as const, postId: post.id }
+}
+
 const STRATEGY_TYPES = new Set(["seo", "local", "blog", "conversao"])
 const OPERATION_MODES = new Set(["manual", "assisted", "automatic"])
 const CADENCES = new Set([4, 8, 12, 20])
@@ -119,26 +217,129 @@ export async function massDeleteKeywords(keywordIds: string[]) {
   return { success: `${keywordIds.length} palavra(s)-chave excluida(s).` }
 }
 
-export async function massApproveTopics(topicIds: string[]) {
-  const { tenant, site } = await getAuthContext()
-  if (!tenant) throw new Error("Nao autenticado.")
-  if (!site) return { error: "Nenhum site configurado." }
-  const db = await getDb()
-  const now = new Date().toISOString()
+function parseKeywordLines(input: string, limit = 50) {
+  const seen = new Set<string>()
+  const keywords: string[] = []
 
-  // 1. Fetch the topics
-  const { data: topics, error: fetchErr } = await (db as any)
-    .from("topic_candidates")
-    .select("*")
-    .in("id", topicIds)
-    .eq("tenant_id", tenant.id)
-    .neq("status", "approved") // only non-approved
+  for (const line of input.split(/\r?\n/)) {
+    const keyword = line.replace(/\s+/g, " ").trim()
+    const key = keyword.toLowerCase()
 
-  if (fetchErr || !topics || topics.length === 0) {
-    return { error: "Nenhum topico pendente/rejeitado encontrado para aprovar." }
+    if (!keyword || seen.has(key)) {
+      continue
+    }
+
+    seen.add(key)
+    keywords.push(keyword)
+
+    if (keywords.length >= limit) {
+      break
+    }
   }
 
-  // 2. Mark topics as approved
+  return keywords
+}
+
+type ManualTopicInput = {
+  title: string
+  primaryKeyword: string
+  keywordId?: string | null
+  funnelStage: "awareness" | "consideration" | "decision"
+  priority: "high" | "medium" | "low"
+  note?: string
+}
+
+const TOPIC_PRIORITY_SCORE: Record<ManualTopicInput["priority"], number> = {
+  high: 90,
+  medium: 60,
+  low: 30,
+}
+
+export async function addManualKeywords(strategyId: string, rawKeywords: string) {
+  const { tenant } = await getAuthContext()
+  if (!tenant) throw new Error("Nao autenticado.")
+  const db = await getDb()
+  const keywords = parseKeywordLines(rawKeywords)
+
+  if (keywords.length === 0) {
+    return { error: "Informe ao menos uma palavra-chave." }
+  }
+
+  const { data: existing, error: existingError } = await (db as any)
+    .from("keyword_candidates")
+    .select("keyword")
+    .eq("tenant_id", tenant.id)
+    .eq("strategy_id", strategyId)
+
+  if (existingError) return { error: existingError.message }
+
+  const existingSet = new Set((existing ?? []).map((item: any) => item.keyword.toLowerCase()))
+  const rows = keywords
+    .filter((keyword) => !existingSet.has(keyword.toLowerCase()))
+    .map((keyword) => ({
+      tenant_id: tenant.id,
+      strategy_id: strategyId,
+      keyword,
+      status: "suggested",
+      source: "manual",
+    }))
+
+  if (rows.length === 0) {
+    return { success: "Todas as palavras-chave informadas ja existiam.", inserted: 0 }
+  }
+
+  const { error } = await (db as any).from("keyword_candidates").insert(rows)
+  if (error) return { error: error.message }
+
+  revalidateStrategies()
+  return { success: `${rows.length} palavra(s)-chave adicionada(s) como sugestao.`, inserted: rows.length }
+}
+
+export async function addManualTopic(strategyId: string, input: ManualTopicInput) {
+  const { tenant } = await getAuthContext()
+  if (!tenant) throw new Error("Nao autenticado.")
+  const db = await getDb()
+  const title = input.title.trim().replace(/\s+/g, " ")
+  const primaryKeyword = input.primaryKeyword.trim().replace(/\s+/g, " ")
+  const note = input.note?.trim().replace(/\s+/g, " ") || null
+
+  if (!title) return { error: "Informe o titulo do topico." }
+  if (!primaryKeyword) return { error: "Informe a palavra-chave principal." }
+
+  const row: TablesInsert<"topic_candidates"> = {
+    tenant_id: tenant.id,
+    strategy_id: strategyId,
+    topic: title,
+    source: primaryKeyword,
+    keyword_id: input.keywordId || null,
+    journey_stage: input.funnelStage,
+    score: TOPIC_PRIORITY_SCORE[input.priority],
+    justification: note,
+    status: "suggested",
+  }
+
+  const { error } = await (db as any).from("topic_candidates").insert(row)
+  if (error) return { error: error.message }
+
+  revalidateStrategies()
+  return { success: "Topico adicionado como sugestao." }
+}
+
+export async function massApproveTopics(topicIds: string[]) {
+  const { tenant } = await getAuthContext()
+  if (!tenant) throw new Error("Nao autenticado.")
+  const db = await getDb()
+
+  const { data: topics, error: fetchErr } = await (db as any)
+    .from("topic_candidates")
+    .select("id")
+    .in("id", topicIds)
+    .eq("tenant_id", tenant.id)
+
+  if (fetchErr || !topics || topics.length === 0) {
+    return { error: "Nenhum topico encontrado para aprovar." }
+  }
+
   const { error: updateErr } = await (db as any)
     .from("topic_candidates")
     .update({ status: "approved" })
@@ -147,42 +348,9 @@ export async function massApproveTopics(topicIds: string[]) {
 
   if (updateErr) return { error: `Falha ao aprovar topicos: ${updateErr.message}` }
 
-  // 3. Create draft posts
-  const postsToInsert = topics.map((topic: any) => {
-    const slug = topic.topic
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "")
-      .slice(0, 80)
-
-    return {
-      tenant_id: tenant.id,
-      site_id: site.id,
-      title: topic.topic,
-      slug,
-      content: topic.justification || "",
-      status: "draft",
-      strategy_id: topic.strategy_id || null,
-      scheduled_for: topic.scheduled_date || null,
-      created_at: now,
-      updated_at: now,
-    }
-  })
-
-  if (postsToInsert.length > 0) {
-    const { error: insertErr } = await (db as any).from("posts").insert(postsToInsert)
-    if (insertErr) return { error: `Topicos aprovados, mas erro ao criar rascunhos: ${insertErr.message}` }
-  }
-
   revalidateStrategies()
-  revalidatePath("/app/artigos")
-  revalidatePath("/app/calendario")
-  revalidatePath("/dashboard/artigos")
-  revalidatePath("/dashboard/calendario")
 
-  return { success: `${topics.length} topico(s) aprovado(s) e rascunhos criados!` }
+  return { success: `${topics.length} topico(s) aprovado(s) com sucesso.` }
 }
 
 export async function massRejectTopics(topicIds: string[]) {
@@ -199,6 +367,96 @@ export async function massRejectTopics(topicIds: string[]) {
   if (error) return { error: `Falha ao rejeitar topicos: ${error.message}` }
   revalidateStrategies()
   return { success: `${topicIds.length} topico(s) rejeitado(s) com sucesso.` }
+}
+
+export async function massDeleteTopics(topicIds: string[]) {
+  const { tenant } = await getAuthContext()
+  if (!tenant) throw new Error("Nao autenticado.")
+  const db = await getDb()
+
+  const { error } = await (db as any)
+    .from("topic_candidates")
+    .delete()
+    .in("id", topicIds)
+    .eq("tenant_id", tenant.id)
+
+  if (error) return { error: `Falha ao excluir topicos: ${error.message}` }
+  revalidateStrategies()
+  return { success: `${topicIds.length} topico(s) excluido(s) com sucesso.` }
+}
+
+export async function sendTopicsToProduction(topicIds: string[]) {
+  const { tenant, site } = await getAuthContext()
+  if (!tenant) throw new Error("Nao autenticado.")
+  if (!site) return { error: "Nenhum site configurado." }
+  const db = await getDb()
+  const uniqueIds = [...new Set(topicIds.filter(Boolean))]
+
+  if (uniqueIds.length === 0) {
+    return { error: "Selecione ao menos um topico aprovado." }
+  }
+
+  const { data: topics, error } = await (db as any)
+    .from("topic_candidates")
+    .select("*")
+    .in("id", uniqueIds)
+    .eq("tenant_id", tenant.id)
+
+  if (error) return { error: `Falha ao buscar topicos: ${error.message}` }
+
+  const foundTopics = topics ?? []
+  const created: Array<{ topicId: string; postId: string }> = []
+  const alreadyExisting: Array<{ topicId: string; postId: string }> = []
+  const failed: Array<{ topicId: string; reason: string }> = []
+
+  for (const topicId of uniqueIds) {
+    const topic = foundTopics.find((item: any) => item.id === topicId)
+
+    if (!topic) {
+      failed.push({ topicId, reason: "Topico nao encontrado." })
+      continue
+    }
+
+    if (topic.status !== "approved") {
+      failed.push({ topicId, reason: "Topico precisa estar aprovado antes da producao." })
+      continue
+    }
+
+    try {
+      const result = await ensurePostForTopic({
+        db,
+        tenantId: tenant.id,
+        siteId: site.id,
+        topic,
+      })
+
+      if (result.status === "existing") {
+        alreadyExisting.push({ topicId, postId: result.postId })
+      } else {
+        created.push({ topicId, postId: result.postId })
+      }
+    } catch (error) {
+      failed.push({
+        topicId,
+        reason: error instanceof Error ? error.message : "Falha ao criar post.",
+      })
+    }
+  }
+
+  revalidateStrategies()
+  revalidatePath("/app/artigos")
+  revalidatePath("/app/calendario")
+  revalidatePath("/dashboard/artigos")
+  revalidatePath("/dashboard/calendario")
+
+  return {
+    success: `${created.length} artigo(s) enviado(s) para producao.`,
+    summary: {
+      criados: created,
+      jaExistentes: alreadyExisting,
+      falhas: failed,
+    },
+  }
 }
 
 export async function triggerKeywordStrategy(strategyId: string, keywordCount: number = 10) {
@@ -242,7 +500,16 @@ export async function approveTopicCandidate(topicId: string) {
   return { success: "Topico aprovado com sucesso." }
 }
 
-export async function triggerTopicResearch(strategyId: string) {
+type TopicResearchScope = "all_approved" | "selected_keywords" | "without_approved_topics"
+
+export async function triggerTopicResearch(
+  strategyId: string,
+  options: {
+    topicCount?: number
+    keywordIds?: string[]
+    scope?: TopicResearchScope
+  } = {},
+) {
   const { tenant, site } = await getAuthContext()
   if (!tenant) throw new Error("Nao autenticado.")
   if (!site) return { error: "Nenhum site configurado." }
@@ -259,6 +526,9 @@ export async function triggerTopicResearch(strategyId: string) {
       tenant_id: tenant.id,
       site_id: site.id,
       strategy_id: strategyId,
+      topic_count: options.topicCount,
+      keyword_ids: options.keywordIds,
+      scope: options.scope,
     },
   })
   if (error) return { error: error.message }

@@ -1,6 +1,10 @@
 export {
     APP_NAME,
     APP_DEFAULTS,
+    CANDIDATE_STATUSES,
+    KEYWORD_STATUSES,
+    TOPIC_STATUSES,
+    normalizeCandidateStatus,
     POST_STATUSES,
     TOPIC_CANDIDATE_STATUSES,
     CONTENT_BRIEF_STATUSES,
@@ -12,6 +16,11 @@ export {
 } from "./constants";
 export type {
     UserRole,
+    CandidateStatus,
+    KeywordStatus,
+    TopicStatus,
+    LegacyCandidateStatus,
+    KeywordCandidateStatus,
     PostStatus,
     TopicCandidateStatus,
     ContentBriefStatus,

@@ -17,7 +17,7 @@ import {
 import {
   Target, ArrowUpDown, Search, Filter, Download, Sparkles,
   ShieldBan, Trash2, ShieldOff, MoreHorizontal, CheckCircle2, Loader2,
-  Clock,
+  Clock, Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { KeywordItem } from "@/lib/strategies";
@@ -27,10 +27,16 @@ import {
   getBannedForStrategy, isRejected, unbanItem, useWorkspaceStore,
 } from "@/lib/workspace-store";
 import {
-  triggerKeywordStrategy, massApproveKeywords, massRejectKeywords, massDeleteKeywords,
+  addManualKeywords, triggerKeywordStrategy, massApproveKeywords, massRejectKeywords, massDeleteKeywords,
 } from "@/app/dashboard/estrategias/actions";
 import { useJobStatus } from "@/hooks/use-job-status";
 import { JobStatusBanner } from "@/components/ui/job-status-banner";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 const difficultyColors = {
   baixa: "bg-green-100 text-green-700",
@@ -118,7 +124,8 @@ export function KeywordsTable({
   const [isPending, startTransition] = useTransition();
   const jobStatus = useJobStatus(strategyId ?? "", "generate_keyword_strategy");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [keywordCount, setKeywordCount] = useState(10);
+  const [addOpen, setAddOpen] = useState(false);
+  const [suggestOpen, setSuggestOpen] = useState(false);
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
   const [enrichedData, setEnrichedData] = useState<Record<string, EnrichedKwData>>({});
 
@@ -177,12 +184,13 @@ export function KeywordsTable({
     });
   };
 
-  const handleSuggestMore = () => {
+  const handleSuggestMore = (keywordCount = 10) => {
     if (!strategyId) return;
     jobStatus.trigger();
     startTransition(async () => {
       const result = await triggerKeywordStrategy(strategyId, keywordCount);
       if (result.error) toast.error(result.error);
+      else setSuggestOpen(false);
     });
   };
 
@@ -192,10 +200,11 @@ export function KeywordsTable({
   );
 
   const approvedCount = effective.filter((k) => k.status === "approved").length;
-  const pendingCount = effective.filter((k) => k.status === "pending").length;
+  const suggestedCount = effective.filter((k) => k.status === "suggested").length;
   const rejectedCount = effective.filter((k) => k.status === "rejected").length;
 
-  const activeList = effective.filter((k) => k.status !== "rejected");
+  const suggestedList = effective.filter((k) => k.status === "suggested");
+  const approvedList = effective.filter((k) => k.status === "approved");
   const rejectedList = effective.filter((k) => k.status === "rejected");
   const bannedInStrategy = strategyId ? getBannedForStrategy(strategyId, "keyword") : [];
 
@@ -210,7 +219,7 @@ export function KeywordsTable({
               {strategyName && <Badge variant="secondary" className="ml-1 font-normal">{strategyName}</Badge>}
             </CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
-              {effective.length} no total · {approvedCount} aprovadas · {pendingCount} aguardando · {rejectedCount} reprovadas
+              {effective.length} no total · {approvedCount} aprovadas · {suggestedCount} sugestões · {rejectedCount} descartadas
             </p>
           </div>
           {showActions && (
@@ -221,22 +230,13 @@ export function KeywordsTable({
               </div>
               <Button variant="outline" size="icon" aria-label="Filtrar"><Filter className="h-4 w-4" /></Button>
               <Button variant="outline" className="gap-2"><Download className="h-4 w-4" />Exportar</Button>
-              <div className="flex items-center gap-1.5">
-                <select
-                  value={keywordCount}
-                  onChange={(e) => setKeywordCount(Number(e.target.value))}
-                  className="h-9 rounded-md border border-input bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  aria-label="Quantidade de keywords"
-                >
-                  {[5, 10, 15, 20, 30, 50].map((n) => (
-                    <option key={n} value={n}>{n} KWs</option>
-                  ))}
-                </select>
-                <Button className="gap-2" onClick={handleSuggestMore} disabled={isPending || jobStatus.isRunning || !strategyId}>
-                  <Sparkles className="h-4 w-4" />
-                  {isPending ? "Enviando..." : "Sugerir"}
-                </Button>
-              </div>
+              <Button variant="outline" className="gap-2" onClick={() => setAddOpen(true)} disabled={!strategyId}>
+                <Plus className="h-4 w-4" />Adicionar palavras-chave
+              </Button>
+              <Button className="gap-2" onClick={() => setSuggestOpen(true)} disabled={isPending || jobStatus.isRunning || !strategyId}>
+                <Sparkles className="h-4 w-4" />
+                {isPending ? "Enviando..." : "Sugerir"}
+              </Button>
             </div>
           )}
         </div>
@@ -248,23 +248,35 @@ export function KeywordsTable({
           jobLabel="keywords"
           count={keywords.length}
           errorMessage={jobStatus.errorMessage}
-          onRetry={handleSuggestMore}
+          onRetry={() => handleSuggestMore()}
           onDismiss={jobStatus.dismiss}
           className="mb-4"
         />
-        <Tabs defaultValue="active" className="space-y-4">
+        <Tabs defaultValue="suggested" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="active">Ativas ({activeList.length})</TabsTrigger>
-            <TabsTrigger value="rejected">Reprovadas ({rejectedList.length})</TabsTrigger>
+            <TabsTrigger value="suggested">Sugestões ({suggestedList.length})</TabsTrigger>
+            <TabsTrigger value="approved">Aprovadas ({approvedList.length})</TabsTrigger>
+            <TabsTrigger value="rejected">Descartadas ({rejectedList.length})</TabsTrigger>
             {strategyId && <TabsTrigger value="banned">Blacklist ({bannedInStrategy.length})</TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="active" className="m-0">
+          <TabsContent value="suggested" className="m-0">
             <KeywordsContent
-              keywords={activeList} onReject={setRejecting}
+              keywords={suggestedList} onReject={setRejecting}
               emptyHint="Peça à IA para sugerir oportunidades para esta estratégia."
               selectedItems={selectedItems} onSelect={handleSelect}
-              onSelectAll={(c) => handleSelectAll(c, activeList)}
+              onSelectAll={(c) => handleSelectAll(c, suggestedList)}
+              enrichedData={enrichedData} enrichingId={enrichingId}
+              onEnrich={strategyId ? handleEnrich : undefined}
+            />
+          </TabsContent>
+
+          <TabsContent value="approved" className="m-0">
+            <KeywordsContent
+              keywords={approvedList} onReject={setRejecting}
+              emptyHint="Nenhuma palavra-chave aprovada."
+              selectedItems={selectedItems} onSelect={handleSelect}
+              onSelectAll={(c) => handleSelectAll(c, approvedList)}
               enrichedData={enrichedData} enrichingId={enrichingId}
               onEnrich={strategyId ? handleEnrich : undefined}
             />
@@ -272,7 +284,7 @@ export function KeywordsTable({
 
           <TabsContent value="rejected" className="m-0">
             <KeywordsContent
-              keywords={rejectedList} emptyHint="Nenhuma palavra-chave reprovada."
+              keywords={rejectedList} emptyHint="Nenhuma palavra-chave descartada."
               rejectedView selectedItems={selectedItems}
               onSelect={handleSelect} onSelectAll={(c) => handleSelectAll(c, rejectedList)}
             />
@@ -292,6 +304,22 @@ export function KeywordsTable({
           itemId={rejecting.id} kind="keyword" term={rejecting.keyword}
           strategyId={strategyId} strategyName={strategyName}
         />
+      )}
+
+      {strategyId && (
+        <>
+          <AddKeywordsDialog
+            open={addOpen}
+            onOpenChange={setAddOpen}
+            strategyId={strategyId}
+          />
+          <SuggestKeywordsDialog
+            open={suggestOpen}
+            onOpenChange={setSuggestOpen}
+            pending={isPending || jobStatus.isRunning}
+            onSubmit={handleSuggestMore}
+          />
+        </>
       )}
 
       {/* Floating Action Bar */}
@@ -431,6 +459,10 @@ function KeywordsContent({
                     <Badge variant="secondary" className="gap-1 bg-green-100 text-green-700 text-[11px]">
                       <CheckCircle2 className="h-3 w-3" />Aprovada
                     </Badge>
+                  ) : kw.status === "rejected" ? (
+                    <Badge variant="secondary" className="gap-1 bg-red-100 text-red-700 text-[11px]">
+                      <ShieldBan className="h-3 w-3" />Descartada
+                    </Badge>
                   ) : (
                     <button
                       className="flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 transition-colors hover:bg-amber-100 hover:border-amber-400 disabled:opacity-50"
@@ -474,7 +506,7 @@ function KeywordsContent({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
-                        {kw.status === "pending" && (
+                        {kw.status === "suggested" && (
                           <DropdownMenuItem onClick={() => massApproveKeywords([kw.id]).then(r => r.error ? toast.error(r.error) : toast.success("Aprovada!"))}>
                             <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />Aprovar
                           </DropdownMenuItem>
@@ -485,9 +517,11 @@ function KeywordsContent({
                             {enrichingId === kw.id ? "Enriquecendo..." : "Enriquecer com DataForSEO"}
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => onReject?.(kw)}>
-                          <ShieldBan className="mr-2 h-4 w-4 text-amber-600" />Blacklist / Reprovar
-                        </DropdownMenuItem>
+                        {kw.status !== "rejected" && (
+                          <DropdownMenuItem onClick={() => onReject?.(kw)}>
+                            <ShieldBan className="mr-2 h-4 w-4 text-amber-600" />Descartar
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteOne(kw.id)} disabled={isPending}>
                           <Trash2 className="mr-2 h-4 w-4" />Excluir definitivamente
@@ -502,6 +536,100 @@ function KeywordsContent({
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+function AddKeywordsDialog({
+  open,
+  onOpenChange,
+  strategyId,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  strategyId: string;
+}) {
+  const [value, setValue] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const keywordsCount = value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).length;
+
+  const handleSubmit = () => {
+    startTransition(async () => {
+      const result = await addManualKeywords(strategyId, value);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(result.success);
+      setValue("");
+      onOpenChange(false);
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Adicionar palavras-chave</DialogTitle>
+          <DialogDescription>Informe uma palavra-chave por linha. Linhas vazias e duplicadas serao ignoradas.</DialogDescription>
+        </DialogHeader>
+        <Textarea
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          rows={8}
+          maxLength={3000}
+          placeholder={"seo local\nconteudo evergreen\nplanejamento editorial"}
+        />
+        <p className="text-xs text-muted-foreground">{Math.min(keywordsCount, 50)} de 50 por envio</p>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>Cancelar</Button>
+          <Button onClick={handleSubmit} disabled={isPending || keywordsCount === 0}>
+            {isPending ? "Adicionando..." : "Adicionar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SuggestKeywordsDialog({
+  open,
+  onOpenChange,
+  pending,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  pending: boolean;
+  onSubmit: (keywordCount: number) => void;
+}) {
+  const [count, setCount] = useState(10);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Sugerir palavras-chave</DialogTitle>
+          <DialogDescription>Confirme a quantidade de sugestoes que a IA deve gerar para esta estrategia.</DialogDescription>
+        </DialogHeader>
+        <label className="grid gap-2 text-sm font-medium">
+          Quantidade
+          <Input
+            type="number"
+            min={1}
+            max={50}
+            value={count}
+            onChange={(event) => setCount(Number(event.target.value))}
+          />
+        </label>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>Cancelar</Button>
+          <Button onClick={() => onSubmit(Math.max(1, Math.min(50, count || 10)))} disabled={pending}>
+            {pending ? "Enviando..." : "Sugerir"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
