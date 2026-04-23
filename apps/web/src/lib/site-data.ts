@@ -3,11 +3,18 @@ import { normalizeSiteSubdomain } from "@/lib/site";
 import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin";
 import { getServerSupabaseClient } from "@/lib/supabase/server";
 
+type ReadDb = Awaited<ReturnType<typeof getServerSupabaseClient>>;
+
+async function getReadDb(): Promise<ReadDb> {
+  const adminDb = getOptionalAdminSupabaseClient();
+  return (adminDb ?? (await getServerSupabaseClient())) as ReadDb;
+}
+
 export async function getSiteBySubdomain(subdomain: string) {
-  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
+  const db = await getReadDb();
   const normalizedSubdomain = normalizeSiteSubdomain(subdomain);
 
-  const result = (await (db as any)
+  const result = (await db
     .from("sites")
     .select("*")
     .eq("subdomain", normalizedSubdomain)

@@ -130,7 +130,7 @@ async function mutatePost(
   }
 
   if (!context.site) {
-    redirect("/onboarding/site");
+    redirect("/app");
   }
 
   const validation = validatePostInput(

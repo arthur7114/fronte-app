@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Tables, TablesInsert, TablesUpdate } from "@super/db";
 import { getAuthContext } from "@/lib/auth-context";
+import { resolveAuthenticatedAppPath } from "@/lib/auth-routing";
 import { validateBusinessBriefingInput } from "@/lib/business-briefing";
 import { getBusinessBriefingForTenant } from "@/lib/business-briefing-data";
 import { validateSiteInput } from "@/lib/site";
@@ -59,10 +60,12 @@ export async function createTenant(
   }
 
   if (context.membership) {
-    const briefing = context.tenant
-      ? await getBusinessBriefingForTenant(context.tenant.id)
-      : null;
-    redirect(context.site ? (briefing ? "/app/dashboard" : "/onboarding/briefing") : "/onboarding/site");
+    redirect(
+      resolveAuthenticatedAppPath({
+        hasMembership: true,
+        hasSite: Boolean(context.site),
+      }),
+    );
   }
 
   const validation = validateTenantInput(
@@ -96,11 +99,15 @@ export async function createTenant(
     return { error: "Nao foi possivel criar o espaco de trabalho agora." };
   }
 
-  const membershipResult = (await admin.from("memberships").insert({
+  const membershipInsert: TablesInsert<"memberships"> = {
     tenant_id: tenantResult.data.id,
     user_id: context.user.id,
     role: "owner",
-  } satisfies TablesInsert<"memberships">)) as {
+  };
+
+  const membershipResult = (await admin.from("memberships").insert(
+    membershipInsert,
+  )) as {
     error: { message: string } | null;
   };
 
@@ -110,7 +117,7 @@ export async function createTenant(
   }
 
   revalidateOnboardingPaths();
-  redirect("/onboarding/site");
+  redirect("/app");
 }
 
 export async function createOnboardingSite(
@@ -202,7 +209,7 @@ export async function saveOnboardingBriefing(
   }
 
   if (!context.site) {
-    redirect("/onboarding/site");
+    redirect("/app");
   }
 
   const validation = validateBusinessBriefingInput(formData);

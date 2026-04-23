@@ -2,9 +2,16 @@ import type { Tables } from "@super/db";
 import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin";
 import { getServerSupabaseClient } from "@/lib/supabase/server";
 
+type ReadDb = Awaited<ReturnType<typeof getServerSupabaseClient>>;
+
+async function getReadDb(): Promise<ReadDb> {
+  const adminDb = getOptionalAdminSupabaseClient();
+  return (adminDb ?? (await getServerSupabaseClient())) as ReadDb;
+}
+
 export async function getBusinessBriefingForTenant(tenantId: string) {
-  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
-  const result = (await (db as any)
+  const db = await getReadDb();
+  const result = (await db
     .from("business_briefings")
     .select("*")
     .eq("tenant_id", tenantId)

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import type { Tables } from "@super/db";
 import { APP_DEFAULTS, type AiRuleType } from "@super/shared";
 import {
@@ -56,11 +56,11 @@ function AvoidTopicRulesCard({
   rules: Tables<"ai_rules">[];
 }) {
   const [state, formAction, pending] = useActionState(saveAiRuleAction, initialState);
-  const [content, setContent] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state.success) {
-      setContent("");
+      formRef.current?.reset();
     }
   }, [state.success]);
 
@@ -71,13 +71,11 @@ function AvoidTopicRulesCard({
       description="Adicione varios assuntos que devem ser ignorados durante a pesquisa e a escrita."
       className="h-full"
     >
-      <form action={formAction} className="space-y-4">
+      <form ref={formRef} action={formAction} className="space-y-4">
         <input type="hidden" name="rule_type" value="avoid_topic" />
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
             name="content"
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
             placeholder="Ex.: politica partidaria, vagas de emprego, memes"
             className="min-h-12 flex-1 rounded-[20px] border border-[#1e293b]/10 bg-white px-4 py-3 text-sm text-[#0f172a] outline-none transition placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.12)]"
           />
@@ -117,11 +115,6 @@ function SingletonRuleCard({
   currentRule: Tables<"ai_rules"> | null;
 }) {
   const [state, formAction, pending] = useActionState(saveAiRuleAction, initialState);
-  const [content, setContent] = useState(currentRule?.content ?? "");
-
-  useEffect(() => {
-    setContent(currentRule?.content ?? "");
-  }, [currentRule?.content]);
 
   return (
     <SettingsSectionCard
@@ -129,7 +122,7 @@ function SingletonRuleCard({
       title={title}
       description={description}
     >
-      <form action={formAction} className="space-y-4">
+      <form key={currentRule?.id ?? `${ruleType}-empty`} action={formAction} className="space-y-4">
         <input type="hidden" name="rule_type" value={ruleType} />
         {currentRule ? <input type="hidden" name="rule_id" value={currentRule.id} /> : null}
         <label className="block">
@@ -139,8 +132,7 @@ function SingletonRuleCard({
           <textarea
             name="content"
             rows={4}
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
+            defaultValue={currentRule?.content ?? ""}
             placeholder={placeholder}
             className="w-full rounded-[22px] border border-[#1e293b]/10 bg-white px-4 py-3 text-sm leading-7 text-[#0f172a] outline-none transition placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.12)]"
           />
@@ -171,17 +163,6 @@ export function SettingsAiPanel({
   aiRules,
 }: SettingsAiPanelProps) {
   const [state, formAction, pending] = useActionState(saveAiSettings, initialState);
-  const [model, setModel] = useState(aiPreferences?.model ?? APP_DEFAULTS.aiModel);
-  const [toneOfVoice, setToneOfVoice] = useState(aiPreferences?.tone_of_voice ?? "");
-  const [writingStyle, setWritingStyle] = useState(aiPreferences?.writing_style ?? "");
-  const [expertiseLevel, setExpertiseLevel] = useState(aiPreferences?.expertise_level ?? "");
-
-  useEffect(() => {
-    setModel(aiPreferences?.model ?? APP_DEFAULTS.aiModel);
-    setToneOfVoice(aiPreferences?.tone_of_voice ?? "");
-    setWritingStyle(aiPreferences?.writing_style ?? "");
-    setExpertiseLevel(aiPreferences?.expertise_level ?? "");
-  }, [aiPreferences]);
 
   const avoidTopics = getRuleList("avoid_topic", aiRules);
   const toneRule = getRule("tone", aiRules);
@@ -196,7 +177,11 @@ export function SettingsAiPanel({
           title="Preferencias editoriais"
           description="Defina o modelo e o jeito de escrever usado pelos prompts do produto."
         >
-          <form action={formAction} className="space-y-5">
+          <form
+            key={aiPreferences?.id ?? "ai-preferences-default"}
+            action={formAction}
+            className="space-y-5"
+          >
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block">
                 <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.24em] text-[#2563eb]/70">
@@ -204,8 +189,7 @@ export function SettingsAiPanel({
                 </span>
                 <select
                   name="model"
-                  value={model}
-                  onChange={(event) => setModel(event.target.value)}
+                  defaultValue={aiPreferences?.model ?? APP_DEFAULTS.aiModel}
                   className="w-full rounded-[20px] border border-[#1e293b]/10 bg-white px-4 py-3 text-base text-[#0f172a] outline-none transition focus:border-[#2563eb] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.12)]"
                 >
                   {AI_MODEL_OPTIONS.map((option) => (
@@ -222,8 +206,7 @@ export function SettingsAiPanel({
                 </span>
                 <input
                   name="tone_of_voice"
-                  value={toneOfVoice}
-                  onChange={(event) => setToneOfVoice(event.target.value)}
+                  defaultValue={aiPreferences?.tone_of_voice ?? ""}
                   placeholder="Direto, consultivo"
                   className="w-full rounded-[20px] border border-[#1e293b]/10 bg-white px-4 py-3 text-base text-[#0f172a] outline-none transition placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.12)]"
                 />
@@ -235,8 +218,7 @@ export function SettingsAiPanel({
                 </span>
                 <input
                   name="writing_style"
-                  value={writingStyle}
-                  onChange={(event) => setWritingStyle(event.target.value)}
+                  defaultValue={aiPreferences?.writing_style ?? ""}
                   placeholder="Didatico, objetivo"
                   className="w-full rounded-[20px] border border-[#1e293b]/10 bg-white px-4 py-3 text-base text-[#0f172a] outline-none transition placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.12)]"
                 />
@@ -248,8 +230,7 @@ export function SettingsAiPanel({
                 </span>
                 <input
                   name="expertise_level"
-                  value={expertiseLevel}
-                  onChange={(event) => setExpertiseLevel(event.target.value)}
+                  defaultValue={aiPreferences?.expertise_level ?? ""}
                   placeholder="Intermediario"
                   className="w-full rounded-[20px] border border-[#1e293b]/10 bg-white px-4 py-3 text-base text-[#0f172a] outline-none transition placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.12)]"
                 />

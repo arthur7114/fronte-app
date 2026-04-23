@@ -8,7 +8,7 @@ export default async function OnboardingBriefingPage() {
 
   if (!user) redirect("/login");
   if (!membership || !tenant) redirect("/onboarding");
-  if (!site) redirect("/onboarding/site");
+  if (!site) redirect("/app");
 
   const briefing = await getBusinessBriefingForTenant(tenant.id);
   if (briefing) redirect("/app/dashboard");

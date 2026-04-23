@@ -3,9 +3,16 @@ import { normalizePostSlug } from "@/lib/post";
 import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin";
 import { getServerSupabaseClient } from "@/lib/supabase/server";
 
+type ReadDb = Awaited<ReturnType<typeof getServerSupabaseClient>>;
+
+async function getReadDb(): Promise<ReadDb> {
+  const adminDb = getOptionalAdminSupabaseClient();
+  return (adminDb ?? (await getServerSupabaseClient())) as ReadDb;
+}
+
 export async function listPostsForSite(tenantId: string, siteId: string) {
-  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
-  const result = (await (db as any)
+  const db = await getReadDb();
+  const result = (await db
     .from("posts")
     .select("*")
     .eq("tenant_id", tenantId)
@@ -23,8 +30,8 @@ export async function listPostsForSite(tenantId: string, siteId: string) {
 }
 
 export async function getPostForSite(tenantId: string, siteId: string, postId: string) {
-  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
-  const result = (await (db as any)
+  const db = await getReadDb();
+  const result = (await db
     .from("posts")
     .select("*")
     .eq("tenant_id", tenantId)
@@ -43,8 +50,8 @@ export async function getPostForSite(tenantId: string, siteId: string, postId: s
 }
 
 export async function listPublishedPostsForSite(siteId: string) {
-  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
-  const result = (await (db as any)
+  const db = await getReadDb();
+  const result = (await db
     .from("posts")
     .select("*")
     .eq("site_id", siteId)
@@ -63,8 +70,8 @@ export async function listPublishedPostsForSite(siteId: string) {
 }
 
 export async function getPublishedPostBySlug(siteId: string, slug: string) {
-  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient());
-  const result = (await (db as any)
+  const db = await getReadDb();
+  const result = (await db
     .from("posts")
     .select("*")
     .eq("site_id", siteId)

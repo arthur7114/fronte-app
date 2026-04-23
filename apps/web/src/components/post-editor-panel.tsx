@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import type { Tables } from "@super/db";
 import {
   createPost,
@@ -42,12 +42,7 @@ export function PostEditorPanel({ post, mode }: PostEditorPanelProps) {
   const [content, setContent] = useState(post?.content ?? "");
   const [publishedAt, setPublishedAt] = useState(toDateTimeLocal(post?.published_at));
   const [slugTouched, setSlugTouched] = useState(Boolean(post?.slug));
-
-  useEffect(() => {
-    if (!slugTouched) {
-      setSlug(normalizePostSlug(title));
-    }
-  }, [title, slugTouched]);
+  const slugValue = slugTouched ? slug : normalizePostSlug(title);
 
   return (
     <section className="grid gap-6 lg:grid-cols-[1fr_0.85fr]">
@@ -84,7 +79,7 @@ export function PostEditorPanel({ post, mode }: PostEditorPanelProps) {
             </span>
             <input
               name="slug"
-              value={slug}
+              value={slugValue}
               onChange={(event) => {
                 setSlugTouched(true);
                 setSlug(normalizePostSlug(event.target.value));
@@ -192,9 +187,9 @@ export function PostEditorPanel({ post, mode }: PostEditorPanelProps) {
           <h3 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-black">
             {title || "Titulo do post"}
           </h3>
-          <p className="mt-2 text-sm leading-7 text-black/62">
-            {slug || "slug-do-post"}
-          </p>
+            <p className="mt-2 text-sm leading-7 text-black/62">
+              {slugValue || "slug-do-post"}
+            </p>
         </div>
 
         <div className="space-y-3 border-t border-black/10 pt-4 text-sm leading-7 text-black/65">

@@ -55,7 +55,7 @@ async function requireBlogContext(): Promise<BlogContext | SiteState> {
   }
 
   if (!context.site) {
-    redirect("/onboarding/site");
+    redirect("/app");
   }
 
   return {

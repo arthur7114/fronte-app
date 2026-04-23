@@ -76,6 +76,7 @@ export function AppShell({
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const homeHref = site ? "/app/dashboard" : "/app";
 
   const getInitials = (name?: string) => {
     if (!name) return "US";
@@ -101,7 +102,7 @@ export function AppShell({
     <div className="min-h-screen bg-background">
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         <Link
-          href="/app/dashboard"
+          href={homeHref}
           className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6 transition hover:bg-sidebar-accent/30"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">

@@ -16,7 +16,6 @@ export type AuthContext = {
 
 export const getAuthContext = cache(async (): Promise<AuthContext> => {
   const supabase = await getServerSupabaseClient();
-  const db = supabase as any;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -25,7 +24,7 @@ export const getAuthContext = cache(async (): Promise<AuthContext> => {
     return { user: null, profile: null, membership: null, tenant: null, site: null };
   }
 
-  const profileResult = (await db
+  const profileResult = (await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
@@ -38,7 +37,7 @@ export const getAuthContext = cache(async (): Promise<AuthContext> => {
     throw new Error(profileResult.error.message);
   }
 
-  const membershipResult = (await db
+  const membershipResult = (await supabase
     .from("memberships")
     .select("*")
     .eq("user_id", user.id)
@@ -59,7 +58,7 @@ export const getAuthContext = cache(async (): Promise<AuthContext> => {
     return { user, profile: profileResult.data, membership: null, tenant: null, site: null };
   }
 
-  const tenantResult = (await db
+  const tenantResult = (await supabase
     .from("tenants")
     .select("*")
     .eq("id", membership.tenant_id)
@@ -72,14 +71,22 @@ export const getAuthContext = cache(async (): Promise<AuthContext> => {
     throw new Error(tenantResult.error.message);
   }
 
-  const siteDb = getOptionalAdminSupabaseClient() ?? supabase;
-  const siteResult = (await (siteDb as any)
-    .from("sites")
-    .select("*")
-    .eq("tenant_id", membership.tenant_id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle()) as {
+  const adminSiteDb = getOptionalAdminSupabaseClient();
+  const siteResult = (adminSiteDb
+    ? await adminSiteDb
+        .from("sites")
+        .select("*")
+        .eq("tenant_id", membership.tenant_id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle()
+    : await supabase
+        .from("sites")
+        .select("*")
+        .eq("tenant_id", membership.tenant_id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle()) as {
     data: Tables<"sites"> | null;
     error: { message: string } | null;
   };

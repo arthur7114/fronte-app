@@ -1,16 +1,22 @@
 import { redirect } from "next/navigation";
 import { OnboardingForm } from "@/components/onboarding-form";
 import { getAuthContext } from "@/lib/auth-context";
-import { getBusinessBriefingForTenant } from "@/lib/business-briefing-data";
+import { resolveAuthenticatedAppPath } from "@/lib/auth-routing";
 
 export default async function OnboardingPage() {
   const { user, membership, tenant, site } = await getAuthContext();
 
-  if (!user) redirect("/login");
+  if (!user) {
+    redirect("/login");
+  }
 
   if (membership && tenant) {
-    const briefing = await getBusinessBriefingForTenant(tenant.id);
-    redirect(site ? (briefing ? "/app/dashboard" : "/onboarding/briefing") : "/onboarding/site");
+    redirect(
+      resolveAuthenticatedAppPath({
+        hasMembership: true,
+        hasSite: Boolean(site),
+      }),
+    );
   }
 
   return <OnboardingForm />;

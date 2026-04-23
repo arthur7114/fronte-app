@@ -7,7 +7,6 @@ import type { AiRuleType } from "@super/shared";
 import {
   getAiPreferencesForTenant,
   getAutomationConfigForTenant,
-  listAiRulesForTenant,
 } from "@/lib/automation-data";
 import {
   AI_RULE_TYPES,
@@ -25,8 +24,6 @@ export type SettingsState = {
   error?: string;
   success?: string;
 };
-
-const SINGLE_RULE_TYPES = ["tone", "style", "structure"] as const;
 
 type SettingsContext = Omit<
   Awaited<ReturnType<typeof getAuthContext>>,
@@ -79,128 +76,6 @@ async function requireSettingsContext(): Promise<SettingsContext> {
     tenant: context.tenant,
     admin,
   };
-}
-
-async function deleteAiRulesByIds(
-  context: SettingsContext,
-  ruleIds: string[],
-) {
-  if (ruleIds.length === 0) {
-    return;
-  }
-
-  const deleteResult = await context.admin
-    .from("ai_rules")
-    .delete()
-    .in("id", ruleIds)
-    .eq("tenant_id", context.tenant.id);
-
-  if (deleteResult.error) {
-    throw new Error(deleteResult.error.message);
-  }
-}
-
-async function syncAiRules(
-  context: SettingsContext,
-  desiredRules: Array<{ rule_type: string; content: string }>,
-) {
-  const existingRules = await listAiRulesForTenant(context.tenant.id);
-  const deleteIds: string[] = [];
-  const insertRows: TablesInsert<"ai_rules">[] = [];
-  const updateRows: Array<{ id: string; content: string }> = [];
-
-  const desiredSingles = new Map(
-    desiredRules
-      .filter((rule) => SINGLE_RULE_TYPES.includes(rule.rule_type as (typeof SINGLE_RULE_TYPES)[number]))
-      .map((rule) => [rule.rule_type, rule.content]),
-  );
-
-  for (const ruleType of SINGLE_RULE_TYPES) {
-    const existingForType = existingRules.filter((rule) => rule.rule_type === ruleType);
-    const desiredContent = desiredSingles.get(ruleType) ?? null;
-
-    if (!desiredContent) {
-      deleteIds.push(...existingForType.map((rule) => rule.id));
-      continue;
-    }
-
-    const [firstRule, ...duplicateRules] = existingForType;
-
-    if (!firstRule) {
-      insertRows.push({
-        tenant_id: context.tenant.id,
-        rule_type: ruleType,
-        content: desiredContent,
-      });
-      continue;
-    }
-
-    if (firstRule.content !== desiredContent) {
-      updateRows.push({
-        id: firstRule.id,
-        content: desiredContent,
-      });
-    }
-
-    deleteIds.push(...duplicateRules.map((rule) => rule.id));
-  }
-
-  const existingAvoidTopics = existingRules.filter((rule) => rule.rule_type === "avoid_topic");
-  const desiredAvoidTopics = desiredRules
-    .filter((rule) => rule.rule_type === "avoid_topic")
-    .map((rule) => rule.content);
-  const keepByContent = new Map<string, string>();
-
-  for (const rule of existingAvoidTopics) {
-    if (keepByContent.has(rule.content)) {
-      deleteIds.push(rule.id);
-      continue;
-    }
-
-    keepByContent.set(rule.content, rule.id);
-  }
-
-  for (const rule of existingAvoidTopics) {
-    if (!desiredAvoidTopics.includes(rule.content)) {
-      deleteIds.push(rule.id);
-    }
-  }
-
-  for (const content of desiredAvoidTopics) {
-    if (!keepByContent.has(content)) {
-      insertRows.push({
-        tenant_id: context.tenant.id,
-        rule_type: "avoid_topic",
-        content,
-      });
-    }
-  }
-
-  await deleteAiRulesByIds(context, [...new Set(deleteIds)]);
-
-  for (const updateRow of updateRows) {
-    const updateResult = await context.admin
-      .from("ai_rules")
-      .update({
-        content: updateRow.content,
-      } satisfies TablesUpdate<"ai_rules">)
-      .eq("id", updateRow.id)
-      .eq("tenant_id", context.tenant.id);
-
-    if (updateResult.error) {
-      throw new Error(updateResult.error.message);
-    }
-  }
-
-  if (insertRows.length > 0) {
-    const insertResult = await context.admin
-      .from("ai_rules")
-      .insert(insertRows satisfies TablesInsert<"ai_rules">[]);
-
-    if (insertResult.error) {
-      throw new Error(insertResult.error.message);
-    }
-  }
 }
 
 export async function saveAccountSettings(
@@ -374,10 +249,14 @@ export async function saveSiteSettings(
   }
 
   revalidateSettingsPaths(result.data.subdomain);
-  revalidatePath("/onboarding/site");
+  revalidatePath("/app/configuracoes/site");
 
   if (previousSubdomain && previousSubdomain !== result.data.subdomain) {
     revalidatePath(`/blog/${previousSubdomain}`);
+  }
+
+  if (!context.site) {
+    redirect("/app/dashboard");
   }
 
   return {

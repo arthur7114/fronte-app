@@ -41,7 +41,7 @@ export async function requireAutomationWorkspace() {
   }
 
   if (!site) {
-    redirect("/onboarding/site");
+    redirect("/app");
   }
 
   return {

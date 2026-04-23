@@ -3,13 +3,18 @@ import { redirect } from "next/navigation";
 import { BarChart3, FileText, Sparkles, TrendingUp } from "lucide-react";
 import { AuthForm } from "@/components/auth-form";
 import { getAuthContext } from "@/lib/auth-context";
+import { resolveAuthenticatedAppPath } from "@/lib/auth-routing";
 
 export default async function LoginPage() {
   const { user, membership, site } = await getAuthContext();
 
   if (user) {
-    if (!membership) redirect("/onboarding");
-    redirect(site ? "/app/dashboard" : "/onboarding/site");
+    redirect(
+      resolveAuthenticatedAppPath({
+        hasMembership: Boolean(membership),
+        hasSite: Boolean(site),
+      }),
+    );
   }
 
   return (
@@ -24,7 +29,9 @@ export default async function LoginPage() {
           </Link>
 
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Bem-vindo de volta</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              Bem-vindo de volta
+            </h1>
             <p className="mt-2 text-muted-foreground">
               Entre na sua conta para continuar gerenciando seu conteudo.
             </p>
@@ -43,11 +50,26 @@ export default async function LoginPage() {
         <div className="relative z-10 max-w-lg text-center">
           <div className="mb-12 space-y-4">
             {[
-              { icon: TrendingUp, title: "+300% em trafego organico", description: "Aumente visitas com conteudo otimizado para SEO e GEO." },
-              { icon: FileText, title: "Conteudo em minutos", description: "Nossa IA cria artigos completos e otimizados automaticamente." },
-              { icon: BarChart3, title: "Resultados mensuraveis", description: "Acompanhe o crescimento com analytics simplificados." },
+              {
+                icon: TrendingUp,
+                title: "+300% em trafego organico",
+                description: "Aumente visitas com conteudo otimizado para SEO e GEO.",
+              },
+              {
+                icon: FileText,
+                title: "Conteudo em minutos",
+                description: "Nossa IA cria artigos completos e otimizados automaticamente.",
+              },
+              {
+                icon: BarChart3,
+                title: "Resultados mensuraveis",
+                description: "Acompanhe o crescimento com analytics simplificados.",
+              },
             ].map((item) => (
-              <div key={item.title} className="rounded-xl border border-border bg-card p-5 text-left shadow-sm">
+              <div
+                key={item.title}
+                className="rounded-xl border border-border bg-card p-5 text-left shadow-sm"
+              >
                 <div className="flex items-start gap-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                     <item.icon className="h-5 w-5 text-primary" />
@@ -63,7 +85,8 @@ export default async function LoginPage() {
 
           <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <p className="leading-relaxed text-foreground italic">
-              &quot;Em 3 meses triplicamos nosso trafego organico. A plataforma faz todo o trabalho pesado de SEO.&quot;
+              &quot;Em 3 meses triplicamos nosso trafego organico. A plataforma faz todo o
+              trabalho pesado de SEO.&quot;
             </p>
             <div className="mt-4 flex items-center justify-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">

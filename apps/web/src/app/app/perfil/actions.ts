@@ -28,7 +28,7 @@ export async function saveBusinessBriefing(
   }
 
   if (!context.site) {
-    redirect("/onboarding/site");
+    redirect("/app");
   }
 
   const validation = validateBusinessBriefingInput(formData);

@@ -1,33 +1,26 @@
-import type { ReactNode } from "react"
-import { redirect } from "next/navigation"
-import { Header } from "@/components/layout/header"
-import { Sidebar } from "@/components/layout/sidebar"
-import { getAuthContext } from "@/lib/auth-context"
-import { getBusinessBriefingForTenant } from "@/lib/business-briefing-data"
+import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
+import { Header } from "@/components/layout/header";
+import { Sidebar } from "@/components/layout/sidebar";
+import { getAuthContext } from "@/lib/auth-context";
 
 export default async function DashboardLayout({
   children,
 }: {
-  children: ReactNode
+  children: ReactNode;
 }) {
-  const { user, profile, membership, tenant, site } = await getAuthContext()
+  const { user, profile, membership, tenant, site } = await getAuthContext();
 
   if (!user) {
-    redirect("/login")
+    redirect("/login");
   }
 
   if (!membership || !tenant) {
-    redirect("/onboarding")
+    redirect("/onboarding");
   }
 
   if (!site) {
-    redirect("/onboarding/site")
-  }
-
-  const briefing = await getBusinessBriefingForTenant(tenant.id)
-
-  if (!briefing) {
-    redirect("/onboarding/briefing")
+    redirect("/app");
   }
 
   return (
@@ -45,10 +38,8 @@ export default async function DashboardLayout({
           userName={profile?.full_name || tenant.name}
           userEmail={user.email || ""}
         />
-        <main className="p-4 md:p-6">
-          {children}
-        </main>
+        <main className="p-4 md:p-6">{children}</main>
       </div>
     </div>
-  )
+  );
 }

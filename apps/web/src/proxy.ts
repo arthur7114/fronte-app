@@ -1,9 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@super/db/types";
 import { NextResponse, type NextRequest } from "next/server";
+import { resolveAuthenticatedAppPath } from "@/lib/auth-routing";
 
 const PUBLIC_ROUTES = ["/", "/login", "/cadastro", "/auth/login", "/auth/signup"];
 const PROTECTED_PREFIXES = ["/app", "/dashboard", "/onboarding"];
+
 type CookieBatch = {
   name: string;
   value: string;
@@ -68,33 +70,68 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  const membershipResult = await supabase
+  const membershipResult = (await supabase
     .from("memberships")
-    .select("id")
+    .select("id, tenant_id")
     .eq("user_id", user.id)
     .limit(1)
-    .maybeSingle();
+    .maybeSingle()) as {
+    data: { id: string; tenant_id: string } | null;
+    error: { message: string } | null;
+  };
 
-  const hasMembership = Boolean(membershipResult.data);
+  const membership = membershipResult.data;
+  let hasSite = false;
 
-  if (pathname === "/onboarding" && hasMembership) {
-    return NextResponse.redirect(new URL("/app/dashboard", request.url));
+  if (membership?.tenant_id) {
+    const siteResult = await supabase
+      .from("sites")
+      .select("id")
+      .eq("tenant_id", membership.tenant_id)
+      .limit(1)
+      .maybeSingle();
+
+    hasSite = Boolean(siteResult.data);
   }
 
-  if ((pathname.startsWith("/app") || pathname.startsWith("/dashboard")) && !hasMembership) {
+  const destination = resolveAuthenticatedAppPath({
+    hasMembership: Boolean(membership),
+    hasSite,
+  });
+
+  if (!membership && (pathname.startsWith("/app") || pathname.startsWith("/dashboard"))) {
     return NextResponse.redirect(new URL("/onboarding", request.url));
   }
 
+  if (pathname === "/onboarding/site") {
+    return NextResponse.redirect(new URL("/app", request.url));
+  }
+
+  if (pathname === "/onboarding" && membership) {
+    return NextResponse.redirect(new URL(destination, request.url));
+  }
+
   if (
-    pathname === "/" ||
-    pathname === "/login" ||
-    pathname === "/cadastro" ||
-    pathname === "/auth/login" ||
-    pathname === "/auth/signup"
+    membership &&
+    !hasSite &&
+    (pathname === "/dashboard" ||
+      pathname.startsWith("/dashboard/") ||
+      pathname === "/app/dashboard" ||
+      pathname.startsWith("/app/dashboard/"))
   ) {
-    return NextResponse.redirect(
-      new URL(hasMembership ? "/app/dashboard" : "/onboarding", request.url),
-    );
+    return NextResponse.redirect(new URL("/app", request.url));
+  }
+
+  if (pathname === "/" || pathname === "/login" || pathname === "/cadastro") {
+    return NextResponse.redirect(new URL(destination, request.url));
+  }
+
+  if (pathname === "/auth/login") {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if (pathname === "/auth/signup") {
+    return NextResponse.redirect(new URL("/cadastro", request.url));
   }
 
   return response;

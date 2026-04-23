@@ -3,13 +3,18 @@ import { redirect } from "next/navigation";
 import { Check, Sparkles } from "lucide-react";
 import { AuthForm } from "@/components/auth-form";
 import { getAuthContext } from "@/lib/auth-context";
+import { resolveAuthenticatedAppPath } from "@/lib/auth-routing";
 
 export default async function SignupPage() {
   const { user, membership, site } = await getAuthContext();
 
   if (user) {
-    if (!membership) redirect("/onboarding");
-    redirect(site ? "/app/dashboard" : "/onboarding/site");
+    redirect(
+      resolveAuthenticatedAppPath({
+        hasMembership: Boolean(membership),
+        hasSite: Boolean(site),
+      }),
+    );
   }
 
   return (
@@ -25,14 +30,22 @@ export default async function SignupPage() {
 
           <div className="mb-8">
             <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">1</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                1
+              </span>
               <span className="font-medium text-foreground">Criar conta</span>
               <div className="h-px flex-1 bg-border" />
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">2</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                2
+              </span>
               <div className="h-px flex-1 bg-border" />
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">3</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                3
+              </span>
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Crie sua conta</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              Crie sua conta
+            </h1>
             <p className="mt-2 text-muted-foreground">
               Comece a gerar trafego organico para seu negocio em minutos.
             </p>
@@ -53,10 +66,15 @@ export default async function SignupPage() {
             Seu blog profissional em minutos, nao em meses.
           </h2>
           <p className="text-lg leading-relaxed text-muted-foreground">
-            A ContentAI cuida de toda a estrategia de SEO enquanto voce foca no que realmente importa: seu negocio.
+            A ContentAI cuida de toda a estrategia de SEO enquanto voce foca no que
+            realmente importa: seu negocio.
           </p>
           <div className="mt-12 space-y-4">
-            {["Setup em menos de 5 minutos", "Sem necessidade de conhecimento tecnico", "Conteudo otimizado por IA"].map((item) => (
+            {[
+              "Setup em menos de 5 minutos",
+              "Sem necessidade de conhecimento tecnico",
+              "Conteudo otimizado por IA",
+            ].map((item) => (
               <div key={item} className="flex items-center gap-3 text-foreground">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                   <Check className="h-4 w-4 text-primary" />
