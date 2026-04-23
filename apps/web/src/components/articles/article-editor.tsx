@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import type { Tables } from "@super/db"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -23,96 +24,184 @@ import {
   RefreshCcw,
 } from "lucide-react"
 
+type ArticleGeneration = Tables<"article_generations">
+export type PostWithGeneration = Tables<"posts"> & {
+  article_generations?: ArticleGeneration | ArticleGeneration[] | null
+}
+
+type ReviewResult = {
+  seo_score?: number
+  readability_score?: number
+  feedback?: string[]
+  approved?: boolean
+  final_content?: string
+}
+
 type ArticleEditorProps = {
   articleId: string
   onBack?: () => void
   onBackUrl?: string
   isNew?: boolean
-  initialData?: any
+  initialData?: PostWithGeneration
 }
 
-const existingArticleData = {
-  title: "Clareamento Dental: Caseiro ou no Consultório?",
-  metaDescription: "Descubra qual método de clareamento dental é melhor para você: tratamento caseiro ou no consultório do dentista. Comparamos prós, contras e resultados.",
-  content: `O clareamento dental é um dos procedimentos estéticos mais procurados nas clínicas odontológicas. Mas com tantas opções disponíveis, surge a dúvida: qual método escolher?
+const LOCKED_STATUSES = new Set(["queued", "generating", "publishing", "failed"])
 
-## Clareamento no Consultório
-
-O clareamento profissional, realizado no consultório do dentista, utiliza géis com maior concentração de peróxido de hidrogênio ou carbamida. O procedimento é supervisionado por um profissional, garantindo maior segurança e resultados mais rápidos.
-
-### Vantagens:
-- Resultados visíveis em uma única sessão
-- Supervisão profissional durante todo o processo
-- Menor risco de sensibilidade quando bem aplicado
-
-## Clareamento Caseiro
-
-O clareamento caseiro é feito com moldeiras personalizadas e gel de menor concentração, aplicado em casa pelo próprio paciente sob orientação do dentista.
-
-### Vantagens:
-- Custo geralmente menor
-- Flexibilidade de horários
-- Tratamento gradual e controlado
-
-## Qual Escolher?
-
-A escolha depende de diversos fatores como orçamento, disponibilidade de tempo e expectativas de resultado. O ideal é consultar seu dentista para uma avaliação personalizada.`,
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Erro inesperado."
 }
 
-const generatedArticleData = {
-  title: "Benefícios do Clareamento Dental Profissional",
-  metaDescription: "Saiba por que o clareamento dental profissional é a melhor escolha para um sorriso branco e saudável. Veja vantagens, cuidados e resultados reais.",
-  content: `Ter dentes brancos deixou de ser apenas uma questão estética e passou a representar saúde, autocuidado e autoestima. O clareamento dental profissional é, hoje, um dos procedimentos mais procurados em consultórios odontológicos no Brasil.
-
-## Por que escolher o clareamento profissional?
-
-Diferente das opções caseiras feitas sem acompanhamento, o clareamento profissional é realizado por um dentista qualificado, que avalia suas condições bucais antes de começar o tratamento. Isso traz mais segurança e resultados previsíveis.
-
-### Principais vantagens:
-- Resultado visível já nas primeiras sessões
-- Procedimento seguro e personalizado
-- Menor risco de sensibilidade
-- Acompanhamento profissional em cada etapa
-
-## Como funciona o procedimento?
-
-O dentista aplica um gel clareador de alta concentração diretamente nos dentes, muitas vezes ativado por luz ou laser. Cada sessão dura entre 45 minutos e 1 hora, e o tratamento completo geralmente requer de 2 a 4 sessões.
-
-## Cuidados pós-clareamento
-
-Para manter os resultados por mais tempo, é importante:
-- Evitar alimentos e bebidas com corantes nas primeiras 48 horas
-- Escovar os dentes com pasta específica para dentes sensíveis
-- Fazer retoques periódicos conforme orientação do dentista
-
-## Conclusão
-
-Se você busca um sorriso mais branco com segurança, o clareamento profissional é a melhor escolha. Agende uma avaliação e descubra o plano ideal para você.`,
+function getArticleGeneration(post?: PostWithGeneration) {
+  const relation = post?.article_generations
+  if (Array.isArray(relation)) return relation[0] ?? null
+  return relation ?? null
 }
 
-export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }: ArticleEditorProps) {
+function isReviewResult(value: unknown): value is ReviewResult {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false
+  const result = value as ReviewResult
+  return (
+    result.seo_score === undefined ||
+    typeof result.seo_score === "number"
+  )
+}
+
+function clampScore(score: number) {
+  return Math.max(0, Math.min(100, score))
+}
+
+function getScoreLabel(score: number | null) {
+  if (score === null) return "Aguardando revisão"
+  if (score >= 80) return "Excelente"
+  if (score >= 60) return "Bom"
+  return "Revisar"
+}
+
+function getScoreColor(score: number | null) {
+  if (score === null) return "text-muted-foreground"
+  if (score >= 80) return "text-green-600"
+  if (score >= 60) return "text-amber-600"
+  return "text-destructive"
+}
+
+function buildChecklist({
+  title,
+  metaDescription,
+  content,
+  keyword,
+  review,
+  score,
+}: {
+  title: string
+  metaDescription: string
+  content: string
+  keyword?: string | null
+  review: ReviewResult | null
+  score: number | null
+}) {
+  if (review?.feedback?.length) {
+    const done = review.approved ?? (score !== null && score >= 70)
+    return review.feedback.map((label) => ({ label, done }))
+  }
+
+  const firstParagraph = content.split(/\n\s*\n/)[0] ?? ""
+  const normalizedKeyword = keyword?.toLowerCase().trim()
+
+  return [
+    { label: "Título preenchido", done: title.trim().length >= 3 },
+    { label: "Meta descrição preenchida", done: metaDescription.trim().length > 0 },
+    { label: "Subtítulos (H2) presentes", done: /^##\s+/m.test(content) },
+    {
+      label: "Palavra-chave no primeiro parágrafo",
+      done: normalizedKeyword ? firstParagraph.toLowerCase().includes(normalizedKeyword) : false,
+    },
+    { label: "Conteúdo com pelo menos 300 palavras", done: getWordCount(content) >= 300 },
+    { label: "Score de SEO calculado", done: score !== null },
+  ]
+}
+
+function getWordCount(content: string) {
+  const trimmed = content.trim()
+  if (!trimmed) return 0
+  return trimmed.split(/\s+/).length
+}
+
+export function ArticleEditor({
+  articleId,
+  onBack,
+  onBackUrl,
+  isNew = false,
+  initialData,
+}: ArticleEditorProps) {
   const router = useRouter()
-  
-  // Real data mapped to state
-  const [title, setTitle] = useState(initialData?.title || (isNew ? generatedArticleData.title : existingArticleData.title))
-  const [metaDescription, setMetaDescription] = useState(initialData?.meta_description || (isNew ? generatedArticleData.metaDescription : existingArticleData.metaDescription))
-  const [content, setContent] = useState(initialData?.content || (isNew ? generatedArticleData.content : existingArticleData.content))
+  const generation = getArticleGeneration(initialData)
+  const reviewResult = isReviewResult(generation?.review_result)
+    ? generation.review_result
+    : null
+  const initialSeoScore = initialData?.seo_score ?? reviewResult?.seo_score ?? null
+  const primaryKeyword = generation?.primary_keyword ?? null
+  const postId = initialData?.id ?? articleId
+  const isLocked = initialData ? LOCKED_STATUSES.has(initialData.status) : true
+
+  const [title, setTitle] = useState(initialData?.title ?? "")
+  const [metaDescription, setMetaDescription] = useState(initialData?.meta_description ?? "")
+  const [content, setContent] = useState(initialData?.content ?? "")
+  const [isSaving, setIsSaving] = useState(false)
   const [isApproving, setIsApproving] = useState(false)
+
+  const seoScore = initialSeoScore === null ? null : clampScore(initialSeoScore)
+  const scoreOffset = seoScore === null ? 226 : 226 * (1 - seoScore / 100)
+  const scoreLabel = getScoreLabel(seoScore)
+  const scoreColor = getScoreColor(seoScore)
+  const checklist = buildChecklist({
+    title,
+    metaDescription,
+    content,
+    keyword: primaryKeyword,
+    review: reviewResult,
+    score: seoScore,
+  })
 
   const handleBack = () => {
     if (onBack) onBack()
     else if (onBackUrl) router.push(onBackUrl)
   }
 
+  const handleSaveDraft = async () => {
+    setIsSaving(true)
+    try {
+      const { saveArticleDraft } = await import("@/app/dashboard/artigos/actions")
+      const result = await saveArticleDraft(postId, {
+        title,
+        metaDescription,
+        content,
+      })
+
+      if (result.error) throw new Error(result.error)
+
+      toast.success("Rascunho salvo.")
+      router.refresh()
+    } catch (error) {
+      toast.error("Não foi possível salvar o rascunho.", {
+        description: getErrorMessage(error),
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const handleApprove = async () => {
     setIsApproving(true)
     try {
       const { approveAndSchedulePost } = await import("@/app/dashboard/artigos/actions")
-      const res = await approveAndSchedulePost(initialData.id, null)
+      const res = await approveAndSchedulePost(postId, null)
       if (res?.error) throw new Error(res.error)
       toast.success("Artigo aprovado e publicado!")
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao aprovar artigo")
+      router.refresh()
+    } catch (error) {
+      toast.error("Erro ao aprovar artigo", {
+        description: getErrorMessage(error),
+      })
     } finally {
       setIsApproving(false)
     }
@@ -131,30 +220,45 @@ export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }:
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={handleBack} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Voltar para artigos
         </Button>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" disabled>
             <Eye className="h-4 w-4" />
             Visualizar
           </Button>
-          <Button variant="outline" className="gap-2">
-            <Save className="h-4 w-4" />
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={handleSaveDraft}
+            disabled={isLocked || isSaving || isApproving}
+          >
+            {isSaving ? (
+              <RefreshCcw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
             Salvar rascunho
           </Button>
-          <Button className="gap-2" onClick={handleApprove} disabled={isApproving}>
-            {isApproving ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          <Button
+            className="gap-2"
+            onClick={handleApprove}
+            disabled={isLocked || isSaving || isApproving}
+          >
+            {isApproving ? (
+              <RefreshCcw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
             {initialData?.status === "published" ? "Atualizar" : "Aprovar e Publicar"}
           </Button>
         </div>
       </div>
 
-      {/* AI Generated Banner */}
-      {isNew && (
+      {isNew && !isLocked && (
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="flex items-start gap-3 p-4">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -166,17 +270,23 @@ export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }:
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 Revise, edite e ajuste o conteúdo conforme necessário antes de publicar.
-                Você pode usar o botão de regenerar para refazer seções específicas.
               </p>
             </div>
           </CardContent>
         </Card>
       )}
 
+      {isLocked && (
+        <Card className="border-border bg-muted/30">
+          <CardContent className="p-4 text-sm text-muted-foreground">
+            Este artigo está com status <strong>{initialData?.status ?? "indisponível"}</strong>.
+            Aguarde a geração terminar ou resolva o erro antes de editar.
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Editor */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Title */}
           <Card>
             <CardContent className="p-4">
               <label className="mb-2 block text-sm font-medium text-foreground">
@@ -185,7 +295,7 @@ export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }:
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(event) => setTitle(event.target.value)}
                 className="w-full border-0 bg-transparent text-xl font-semibold text-foreground outline-none placeholder:text-muted-foreground"
                 placeholder="Digite o título..."
               />
@@ -193,7 +303,7 @@ export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }:
                 <span className="text-xs text-muted-foreground">
                   {title.length}/70 caracteres
                 </span>
-                <Button variant="ghost" size="sm" className="gap-1 text-primary">
+                <Button variant="ghost" size="sm" className="gap-1 text-primary" disabled>
                   <Sparkles className="h-3 w-3" />
                   Sugerir título
                 </Button>
@@ -201,7 +311,6 @@ export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }:
             </CardContent>
           </Card>
 
-          {/* Meta Description */}
           <Card>
             <CardContent className="p-4">
               <label className="mb-2 block text-sm font-medium text-foreground">
@@ -209,7 +318,7 @@ export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }:
               </label>
               <textarea
                 value={metaDescription}
-                onChange={(e) => setMetaDescription(e.target.value)}
+                onChange={(event) => setMetaDescription(event.target.value)}
                 rows={2}
                 className="w-full resize-none border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                 placeholder="Uma breve descrição do artigo para aparecer nos resultados de busca..."
@@ -218,7 +327,7 @@ export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }:
                 <span className="text-xs text-muted-foreground">
                   {metaDescription.length}/160 caracteres
                 </span>
-                <Button variant="ghost" size="sm" className="gap-1 text-primary">
+                <Button variant="ghost" size="sm" className="gap-1 text-primary" disabled>
                   <Sparkles className="h-3 w-3" />
                   Gerar descrição
                 </Button>
@@ -226,10 +335,8 @@ export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }:
             </CardContent>
           </Card>
 
-          {/* Content Editor */}
           <Card>
             <CardContent className="p-0">
-              {/* Toolbar */}
               <div className="flex items-center gap-1 border-b border-border p-2">
                 {toolbarButtons.map((btn) => (
                   <Button
@@ -238,35 +345,34 @@ export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }:
                     size="icon"
                     className="h-8 w-8"
                     title={btn.label}
+                    disabled
                   >
                     <btn.icon className="h-4 w-4" />
                   </Button>
                 ))}
                 <div className="ml-auto">
-                  <Button variant="ghost" size="sm" className="gap-1 text-primary">
+                  <Button variant="ghost" size="sm" className="gap-1 text-primary" disabled>
                     <RefreshCcw className="h-3 w-3" />
                     Regenerar
                   </Button>
                 </div>
               </div>
 
-              {/* Editor Area */}
               <div className="p-4">
                 <textarea
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  onChange={(event) => setContent(event.target.value)}
                   rows={20}
                   className="w-full resize-none border-0 bg-transparent text-sm leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
                   placeholder="Comece a escrever seu artigo..."
                 />
               </div>
 
-              {/* Footer */}
               <div className="flex items-center justify-between border-t border-border p-4">
                 <span className="text-xs text-muted-foreground">
-                  {content.split(/\s+/).length} palavras
+                  {getWordCount(content)} palavras
                 </span>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="outline" size="sm" className="gap-2" disabled>
                   <Sparkles className="h-4 w-4" />
                   Expandir com IA
                 </Button>
@@ -275,9 +381,7 @@ export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }:
           </Card>
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-4">
-          {/* AI Score */}
           <Card>
             <CardContent className="p-4">
               <h3 className="mb-4 font-medium text-foreground">Pontuação SEO</h3>
@@ -293,47 +397,41 @@ export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }:
                       fill="none"
                       className="text-muted"
                     />
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r="36"
-                      stroke="currentColor"
-                      strokeWidth="8"
-                      fill="none"
-                      strokeDasharray={226}
-                      strokeDashoffset={226 * (1 - 0.78)}
-                      className="text-green-500"
-                    />
+                    {seoScore !== null && (
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="36"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="none"
+                        strokeDasharray={226}
+                        strokeDashoffset={scoreOffset}
+                        className={scoreColor}
+                      />
+                    )}
                   </svg>
                   <span className="absolute inset-0 flex items-center justify-center text-xl font-bold text-foreground">
-                    {initialData?.seo_score || 78}
+                    {seoScore ?? "--"}
                   </span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-green-600">
-                    {initialData?.seo_score >= 80 ? "Excelente" : initialData?.seo_score >= 60 ? "Bom" : "Revisar"}
-                  </p>
+                  <p className={`text-sm font-medium ${scoreColor}`}>{scoreLabel}</p>
                   <p className="text-xs text-muted-foreground">
-                    Seu artigo está bem otimizado para os buscadores.
+                    {seoScore === null
+                      ? "A revisão da IA ainda não calculou a pontuação deste artigo."
+                      : "Pontuação carregada da revisão da IA."}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Checklist */}
           <Card>
             <CardContent className="p-4">
               <h3 className="mb-4 font-medium text-foreground">Lista de verificação</h3>
               <div className="space-y-3">
-                {[
-                  { label: "Título contém palavra-chave", done: true },
-                  { label: "Meta descrição preenchida", done: true },
-                  { label: "Subtítulos (H2) presentes", done: true },
-                  { label: "Palavra-chave no primeiro parágrafo", done: true },
-                  { label: "Links internos adicionados", done: false },
-                  { label: "Imagens com alt text", done: false },
-                ].map((item) => (
+                {checklist.map((item) => (
                   <div key={item.label} className="flex items-center gap-2">
                     <div
                       className={`h-5 w-5 rounded-full ${
@@ -357,14 +455,17 @@ export function ArticleEditor({ onBack, onBackUrl, isNew = false, initialData }:
             </CardContent>
           </Card>
 
-          {/* Keywords */}
           <Card>
             <CardContent className="p-4">
               <h3 className="mb-3 font-medium text-foreground">Palavras-chave alvo</h3>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">clareamento dental</Badge>
-                <Badge variant="secondary">clareamento caseiro</Badge>
-                <Badge variant="secondary">clareamento consultório</Badge>
+                {primaryKeyword ? (
+                  <Badge variant="secondary">{primaryKeyword}</Badge>
+                ) : (
+                  <span className="text-sm text-muted-foreground">
+                    Nenhuma palavra-chave vinculada.
+                  </span>
+                )}
               </div>
             </CardContent>
           </Card>

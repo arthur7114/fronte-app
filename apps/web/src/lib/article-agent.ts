@@ -131,6 +131,12 @@ export async function runResearchPhase(generationId: string, tenantId: string) {
     .update({ phase: "research", started_at: new Date().toISOString() })
     .eq("id", generationId)
 
+  await (db as any)
+    .from("posts")
+    .update({ status: "generating", updated_at: new Date().toISOString() })
+    .eq("id", gen.post_id)
+    .eq("tenant_id", tenantId)
+
   try {
     const queryToSearch = gen.primary_keyword || gen.topic
 
@@ -470,8 +476,11 @@ export async function runReviewPhase(generationId: string, tenantId: string) {
       .update({
         content: reviewAiResult.final_content,
         seo_score: reviewAiResult.seo_score,
+        status: "draft",
+        updated_at: new Date().toISOString(),
       })
       .eq("id", gen.post_id)
+      .eq("tenant_id", tenantId)
 
     return reviewAiResult
   } catch (error: any) {

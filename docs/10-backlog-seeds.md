@@ -32,12 +32,14 @@
 - permitir edição e aprovação
 
 ## Épico 6 — Produção de artigos
-- configurar estilo e tamanho
-- subir referências em texto e PDF
-- gerar título, meta description e artigo
-- editar rascunho
-- aprovar ou reprovar
-- publicar
+- configurar estilo e tamanho (`tone`, `target_length` via modal de geração)
+- gerar artigo via pipeline de 4 fases: research (SERP + DataForSEO) → structure → write → review
+- pipeline persistido em `article_generations` com progresso por `phase`
+- geração em lote a partir de tópicos aprovados (`bulk-generate`)
+- editar rascunho em `article-editor` com SEO score e checklist vindos do `review_result`
+- aprovar ou reprovar; agendar publicação via `scheduled_for`
+- publicar automaticamente via pg_cron quando `scheduled_for` vencer
+- modo de operação controlado por `workspace.operation_mode` (manual/assisted/automatic)
 
 ## Épico 7 — Tendências
 - rodar análise semanal

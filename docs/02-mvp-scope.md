@@ -53,7 +53,10 @@ Saída esperada:
 - gerar título
 - gerar meta description
 - gerar conteúdo completo
-- operar em modo automático ou com validação manual
+- operar em modo automático ou com validação manual (controlado por `workspace.operation_mode`: manual/assisted/automatic)
+- pipeline de 4 fases via `article_generations`: research (SERP + DataForSEO) → structure (outline) → write (markdown) → review (SEO score)
+- geração contextual via modal dentro de estratégia, calendário ou lista de artigos — não como página separada
+- geração em lote a partir de tópicos aprovados (`bulk-generate`)
 
 ### 8. Edição
 - editar rascunhos

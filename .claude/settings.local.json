@@ -7,7 +7,13 @@
       "Bash(npx supabase *)",
       "Bash(npm --workspace @super/web run build)",
       "Skill(update-config)",
-      "Skill(update-config:*)"
+      "Skill(update-config:*)",
+      "Bash(grep -E \"\\\\.tsx$\")",
+      "Bash(awk '{print $NF}')",
+      "Bash(npm --workspace @super/web run lint)",
+      "Bash(grep -v \"^$\")",
+      "Bash(npx eslint *)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\kbrit\\\\Documents\\\\GitHub\\\\fronte-app\\\\\" -Name | Select-String \"env\")"
     ]
   }
 }

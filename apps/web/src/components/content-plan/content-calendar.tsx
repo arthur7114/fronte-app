@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { CalendarEvent } from "@/lib/strategies"
-import { CALENDAR_EVENTS } from "@/lib/strategies"
 
 const statusColors = {
   published: "bg-green-500",
@@ -24,28 +23,78 @@ const statusLabels = {
 
 const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
 
+const MONTH_NAMES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+]
+
+type CalendarDay = {
+  date: Date
+  isCurrentMonth: boolean
+}
+
+function buildCalendarDays(year: number, month: number): CalendarDay[] {
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const days: CalendarDay[] = []
+
+  // Padding from previous month
+  for (let i = 0; i < firstDay.getDay(); i++) {
+    const d = new Date(year, month, -firstDay.getDay() + 1 + i)
+    days.push({ date: d, isCurrentMonth: false })
+  }
+
+  // Current month
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    days.push({ date: new Date(year, month, i), isCurrentMonth: true })
+  }
+
+  // Padding to complete last row
+  const remaining = 7 - (days.length % 7)
+  if (remaining < 7) {
+    for (let i = 1; i <= remaining; i++) {
+      days.push({ date: new Date(year, month + 1, i), isCurrentMonth: false })
+    }
+  }
+
+  return days
+}
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+}
+
+function eventDate(event: CalendarEvent): Date {
+  // Real events use Unix ms timestamp; mock data used day-of-month integers.
+  // Values > 31 are guaranteed to be timestamps.
+  if (event.date > 31) return new Date(event.date)
+  // Fallback for any residual mock data: treat as current-month day
+  const now = new Date()
+  return new Date(now.getFullYear(), now.getMonth(), event.date)
+}
+
 type ContentCalendarProps = {
   events?: CalendarEvent[]
   strategyName?: string
 }
 
-export function ContentCalendar({
-  events = CALENDAR_EVENTS,
-  strategyName,
-}: ContentCalendarProps) {
-  const [viewMode, setViewMode] = useState<"week" | "month">("month")
-  const [currentMonth] = useState("Abril 2026")
+export function ContentCalendar({ events = [], strategyName }: ContentCalendarProps) {
+  const today = new Date()
+  const [current, setCurrent] = useState<Date>(new Date(today.getFullYear(), today.getMonth(), 1))
 
-  // Generate calendar days (simplified for demo)
-  const generateCalendarDays = () => {
-    const days: { day: number; isCurrentMonth: boolean }[] = []
-    for (let i = 0; i < 3; i++) days.push({ day: 29 + i, isCurrentMonth: false })
-    for (let i = 1; i <= 30; i++) days.push({ day: i, isCurrentMonth: true })
-    for (let i = 1; i <= 4; i++) days.push({ day: i, isCurrentMonth: false })
-    return days
+  const year = current.getFullYear()
+  const month = current.getMonth()
+  const calendarDays = buildCalendarDays(year, month)
+
+  function prevMonth() {
+    setCurrent(new Date(year, month - 1, 1))
   }
 
-  const calendarDays = generateCalendarDays()
+  function nextMonth() {
+    setCurrent(new Date(year, month + 1, 1))
+  }
 
   const publishedCount = events.filter((e) => e.status === "published").length
   const scheduledCount = events.filter((e) => e.status === "scheduled").length
@@ -70,37 +119,14 @@ export function ContentCalendar({
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center rounded-lg border border-border p-1">
-              <button
-                onClick={() => setViewMode("week")}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                  viewMode === "week"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Semana
-              </button>
-              <button
-                onClick={() => setViewMode("month")}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                  viewMode === "month"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Mês
-              </button>
-            </div>
-
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" aria-label="Mês anterior">
+              <Button variant="outline" size="icon" onClick={prevMonth} aria-label="Mês anterior">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="min-w-[120px] text-center font-medium">{currentMonth}</span>
-              <Button variant="outline" size="icon" aria-label="Próximo mês">
+              <span className="min-w-[140px] text-center font-medium">
+                {MONTH_NAMES[month]} {year}
+              </span>
+              <Button variant="outline" size="icon" onClick={nextMonth} aria-label="Próximo mês">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -134,10 +160,7 @@ export function ContentCalendar({
         <div className="rounded-xl border border-border">
           <div className="grid grid-cols-7 border-b border-border bg-muted/30">
             {weekDays.map((day) => (
-              <div
-                key={day}
-                className="p-3 text-center text-sm font-medium text-muted-foreground"
-              >
+              <div key={day} className="p-3 text-center text-sm font-medium text-muted-foreground">
                 {day}
               </div>
             ))}
@@ -145,10 +168,8 @@ export function ContentCalendar({
 
           <div className="grid grid-cols-7">
             {calendarDays.map((dayInfo, index) => {
-              const content = events.find(
-                (c) => c.date === dayInfo.day && dayInfo.isCurrentMonth,
-              )
-              const isToday = dayInfo.day === 10 && dayInfo.isCurrentMonth
+              const dayEvents = events.filter((e) => isSameDay(eventDate(e), dayInfo.date))
+              const isToday = isSameDay(dayInfo.date, today)
 
               return (
                 <div
@@ -168,11 +189,12 @@ export function ContentCalendar({
                           : "text-muted-foreground",
                     )}
                   >
-                    {dayInfo.day}
+                    {dayInfo.date.getDate()}
                   </div>
 
-                  {content && (
+                  {dayEvents.map((content) => (
                     <Link
+                      key={content.id}
                       href={`/dashboard/artigos/${content.id}`}
                       className={cn(
                         "mt-1 block cursor-pointer rounded-md p-2 text-xs transition-all hover:shadow-md",
@@ -193,7 +215,7 @@ export function ContentCalendar({
                         <span className="line-clamp-2 font-medium">{content.title}</span>
                       </div>
                     </Link>
-                  )}
+                  ))}
                 </div>
               )
             })}

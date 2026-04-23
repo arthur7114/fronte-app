@@ -22,6 +22,18 @@
 - `serp_results` (Links individuais, títulos, PAA destrinchados do snapshot)
 - `workspace_competitors` (Agregação de share of voice por tenant/site)
 
+## Entidades do Workflow Editorial (adicionadas 2026-04-22)
+
+- `article_generations` (pipeline de geração por artigo — 4 fases: research, structure, write, review)
+  - Campos: `tenant_id`, `strategy_id`, `post_id`, `topic`, `primary_keyword`, `tone`, `target_length`, `additional_instructions`, `phase` (enum), `research_result` (JSONB), `structure_result` (JSONB), `write_result` (JSONB), `review_result` (JSONB), `started_at`, `completed_at`, `error_message`
+  - Migration: `supabase/migrations/20260422_create_article_generations.sql` (criada, aguarda aplicação no Supabase live)
+
+Novos campos em `posts` (mesma migration):
+- `generation_id` — FK para `article_generations`
+- `seo_score` — score 0-100 gerado pelo agente na fase review
+- `approved_at` — timestamp de aprovação manual
+- `approved_by` — FK para `auth.users`
+
 ## Hierarquia de dominio
 
 ```text
@@ -33,6 +45,7 @@ CONTA
       -> KEYWORD_CANDIDATES
       -> TOPIC_CANDIDATES
     -> POSTS
+      -> ARTICLE_GENERATIONS (pipeline de IA por artigo)
     -> NEWSLETTER / LEADS / ANALYTICS
     -> SERP_SNAPSHOTS / WORKSPACE_COMPETITORS
 ```
@@ -93,7 +106,8 @@ A maioria das superfícies do protótipo já possui modelo de dados oficial no S
 - ~~leads: origem, status, responsavel e historico~~ (Resolvido via `contacts`)
 - ~~analytics SEO/GEO: series temporais, canais, query terms e metricas de conversao~~ (SEO e Conversões via `analytics_daily`. GEO requer integração GA4 Server-to-Server)
 - ~~blog publico por slug~~: fonte de conteudo é `posts`, topologia publica em `/blog/[slug]` (Resolvido)
-- calendario editorial: eventos persistidos e itens sem data (Gap remanescente)
+- ~~pipeline de geracao de artigos~~ (Resolvido via `article_generations` — migration criada em 22/04, aguarda aplicação)
+- calendario editorial: `scheduled_for` em `posts` serve como ancora; calendário visual consome esse campo via `ArticleItem.scheduledAt`
 
 ## Rastreamento de Tráfego de IAs (GEO)
 

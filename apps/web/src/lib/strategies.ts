@@ -72,8 +72,13 @@ export type Strategy = {
   status: StrategyStatus
   tone: string
   audience: string
+  persona: string
   goal: string
   cadence: number
+  differentiators: string
+  ctaText: string
+  ctaLink: string
+  restrictions: string
   operation_mode: OperationMode
   lastUpdated: string
   color: string
@@ -97,10 +102,15 @@ export function adaptStrategy(db: Tables<"strategies">): Strategy {
     description: db.description || "Sem descrição definida.",
     type: (db.strategy_type as StrategyType) || "seo",
     status: statusMap[db.status] || "rascunho",
-    tone: db.tone || "Tom não definido",
-    audience: db.audience || "Público não definido",
-    goal: db.goal || "Sem objetivo definido",
-    cadence: db.cadence || 8,
+    tone: db.tone || "",
+    audience: db.audience || "",
+    persona: (db as any).persona || "",
+    goal: db.goal || "",
+    cadence: db.cadence || 0,
+    differentiators: (db as any).differentiators || "",
+    ctaText: (db as any).cta_text || "",
+    ctaLink: (db as any).cta_link || "",
+    restrictions: (db as any).restrictions || "",
     operation_mode: (db.operation_mode as OperationMode) || "manual",
     lastUpdated: db.updated_at,
     color: db.color || "#3b82f6",
@@ -108,6 +118,9 @@ export function adaptStrategy(db: Tables<"strategies">): Strategy {
 }
 
 const postStatusMap: Record<string, ArticleStatus> = {
+  queued: "queued",
+  generating: "generating",
+  in_progress: "generating",
   draft: "draft",
   in_review: "review",
   approved: "draft",
@@ -166,8 +179,13 @@ export const STRATEGIES: Strategy[] = [
     status: "ativa",
     tone: "Profissional e educativo",
     audience: "Adultos 25-55 interessados em saúde bucal",
+    persona: "",
     goal: "Aumentar tráfego orgânico qualificado em 3x",
     cadence: 8,
+    differentiators: "",
+    ctaText: "",
+    ctaLink: "",
+    restrictions: "",
     operation_mode: "assisted",
     lastUpdated: "2025-11-08",
     color: "#3b82f6",
@@ -181,8 +199,13 @@ export const STRATEGIES: Strategy[] = [
     status: "ativa",
     tone: "Acolhedor e próximo",
     audience: "Moradores da zona sul de São Paulo",
+    persona: "",
     goal: "Dominar buscas locais e aumentar agendamentos",
     cadence: 4,
+    differentiators: "",
+    ctaText: "",
+    ctaLink: "",
+    restrictions: "",
     operation_mode: "automatic",
     lastUpdated: "2025-11-06",
     color: "#10b981",
@@ -196,8 +219,13 @@ export const STRATEGIES: Strategy[] = [
     status: "pausada",
     tone: "Persuasivo e direto",
     audience: "Pessoas com intenção alta (fundo de funil)",
+    persona: "",
     goal: "Converter leitores em leads qualificados",
     cadence: 4,
+    differentiators: "",
+    ctaText: "",
+    ctaLink: "",
+    restrictions: "",
     operation_mode: "manual",
     lastUpdated: "2025-10-28",
     color: "#f97316",

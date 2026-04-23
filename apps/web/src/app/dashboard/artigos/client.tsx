@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ArticlesList } from "@/components/articles/articles-list"
-import { ArticleEditor } from "@/components/articles/article-editor"
+import { GenerateArticleDialog } from "@/components/articles/generate-article-dialog"
 import { ProductionQueue } from "@/components/articles/production-queue"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,24 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
-import {
-  Sparkles,
-  LayoutList,
-  Grid3X3,
-  ExternalLink,
-  Lightbulb,
-  ChevronDown,
-  Layers,
-  PenTool,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Sparkles, ExternalLink, Lightbulb } from "lucide-react"
 import type { ArticleItem, Strategy } from "@/lib/strategies"
 
 export type ArtigosClientProps = {
@@ -40,9 +24,9 @@ export type ArtigosClientProps = {
 }
 
 export function ArtigosClient({ articles, strategies }: ArtigosClientProps) {
-  const [selectedArticle, setSelectedArticle] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list")
+  const router = useRouter()
   const [strategyFilter, setStrategyFilter] = useState<string>("all")
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false)
 
   const filteredArticles = useMemo(() => {
     if (strategyFilter === "all") return articles
@@ -58,16 +42,6 @@ export function ArtigosClient({ articles, strategies }: ArtigosClientProps) {
   )
 
   const currentStrategy = strategies.find((s) => s.id === strategyFilter)
-
-  if (selectedArticle) {
-    return (
-      <ArticleEditor
-        articleId={selectedArticle}
-        isNew={selectedArticle === "new"}
-        onBack={() => setSelectedArticle(null)}
-      />
-    )
-  }
 
   return (
     <div className="space-y-6">
@@ -96,40 +70,10 @@ export function ArtigosClient({ articles, strategies }: ArtigosClientProps) {
             </SelectContent>
           </Select>
 
-          {/* View Toggle */}
-          <div className="flex items-center rounded-lg border border-border p-1">
-            <button
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "rounded-md p-2 transition-colors",
-                viewMode === "list"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              aria-label="Lista"
-            >
-              <LayoutList className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("grid")}
-              className={cn(
-                "rounded-md p-2 transition-colors",
-                viewMode === "grid"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              aria-label="Grade"
-            >
-              <Grid3X3 className="h-4 w-4" />
-            </button>
-          </div>
-
           {/* Button: gerar artigo */}
-          <Button asChild className="gap-2">
-            <Link href="/dashboard/artigos/novo">
-              <Sparkles className="h-4 w-4" />
-              Novo Artigo (IA)
-            </Link>
+          <Button className="gap-2" onClick={() => setShowGenerateDialog(true)}>
+            <Sparkles className="h-4 w-4" />
+            Novo Artigo (IA)
           </Button>
         </div>
       </div>
@@ -155,7 +99,7 @@ export function ArtigosClient({ articles, strategies }: ArtigosClientProps) {
             </Badge>
           </div>
           <Button asChild variant="ghost" size="sm" className="gap-1.5">
-            <Link href={`/app/estrategias/${currentStrategy.id}`}>
+            <Link href={`/dashboard/estrategias/${currentStrategy.id}`}>
               Abrir estratégia
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>
@@ -166,8 +110,8 @@ export function ArtigosClient({ articles, strategies }: ArtigosClientProps) {
       {/* Articles List */}
       <ArticlesList
         articles={filteredArticles}
-        viewMode={viewMode}
-        onSelectArticle={setSelectedArticle}
+        viewMode="list"
+        onSelectArticle={(id) => router.push(`/dashboard/artigos/${id}`)}
         emptyLabel={
           currentStrategy
             ? `Ainda não há artigos em ${currentStrategy.name}.`
@@ -175,6 +119,12 @@ export function ArtigosClient({ articles, strategies }: ArtigosClientProps) {
         }
       />
 
+      <GenerateArticleDialog
+        open={showGenerateDialog}
+        onOpenChange={setShowGenerateDialog}
+        onGenerated={() => router.refresh()}
+        strategyId={currentStrategy?.id ?? null}
+      />
     </div>
   )
 }

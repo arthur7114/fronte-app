@@ -21,9 +21,12 @@ import { rejectItem, type BanKind, type BanScope } from "@/lib/workspace-store"
 type RejectItemDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  itemId: string
+  // modo single
+  itemId?: string
+  term?: string
+  // modo bulk
+  items?: Array<{ id: string; term: string }>
   kind: BanKind
-  term: string
   strategyId?: string
   strategyName?: string
   onDone?: () => void
@@ -33,12 +36,23 @@ export function RejectItemDialog({
   open,
   onOpenChange,
   itemId,
-  kind,
   term,
+  items,
+  kind,
   strategyId,
   strategyName,
   onDone,
 }: RejectItemDialogProps) {
+  const isBulk = Array.isArray(items) && items.length > 1
+  const effectiveItems =
+    items && items.length > 0
+      ? items
+      : itemId && term
+        ? [{ id: itemId, term }]
+        : []
+  const headerTerm = isBulk
+    ? `${effectiveItems.length} ${kind === "keyword" ? "palavras-chave" : "tópicos"}`
+    : (effectiveItems[0]?.term ?? "")
   const [note, setNote] = useState("")
   const [banEnabled, setBanEnabled] = useState(false)
   const [scope, setScope] = useState<BanScope>("strategy")
@@ -51,16 +65,24 @@ export function RejectItemDialog({
     }
   }, [open])
 
-  const kindLabel = kind === "keyword" ? "palavra-chave" : "tópico"
+  const kindLabel = isBulk
+    ? kind === "keyword"
+      ? "palavras-chave"
+      : "tópicos"
+    : kind === "keyword"
+      ? "palavra-chave"
+      : "tópico"
 
   const handleConfirm = () => {
-    rejectItem(itemId, {
-      kind,
-      term,
-      note: note.trim() || undefined,
-      ban: banEnabled ? scope : null,
-      strategyId,
-      strategyName,
+    effectiveItems.forEach((it) => {
+      rejectItem(it.id, {
+        kind,
+        term: it.term,
+        note: note.trim() || undefined,
+        ban: banEnabled ? scope : null,
+        strategyId,
+        strategyName,
+      })
     })
     onOpenChange(false)
     onDone?.()
@@ -83,9 +105,20 @@ export function RejectItemDialog({
         <div className="space-y-4 py-2">
           <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
             <p className="text-xs text-muted-foreground">
-              {kind === "keyword" ? "Palavra-chave" : "Tópico"}
+              {isBulk
+                ? `Reprovando ${kind === "keyword" ? "palavras-chave" : "tópicos"}`
+                : kind === "keyword"
+                  ? "Palavra-chave"
+                  : "Tópico"}
             </p>
-            <p className="mt-0.5 text-sm font-medium text-foreground">{term}</p>
+            <p className="mt-0.5 text-sm font-medium text-foreground">
+              {headerTerm}
+            </p>
+            {isBulk && (
+              <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                {effectiveItems.map((i) => i.term).join(", ")}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

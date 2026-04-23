@@ -9,6 +9,11 @@ import {
   buildResearchPrompt,
 } from "./prompts.js";
 import { fetchSerpWithCache } from "./serper.js";
+import {
+  isDataForSeoConfigured,
+  getKeywordMetrics,
+  getBulkKeywordDifficulty,
+} from "./dataforseo.js";
 import type {
   BriefGenerationResult,
   ClaimedJob,
@@ -405,6 +410,56 @@ async function processKeywordStrategy(client: ReturnType<typeof createAdminClien
 
   if (keywordCandidateIds.length === 0) {
     throw new Error("Failed to insert any keyword candidates.");
+  }
+
+  // ── DataForSEO enrichment ────────────────────────────────────────────────
+  // After all keywords are inserted, enrich them with real metrics (volume,
+  // difficulty, CPC) in a single batch call so the UI shows accurate data.
+  if (isDataForSeoConfigured()) {
+    try {
+      const kwTexts = aiResult.keywords
+        .filter((k) => k.keyword?.trim())
+        .map((k) => k.keyword.trim());
+
+      const [metrics, difficulties] = await Promise.all([
+        getKeywordMetrics(kwTexts),
+        getBulkKeywordDifficulty(kwTexts),
+      ]);
+
+      // Build lookup maps for O(1) access
+      const metricMap = new Map(metrics.map((m) => [m.keyword, m]));
+      const diffMap = new Map(difficulties.map((d) => [d.keyword, d]));
+
+      // Fetch the inserted candidates to get their IDs by keyword text
+      const { data: inserted } = await client
+        .from("keyword_candidates")
+        .select("id, keyword")
+        .in("id", keywordCandidateIds);
+
+      if (inserted) {
+        for (const row of inserted) {
+          const metric = metricMap.get(row.keyword);
+          const diff = diffMap.get(row.keyword);
+
+          if (!metric && !diff) continue;
+
+          await client
+            .from("keyword_candidates")
+            .update({
+              search_volume_int: metric?.search_volume ?? null,
+              difficulty: diff?.difficulty ?? null,
+              cpc: metric?.cpc ?? null,
+              competition_level: metric?.competition_level ?? null,
+              updated_at: new Date().toISOString(),
+            } as any)
+            .eq("id", row.id);
+        }
+      }
+    } catch (enrichErr) {
+      // Non-fatal: keywords are already saved; enrichment failure should not
+      // fail the entire job. Log and continue.
+      console.warn("[Processor] DataForSEO enrichment failed:", enrichErr);
+    }
   }
 
   await finishJob(client, job.id, {

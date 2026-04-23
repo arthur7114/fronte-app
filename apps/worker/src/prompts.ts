@@ -41,12 +41,22 @@ export function buildResearchPrompt(
   }
 
   if (approvedKeywords.length > 0) {
-    lines.push(
-      "",
-      "PALAVRAS-CHAVE APROVADAS (ESTRATÉGIA):",
-      ...approvedKeywords.map(k => `- ${k.keyword} (Jornada: ${(k as any).journey_stage}, Volume: ${(k as any).search_volume})`)
-
-    );
+    lines.push("", "PALAVRAS-CHAVE APROVADAS (ESTRATÉGIA):");
+    for (const k of approvedKeywords) {
+      const kw = k as any;
+      const parts: string[] = [`- "${k.keyword}"`];
+      parts.push(`Jornada: ${kw.journey_stage ?? "awareness"}`);
+      // Prefer real integer volume over AI-estimated string
+      if (kw.search_volume_int != null) {
+        parts.push(`Volume/mês: ${kw.search_volume_int}`);
+      } else if (kw.search_volume) {
+        parts.push(`Volume: ${kw.search_volume}`);
+      }
+      if (kw.difficulty != null) parts.push(`Dificuldade: ${kw.difficulty}/100`);
+      if (kw.cpc != null && kw.cpc > 0) parts.push(`CPC: R$${kw.cpc.toFixed(2)}`);
+      if (kw.search_intent) parts.push(`Intenção: ${kw.search_intent}`);
+      lines.push(parts.join(" | "));
+    }
   } else {
     lines.push(`Seed keywords: ${(config.keywords_seed ?? []).join(", ") || "none"}`);
   }
@@ -55,10 +65,12 @@ export function buildResearchPrompt(
     "",
     "INSTRUÇÕES PARA O PLANO EDITORIAL:",
     "1. Gere tópicos de conteúdo (títulos de posts) EXCLUSIVAMENTE focados nas palavras-chave aprovadas acima ou no contexto do negócio.",
-    "2. Para cada tópico, forneça um 'justification' (Racional Estratégico) explicando por que este post ajudará no ROI e qual o objetivo dele.",
-    "3. Classifique cada tópico com o 'journey_stage' mais adequado: awareness, consideration, evaluation, decision.",
-    "4. Retorne APENAS um JSON válido seguindo este formato:",
-    '{ "topics": [{ "topic": "string", "score": number, "source": "string", "justification": "string", "journey_stage": "string" }] }'
+    "2. Priorize keywords com intenção informacional (informational) e dificuldade < 40 — são mais rápidas de ranquear e têm maior potencial de tráfego orgânico para sites novos.",
+    "3. Para keywords de alta dificuldade (≥ 60), crie tópicos de cauda longa relacionados que sejam mais específicos e competitivos.",
+    "4. Para cada tópico, forneça um 'justification' (Racional Estratégico) explicando por que este post ajudará no ROI e qual o objetivo dele.",
+    "5. Classifique cada tópico com o 'journey_stage' mais adequado: awareness, consideration, evaluation, decision.",
+    "6. Retorne APENAS um JSON válido seguindo este formato:",
+    '{ "topics": [{ "topic": "string", "score": number, "source": "string", "justification": "string", "journey_stage": "string" }] }',
   );
 
   return lines.join("\n");

@@ -2,11 +2,13 @@ import { notFound, redirect } from "next/navigation"
 import { getAuthContext } from "@/lib/auth-context"
 import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin"
 import { getServerSupabaseClient } from "@/lib/supabase/server"
-import { ArticleEditor } from "@/components/articles/article-editor"
+import { ArticleEditor, type PostWithGeneration } from "@/components/articles/article-editor"
 
 export const metadata = {
   title: "Editor de Artigo | Next.js",
 }
+
+type DbClient = Awaited<ReturnType<typeof getServerSupabaseClient>>
 
 export default async function ArticleDetailPage({
   params,
@@ -20,14 +22,15 @@ export default async function ArticleDetailPage({
     redirect("/login")
   }
 
-  const db = getOptionalAdminSupabaseClient() ?? getServerSupabaseClient()
+  const db = (getOptionalAdminSupabaseClient() as DbClient | null) ?? (await getServerSupabaseClient())
   
-  const { data: post, error } = await (db as any)
+  const { data, error } = await db
     .from("posts")
     .select("*, article_generations(*)")
     .eq("id", id)
     .eq("tenant_id", tenant.id)
     .single()
+  const post = data as PostWithGeneration | null
 
   if (error || !post) {
     notFound()
@@ -38,7 +41,7 @@ export default async function ArticleDetailPage({
       <ArticleEditor 
         articleId={post.id} 
         initialData={post}
-        isNew={post.status === "draft" || post.status === "generating"} 
+        isNew={post.status === "draft" && Boolean(post.generation_id)}
         onBackUrl="/dashboard/artigos"
       />
     </div>

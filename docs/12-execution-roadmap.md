@@ -155,3 +155,27 @@ Foco na qualidade, metodologia e motor por trás da execução das estratégias 
 - `npm --workspace @super/web run build` passou.
 - `npm --workspace @super/web run lint` falhou por baseline global preexistente fora do escopo da Fase 7.
 - Validacao Supabase local nao executada: `supabase`, `deno`, `psql` e `python` nao estao disponiveis neste ambiente.
+
+## Atualizacao registrada - 2026-04-22 (Workflow Editorial)
+
+Execucao parcial do plano `docs/Artefatos/Implementation plan - workflow de producao editorial`:
+
+- **[FEITO] Migration `article_generations`**: `supabase/migrations/20260422_create_article_generations.sql` criada com tabela completa (fases, JSONB por fase, RLS, trigger updated_at) + ALTER TABLE posts adicionando `generation_id`, `seo_score`, `approved_at`, `approved_by`. Desbloqueia backend e wizard que ja referenciam essa tabela.
+- **[FEITO] Calendario funcional**: `content-calendar.tsx` reescrito com navegacao real de mes (useState<Date>), geracao dinamica de dias por mes/ano, matching correto de eventos por timestamp vs dia, remocao de mock CALENDAR_EVENTS como fallback padrao.
+- **[FEITO] Lista /artigos simplificada**: `artigos/client.tsx` — removido state swap para ArticleEditor inline; artigos agora navegam para `/dashboard/artigos/[id]` via router.push. Removido toggle de grid (nunca implementado). Corrigido link de estrategia de `/app/estrategias/` para `/dashboard/estrategias/`. ProductionQueue mantida (so aparece com itens reais em producao).
+
+## Validacao registrada - 2026-04-22 (Workflow Editorial)
+
+- `npx tsc -p apps/web/tsconfig.json --noEmit` passou (sem erros nos arquivos alterados).
+- `npm --workspace @super/web run lint` — arquivos alterados nao aparecem na saida de erros; erros restantes sao baseline preexistente.
+- Migration nao aplicada ao Supabase (ambiente sem CLI); deve ser aplicada manualmente ou via deploy.
+
+## Proximo passo para Codex (continuacao do plano editorial)
+
+Ver ordem completa em `docs/Artefatos/Implementation plan - workflow de producao editorial`.
+
+Itens pendentes por prioridade:
+1. Aplicar a migration `20260422_create_article_generations.sql` no Supabase (via dashboard ou CLI).
+2. Editor real `/artigos/[id]`: substituir `existingArticleData`/`generatedArticleData` hardcoded em `article-editor.tsx` por fetch real do post + `article_generations`.
+3. Estrategia: remover aba "Artigos" de `estrategias/[id]/client.tsx`, linkar botao "Gerar artigo" do topics-table para `/artigos/novo?topic={id}&strategy={id}`.
+4. Cleanup: deletar `generate-article-dialog.tsx` e `bulk-generate-dialog.tsx` do prototipo-visual apos confirmar que nenhum import real os referencia.

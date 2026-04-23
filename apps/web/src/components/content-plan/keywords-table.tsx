@@ -17,6 +17,7 @@ import {
 import {
   Target, ArrowUpDown, Search, Filter, Download, Sparkles,
   ShieldBan, Trash2, ShieldOff, MoreHorizontal, CheckCircle2, Loader2,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { KeywordItem } from "@/lib/strategies";
@@ -28,6 +29,8 @@ import {
 import {
   triggerKeywordStrategy, massApproveKeywords, massRejectKeywords, massDeleteKeywords,
 } from "@/app/dashboard/estrategias/actions";
+import { useJobStatus } from "@/hooks/use-job-status";
+import { JobStatusBanner } from "@/components/ui/job-status-banner";
 
 const difficultyColors = {
   baixa: "bg-green-100 text-green-700",
@@ -113,6 +116,7 @@ export function KeywordsTable({
 
   const [rejecting, setRejecting] = useState<KeywordItem | null>(null);
   const [isPending, startTransition] = useTransition();
+  const jobStatus = useJobStatus(strategyId ?? "", "generate_keyword_strategy");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [keywordCount, setKeywordCount] = useState(10);
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
@@ -175,10 +179,10 @@ export function KeywordsTable({
 
   const handleSuggestMore = () => {
     if (!strategyId) return;
+    jobStatus.trigger();
     startTransition(async () => {
       const result = await triggerKeywordStrategy(strategyId, keywordCount);
       if (result.error) toast.error(result.error);
-      else toast.success(result.success);
     });
   };
 
@@ -228,9 +232,9 @@ export function KeywordsTable({
                     <option key={n} value={n}>{n} KWs</option>
                   ))}
                 </select>
-                <Button className="gap-2" onClick={handleSuggestMore} disabled={isPending || !strategyId}>
+                <Button className="gap-2" onClick={handleSuggestMore} disabled={isPending || jobStatus.isRunning || !strategyId}>
                   <Sparkles className="h-4 w-4" />
-                  {isPending ? "Gerando..." : "Sugerir"}
+                  {isPending ? "Enviando..." : "Sugerir"}
                 </Button>
               </div>
             </div>
@@ -239,6 +243,15 @@ export function KeywordsTable({
       </CardHeader>
 
       <CardContent>
+        <JobStatusBanner
+          status={jobStatus.status}
+          jobLabel="keywords"
+          count={keywords.length}
+          errorMessage={jobStatus.errorMessage}
+          onRetry={handleSuggestMore}
+          onDismiss={jobStatus.dismiss}
+          className="mb-4"
+        />
         <Tabs defaultValue="active" className="space-y-4">
           <TabsList>
             <TabsTrigger value="active">Ativas ({activeList.length})</TabsTrigger>
@@ -359,6 +372,7 @@ function KeywordsContent({
             <TableHead>Intenção</TableHead>
             <TableHead>Potencial</TableHead>
             <TableHead>Estágio</TableHead>
+            <TableHead className="w-[110px]">Status</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -370,11 +384,26 @@ function KeywordsContent({
             const cpc = enriched?.cpc ?? kw.cpc;
             const intent = enriched?.search_intent ?? kw.search_intent;
             return (
-              <TableRow key={kw.id} className="group hover:bg-muted/50 transition-colors">
+              <TableRow
+                key={kw.id}
+                className={cn(
+                  "group transition-colors",
+                  kw.status === "approved"
+                    ? "hover:bg-green-50/40"
+                    : "hover:bg-muted/50 border-l-2 border-l-amber-300",
+                )}
+              >
                 <TableCell><Checkbox checked={selectedItems?.includes(kw.id)} onCheckedChange={(c) => onSelect?.(kw.id, !!c)} /></TableCell>
                 <TableCell className="font-medium">
-                  <div className="flex flex-col">
-                    <span>{kw.keyword}</span>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1.5">
+                      {kw.status === "approved" && (
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
+                      )}
+                      <span className={cn(kw.status === "approved" ? "text-foreground" : "text-foreground/80")}>
+                        {kw.keyword}
+                      </span>
+                    </div>
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{kw.type}</span>
                   </div>
                 </TableCell>
@@ -395,6 +424,22 @@ function KeywordsContent({
                   <Badge variant="secondary" className={cn("capitalize text-[10px] px-1.5 py-0", stageColors[String(kw.stage).toLowerCase()] || "bg-muted text-muted-foreground")}>
                     {kw.stage}
                   </Badge>
+                </TableCell>
+                {/* ── Status column ─────────────────────────────── */}
+                <TableCell>
+                  {kw.status === "approved" ? (
+                    <Badge variant="secondary" className="gap-1 bg-green-100 text-green-700 text-[11px]">
+                      <CheckCircle2 className="h-3 w-3" />Aprovada
+                    </Badge>
+                  ) : (
+                    <button
+                      className="flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 transition-colors hover:bg-amber-100 hover:border-amber-400 disabled:opacity-50"
+                      onClick={() => massApproveKeywords([kw.id]).then(r => r.error ? toast.error(r.error) : toast.success("Aprovada!"))}
+                      title="Clique para aprovar"
+                    >
+                      <Clock className="h-3 w-3" />Sugerida
+                    </button>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

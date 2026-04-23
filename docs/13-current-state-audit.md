@@ -41,10 +41,16 @@ Nesta fase, `prototipo-visual/` e `prototipo-visual/design-system/` sao a fonte 
 
 ### Com mock/adapters temporarios
 
-- estrategias visuais do prototipo
-- keywords/topics/calendario da nova experiencia
-- artigos de demonstracao usados pela tela visual
-- analytics detalhado
+- estrategias visuais do prototipo (keywords e topics ainda com dados mock em partes da UI)
+- analytics GEO (aguarda GA4 Data API)
+- `generate-article-dialog.tsx` e `bulk-generate-dialog.tsx` no app real: ainda usam `setTimeout` fake — o backend real (`article-agent.ts`) existe mas não está conectado a esses dialogs
+
+### Workflow editorial conectado parcialmente
+
+- `article-agent.ts` + `/api/article-agent/route.ts`: implementados com 4 fases reais (research/structure/write/review), sem mocks
+- `article_generations` table: migration SQL criada (`supabase/migrations/20260422_create_article_generations.sql`) mas **ainda não aplicada no Supabase live** — todos os fluxos que dependem dela falharão em runtime até aplicação
+- `/dashboard/artigos/novo/client.tsx` (448 linhas): wizard page implementada sem mocks, chama o backend real via `/api/article-agent`
+- Calendário: `content-calendar.tsx` reescrito com navegação real de mês (22/04)
 
 ---
 
@@ -85,9 +91,11 @@ Nesta fase, `prototipo-visual/` e `prototipo-visual/design-system/` sao a fonte 
 
 ## Gaps tecnicos
 
-- calendario editorial ainda nao possui entidade dedicada
-- analytics SEO/GEO ainda usa estrutura visual do prototipo sem integracao completa (GA4 API pendente)
-- algumas telas de onboarding novas usam estado de browser do prototipo enquanto o backend real ainda passa pelo fluxo persistido atual
+- `article_generations` migration criada mas nao aplicada no Supabase live — bloqueador critico para o workflow editorial
+- `generate-article-dialog.tsx` e `bulk-generate-dialog.tsx` no app: ainda com `setTimeout` fake; precisam ser conectados ao `/api/article-agent`
+- `article-editor.tsx`: dados hardcoded (`existingArticleData`, `generatedArticleData`); precisa consumir dados reais de `posts` + `article_generations`
+- analytics GEO ainda usa estrutura visual do prototipo sem integracao completa (GA4 API pendente)
+- algumas telas de onboarding usam estado de browser (`sessionStorage`) como persistencia secundaria
 
 ---
 

@@ -1,14 +1,16 @@
-import { notFound, redirect } from "next/navigation"
+import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { getAuthContext } from "@/lib/auth-context"
-import { getStrategyFromDb, getStrategyStatsFromDb } from "@/lib/strategies-server"
+import {
+  getStrategyFromDb,
+  getStrategyStatsFromDb,
+  listArticlesFromDb,
+} from "@/lib/strategies-server"
 import {
   listKeywordCandidatesForTenant,
   listTopicCandidatesForTenant,
-  listPostsForTenant,
   listWorkspaceCompetitorsForTenant,
-  getAutomationConfigForTenant,
 } from "@/lib/automation-data"
 import { StrategyDetailClient } from "./client"
 
@@ -37,19 +39,20 @@ export default async function StrategyDetailPage({ params }: PageProps) {
           Estratégia não encontrada
         </p>
         <Button asChild>
-          <Link href="/app/estrategias">Ver todas as estratégias</Link>
+          <Link href="/dashboard/estrategias">Ver todas as estratégias</Link>
         </Button>
       </div>
     )
   }
 
-  const [stats, keywords, topics, posts, competitors, automationConfig] = await Promise.all([
+  const [stats, keywords, topics, articles, competitors] = await Promise.all([
     getStrategyStatsFromDb(tenant.id, id),
     listKeywordCandidatesForTenant(tenant.id, id),
-    listTopicCandidatesForTenant(tenant.id).then(res => res.filter(t => t.strategy_id === id)),
-    listPostsForTenant(tenant.id).then(res => res.filter((p: any) => p.strategy_id === id)),
+    listTopicCandidatesForTenant(tenant.id).then((result) =>
+      result.filter((topic) => topic.strategy_id === id),
+    ),
+    listArticlesFromDb(tenant.id, id),
     listWorkspaceCompetitorsForTenant(tenant.id),
-    getAutomationConfigForTenant(tenant.id),
   ])
 
   return (
@@ -58,9 +61,8 @@ export default async function StrategyDetailPage({ params }: PageProps) {
       stats={stats}
       keywords={keywords}
       topics={topics}
-      articles={posts}
+      articles={articles}
       competitors={competitors}
-      automationConfig={automationConfig}
     />
   )
 }

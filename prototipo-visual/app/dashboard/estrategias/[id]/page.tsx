@@ -15,15 +15,19 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { KeywordsTable } from "@/components/content-plan/keywords-table"
 import { TopicsTable } from "@/components/content-plan/topics-table"
-import { ArticlesList } from "@/components/articles/articles-list"
+import { ArticlesTable } from "@/components/articles/articles-table"
 import { ArticleEditor } from "@/components/articles/article-editor"
 import { GenerateArticleDialog } from "@/components/articles/generate-article-dialog"
 import { ProductionQueue } from "@/components/articles/production-queue"
 import { StrategyAssistant } from "@/components/strategy/strategy-assistant"
+import { StrategyBriefing } from "@/components/strategy/strategy-briefing"
+import { CompetitorResearch } from "@/components/competitors/competitor-research"
 import {
   ArrowLeft,
+  ClipboardList,
   Copy,
   FileText,
+  Gauge,
   MapPin,
   MessageSquare,
   MoreVertical,
@@ -43,6 +47,14 @@ import {
   getTopicsByStrategy,
   type Strategy,
 } from "@/lib/strategies"
+import {
+  getInsightsFor,
+  useCompetitorsStore,
+} from "@/lib/competitors-store"
+import {
+  getPendingSuggestions,
+  useBriefingStore,
+} from "@/lib/strategy-briefing"
 
 const TYPE_META: Record<
   Strategy["type"],
@@ -80,8 +92,13 @@ export default function StrategyDetailPage() {
   const strategy = useMemo(() => (id ? getStrategy(id) : undefined), [id])
 
   const [activeTab, setActiveTab] = useState<
-    "chat" | "keywords" | "topics" | "articles"
-  >("chat")
+    "briefing" | "chat" | "competitors" | "keywords" | "topics" | "articles"
+  >("briefing")
+  const [articlesFilter, setArticlesFilter] = useState<
+    "all" | "draft" | "review" | "scheduled" | "published"
+  >("all")
+  useCompetitorsStore()
+  useBriefingStore()
   const [selectedArticle, setSelectedArticle] = useState<string | null>(null)
   const [generateOpen, setGenerateOpen] = useState(false)
 
@@ -110,6 +127,8 @@ export default function StrategyDetailPage() {
   const inProduction = articles.filter(
     (a) => a.status === "generating" || a.status === "queued",
   )
+  const competitorInsights = getInsightsFor(strategy.id)
+  const pendingBriefings = getPendingSuggestions(strategy.id)
 
   if (selectedArticle) {
     return (
@@ -200,12 +219,39 @@ export default function StrategyDetailPage() {
         </div>
       </header>
 
-      {/* KPI strip — linha horizontal, sem cards pesados */}
+      {/* KPI strip — linha horizontal, cliques levam para aba correspondente */}
       <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
-        <Stat label="Palavras-chave" value={stats.keywords} hint={`${keywords.filter((k) => k.status === "approved").length} aprovadas`} />
-        <Stat label="Tópicos" value={stats.topics} hint={`${topics.filter((t) => t.status === "approved").length} prontos`} />
-        <Stat label="Em produção" value={inProduction.length} hint={`${stats.drafts} rascunhos`} accent />
-        <Stat label="Publicados" value={stats.published} hint="últimos 30 dias" />
+        <Stat
+          label="Palavras-chave"
+          value={stats.keywords}
+          hint={`${keywords.filter((k) => k.status === "approved").length} aprovadas`}
+          onClick={() => setActiveTab("keywords")}
+        />
+        <Stat
+          label="Tópicos"
+          value={stats.topics}
+          hint={`${topics.filter((t) => t.status === "approved").length} prontos`}
+          onClick={() => setActiveTab("topics")}
+        />
+        <Stat
+          label="Em revisão"
+          value={articles.filter((a) => a.status === "review").length}
+          hint={`${stats.drafts} rascunho${stats.drafts === 1 ? "" : "s"}`}
+          accent={articles.some((a) => a.status === "review")}
+          onClick={() => {
+            setArticlesFilter("review")
+            setActiveTab("articles")
+          }}
+        />
+        <Stat
+          label="Publicados"
+          value={stats.published}
+          hint="últimos 30 dias"
+          onClick={() => {
+            setArticlesFilter("published")
+            setActiveTab("articles")
+          }}
+        />
       </dl>
 
       {inProduction.length > 0 && (
@@ -224,9 +270,27 @@ export default function StrategyDetailPage() {
         className="space-y-5"
       >
         <TabsList>
+          <TabsTrigger value="briefing" className="gap-1.5">
+            <ClipboardList className="h-3.5 w-3.5" />
+            Briefing
+            {pendingBriefings.length > 0 && (
+              <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 text-[10px] font-medium text-primary">
+                {pendingBriefings.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="chat" className="gap-1.5">
             <MessageSquare className="h-3.5 w-3.5" />
             Conversar com IA
+          </TabsTrigger>
+          <TabsTrigger value="competitors" className="gap-1.5">
+            <Gauge className="h-3.5 w-3.5" />
+            Concorrentes
+            {competitorInsights.length > 0 && (
+              <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 text-[10px] font-medium text-primary">
+                {competitorInsights.length}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="keywords">
             Palavras-chave
@@ -248,8 +312,19 @@ export default function StrategyDetailPage() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="briefing" className="m-0">
+          <StrategyBriefing strategyId={strategy.id} />
+        </TabsContent>
+
         <TabsContent value="chat" className="m-0">
           <StrategyAssistant strategy={strategy} />
+        </TabsContent>
+
+        <TabsContent value="competitors" className="m-0">
+          <CompetitorResearch
+            strategy={strategy}
+            onContinueToTopics={() => setActiveTab("topics")}
+          />
         </TabsContent>
 
         <TabsContent value="keywords" className="m-0">
@@ -270,10 +345,10 @@ export default function StrategyDetailPage() {
         </TabsContent>
 
         <TabsContent value="articles" className="m-0 space-y-4">
-          <ArticlesList
+          <ArticlesTable
             articles={articles}
-            viewMode="list"
             onSelectArticle={setSelectedArticle}
+            initialFilter={articlesFilter}
             emptyLabel={`Nenhum artigo em ${strategy.name} ainda.`}
           />
         </TabsContent>
@@ -296,14 +371,16 @@ function Stat({
   value,
   hint,
   accent = false,
+  onClick,
 }: {
   label: string
   value: number | string
   hint?: string
   accent?: boolean
+  onClick?: () => void
 }) {
-  return (
-    <div className="flex flex-col gap-0.5 border-l border-border pl-4 first:border-l-0 first:pl-0 sm:pl-6">
+  const content = (
+    <>
       <dt className="text-xs uppercase tracking-wide text-muted-foreground">
         {label}
       </dt>
@@ -316,6 +393,22 @@ function Stat({
         {value}
       </dd>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </>
+  )
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="group flex flex-col gap-0.5 border-l border-border pl-4 text-left first:border-l-0 first:pl-0 sm:pl-6 hover:[&_dd]:text-primary"
+      >
+        {content}
+      </button>
+    )
+  }
+  return (
+    <div className="flex flex-col gap-0.5 border-l border-border pl-4 first:border-l-0 first:pl-0 sm:pl-6">
+      {content}
     </div>
   )
 }

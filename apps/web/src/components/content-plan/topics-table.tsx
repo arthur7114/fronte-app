@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {
   Lightbulb, Plus, CheckCircle2, PenTool, Sparkles, Trash2,
-  MoreHorizontal, XCircle, ShieldBan,
+  MoreHorizontal, XCircle, ShieldBan, Clock,
 } from "lucide-react"
 import type { TopicItem } from "@/lib/strategies"
 import { TOPICS } from "@/lib/strategies"
@@ -25,8 +25,10 @@ import { RejectItemDialog } from "./reject-item-dialog"
 import { isRejected, useWorkspaceStore } from "@/lib/workspace-store"
 import {
   approveTopicCandidate, triggerTopicResearch,
-  triggerBriefAndPostGeneration, massApproveTopics, massRejectTopics,
+  massApproveTopics, massRejectTopics,
 } from "@/app/dashboard/estrategias/actions"
+import { useJobStatus } from "@/hooks/use-job-status"
+import { JobStatusBanner } from "@/components/ui/job-status-banner"
 
 const priorityColors: Record<string, string> = {
   alta: "bg-red-100 text-red-700",
@@ -44,18 +46,20 @@ type TopicsTableProps = {
   topics?: TopicItem[]
   strategyId?: string
   strategyName?: string
+  onGenerateArticle?: (topicId: string) => void
   onSendBatchToProduction?: (topicIds: string[]) => void
   onApprove?: (topicId: string) => void
 }
 
 export function TopicsTable({
   topics = TOPICS, strategyId, strategyName,
-  onSendBatchToProduction, onApprove,
+  onGenerateArticle, onSendBatchToProduction, onApprove,
 }: TopicsTableProps) {
   useWorkspaceStore()
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [rejecting, setRejecting] = useState<TopicItem | null>(null)
   const [isPending, startTransition] = useTransition()
+  const jobStatus = useJobStatus(strategyId ?? "", "research_topics")
 
   const visible = useMemo(() => topics.filter((t) => !isRejected(t.id)), [topics])
   const hasSelection = selected.size > 0
@@ -82,9 +86,10 @@ export function TopicsTable({
 
   const handleSuggestTopics = () => {
     if (!strategyId) return
+    jobStatus.trigger()
     startTransition(async () => {
       const r = await triggerTopicResearch(strategyId)
-      if (r.error) toast.error(r.error); else toast.success(r.success)
+      if (r.error) toast.error(r.error)
     })
   }
 
@@ -124,14 +129,23 @@ export function TopicsTable({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="gap-2" onClick={handleSuggestTopics} disabled={isPending || !strategyId}>
-              <Sparkles className="h-4 w-4" />{isPending ? "Processando..." : "Sugerir tópicos"}
+            <Button variant="outline" className="gap-2" onClick={handleSuggestTopics} disabled={isPending || jobStatus.isRunning || !strategyId}>
+              <Sparkles className="h-4 w-4" />{isPending ? "Enviando..." : "Sugerir tópicos"}
             </Button>
             <Button className="gap-2"><Plus className="h-4 w-4" />Adicionar</Button>
           </div>
         </div>
       </CardHeader>
       <CardContent>
+        <JobStatusBanner
+          status={jobStatus.status}
+          jobLabel="topics"
+          count={topics.length}
+          errorMessage={jobStatus.errorMessage}
+          onRetry={handleSuggestTopics}
+          onDismiss={jobStatus.dismiss}
+          className="mb-4"
+        />
         {visible.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border py-12 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
@@ -163,14 +177,24 @@ export function TopicsTable({
               </TableHeader>
               <TableBody>
                 {visible.map((topic) => (
-                  <TableRow key={topic.id}>
+                  <TableRow
+                    key={topic.id}
+                    className={cn(
+                      "transition-colors",
+                      topic.status === "approved"
+                        ? "hover:bg-green-50/40"
+                        : "hover:bg-muted/50 border-l-2 border-l-amber-300",
+                    )}
+                  >
                     <TableCell>
                       <Checkbox checked={selected.has(topic.id)} onCheckedChange={() => toggle(topic.id)} />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
+                        {topic.status === "approved"
+                          ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
+                          : <Clock className="h-3.5 w-3.5 shrink-0 text-amber-400" />}
                         <span className="font-medium text-foreground line-clamp-1">{topic.title}</span>
-                        {topic.status === "approved" && <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />}
                       </div>
                       <div className="mt-0.5 flex flex-wrap gap-1">
                         {topic.keywords.slice(0, 3).map((kw) => (
@@ -185,9 +209,20 @@ export function TopicsTable({
                     <TableCell><Badge variant="secondary" className={cn("text-[11px]", priorityColors[topic.priority])}>{topic.priority}</Badge></TableCell>
                     <TableCell><span className="text-sm text-muted-foreground">~{topic.estimatedTraffic}</span></TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className={topic.status === "approved" ? "bg-green-100 text-green-700 text-[11px]" : "text-[11px]"}>
-                        {topic.status === "approved" ? "Aprovado" : "Pendente"}
-                      </Badge>
+                      {topic.status === "approved" ? (
+                        <Badge variant="secondary" className="gap-1 bg-green-100 text-green-700 text-[11px]">
+                          <CheckCircle2 className="h-3 w-3" />Aprovado
+                        </Badge>
+                      ) : (
+                        <button
+                          className="flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 transition-colors hover:bg-amber-100 hover:border-amber-400"
+                          onClick={() => handleApprove(topic.id)}
+                          disabled={isPending}
+                          title="Clique para aprovar"
+                        >
+                          <Clock className="h-3 w-3" />Sugerido
+                        </button>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -201,11 +236,17 @@ export function TopicsTable({
                             </DropdownMenuItem>
                           )}
                           {topic.status === "approved" && (
-                            <DropdownMenuItem asChild disabled={isPending}>
-                              <Link href={`/dashboard/artigos/novo?strategyId=${strategyId}&topicId=${topic.id}`}>
+                            onGenerateArticle ? (
+                              <DropdownMenuItem onClick={() => onGenerateArticle(topic.id)} disabled={isPending}>
                                 <PenTool className="mr-2 h-4 w-4" />Gerar artigo
-                              </Link>
-                            </DropdownMenuItem>
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem asChild disabled={isPending}>
+                                <Link href={`/dashboard/artigos/novo?strategyId=${strategyId}&topicId=${topic.id}`}>
+                                  <PenTool className="mr-2 h-4 w-4" />Gerar artigo
+                                </Link>
+                              </DropdownMenuItem>
+                            )
                           )}
                           <DropdownMenuItem onClick={() => setRejecting(topic)}>
                             <XCircle className="mr-2 h-4 w-4 text-amber-600" />Reprovar

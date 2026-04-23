@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
-import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin"
-import { getServerSupabaseClient } from "@/lib/supabase/server"
+import { getAuthContext } from "@/lib/auth-context"
 import {
   runResearchPhase,
   runStructurePhase,
@@ -12,10 +11,9 @@ export const maxDuration = 60
 
 export async function POST(req: Request) {
   try {
-    const supabase = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient())
-    const { data: authData, error: authError } = await supabase.auth.getUser()
+    const { tenant } = await getAuthContext()
 
-    if (authError || !authData.user) {
+    if (!tenant) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -24,6 +22,10 @@ export async function POST(req: Request) {
 
     if (!generationId || !tenantId || !phase) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    }
+
+    if (tenantId !== tenant.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     let result
@@ -45,10 +47,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true, phase, result })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Article Agent Error:", error)
     return NextResponse.json(
-      { success: false, error: error.message || "Internal Server Error" },
+      { success: false, error: error instanceof Error ? error.message : "Internal Server Error" },
       { status: 500 }
     )
   }

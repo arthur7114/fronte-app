@@ -39,10 +39,12 @@
 ## 6. Artigos e calendario
 
 - centralizar producao editorial em `/dashboard/artigos`
-- incluir fila de producao e geracao em massa conforme prototipo
-- organizar agenda em `/dashboard/calendario`
-- manter `/dashboard/artigos/novo` e `/dashboard/artigos/[id]` como compatibilidade quando o prototipo consolidar a experiencia na pagina principal
-- publicar automaticamente posts agendados quando `scheduled_for` vencer, usando a integracao CMS configurada do site
+- fluxo principal de geração: modal `GenerateArticleDialog` (contextual — abre de dentro de estratégia, calendário ou artigos); `/dashboard/artigos/novo` existe como fallback
+- geração em lote via `BulkGenerateDialog` a partir de tópicos aprovados
+- pipeline real em `/api/article-agent` com 4 fases (research/structure/write/review) persistidas em `article_generations`
+- `ProductionQueue` exibe progresso em tempo real consumindo `article_generations.phase` do DB
+- organizar agenda em `/dashboard/calendario` com navegação real de mês
+- publicar automaticamente posts agendados quando `scheduled_for` vencer, usando a integracao CMS configurada do site (já implementado via pg_cron)
 
 ## 7. Blog publico e blog do dashboard
 
