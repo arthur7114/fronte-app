@@ -55,9 +55,10 @@ Quando o trabalho continuar:
 - **[NOVO] Onboarding Persistente**:
   - Briefing de IA salva diretamente em `business_briefings` e `ai_preferences` via Server Actions.
   - Substitui o `sessionStorage` como persistência primária.
-- **[NOVO] Workflow Editorial (Estratégia -> Tópicos -> Posts)**:
-  - Server Action `approveTopicCandidate` marca o tópico como aprovado e cria automaticamente um rascunho na tabela `posts`.
-  - UI do TopicsTable conectada à ação real com feedback via toast.
+- **[NOVO] Workflow Editorial (Estratégia -> Tópicos -> Produção)**:
+  - Server Actions `approveTopicCandidate` e `massApproveTopics` apenas validam editorialmente o tópico.
+  - A criação de posts acontece somente pela action explícita `sendTopicsToProduction(topicIds[])`.
+  - UI do TopicsTable conectada às ações reais com feedback via toast.
 - **[NOVO] Configuração operacional do workspace**:
   - `manual`, `assisted` e `automatic` foram movidos para o workspace.
   - A tela de configurações ganhou seletor visual de modo operacional.
