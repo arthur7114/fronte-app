@@ -104,6 +104,13 @@ export function AuthForm({ mode }: AuthFormProps) {
         return;
       }
 
+      // Supabase returns user with empty identities when email already exists
+      // and "Prevent email enumeration" is enabled (no error is thrown)
+      if (isSignup && result.data.user && result.data.user.identities?.length === 0) {
+        setError("Este email já está cadastrado.");
+        return;
+      }
+
       if (isSignup && !result.data.session) {
         setSuccess(getSignupConfirmationMessage(email));
         return;
