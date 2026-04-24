@@ -1,6 +1,7 @@
 import "server-only"
 import type { Tables } from "@super/db"
 import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin"
+import { normalizePostSlug } from "@/lib/post"
 import { getServerSupabaseClient } from "@/lib/supabase/server"
 import type { BlogPost } from "@/lib/blog-content"
 
@@ -20,9 +21,13 @@ export const DEMO_BLOG_SITE = {
 } as const
 
 type PostRow = Tables<"posts">
+type SiteRow = Tables<"sites">
 type BlogDb = NonNullable<ReturnType<typeof getOptionalAdminSupabaseClient>>
 type PostWithSite = PostRow & {
-  sites?: { subdomain: string } | { subdomain: string }[] | null
+  sites?: Pick<SiteRow, "subdomain"> | Pick<SiteRow, "subdomain">[] | null
+}
+type PostWithFullSite = PostRow & {
+  sites?: SiteRow | SiteRow[] | null
 }
 
 function mapPostToBlogPost(post: PostRow): BlogPost {
@@ -150,12 +155,13 @@ export async function getAllPublicPostsWithBasePath(): Promise<Array<BlogPost & 
 }
 
 export async function getPublicPostBySlug(slug: string, siteId?: string): Promise<BlogPost | undefined> {
+  const normalizedSlug = normalizePostSlug(slug)
   const db = await getDb()
   let query = db
     .from("posts")
     .select("*")
     .eq("status", "published")
-    .eq("slug", slug)
+    .eq("slug", normalizedSlug)
 
   if (siteId) {
     query = query.eq("site_id", siteId)
@@ -164,9 +170,43 @@ export async function getPublicPostBySlug(slug: string, siteId?: string): Promis
   const { data, error } = await query.maybeSingle()
 
   if (error || !data) {
-    if (error) console.error(`[blog-public-server] Erro ao buscar post ${slug}:`, error)
+    if (error) console.error(`[blog-public-server] Erro ao buscar post ${normalizedSlug}:`, error)
     return undefined
   }
 
   return mapPostToBlogPost(data)
+}
+
+export async function getPublicPostWithSiteBySlug(
+  slug: string,
+): Promise<{ post: BlogPost; site: SiteRow } | undefined> {
+  const normalizedSlug = normalizePostSlug(slug)
+  const db = await getDb()
+  const { data, error } = await db
+    .from("posts")
+    .select("*, sites!inner(*)")
+    .eq("status", "published")
+    .eq("slug", normalizedSlug)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(2)
+
+  if (error) {
+    console.error(`[blog-public-server] Erro ao buscar post com site ${normalizedSlug}:`, error)
+    return undefined
+  }
+
+  const [row] = (data ?? []) as PostWithFullSite[]
+  if (!row) return undefined
+
+  const site = Array.isArray(row.sites) ? row.sites[0] : row.sites
+  if (!site) return undefined
+
+  if ((data?.length ?? 0) > 1) {
+    console.warn(`[blog-public-server] Slug publico duplicado encontrado para ${normalizedSlug}. Usando o mais recente.`)
+  }
+
+  return {
+    post: mapPostToBlogPost(row),
+    site,
+  }
 }

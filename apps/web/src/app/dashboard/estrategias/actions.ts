@@ -25,17 +25,6 @@ function revalidateStrategies() {
   revalidatePath("/dashboard")
 }
 
-function slugifyTitle(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .slice(0, 80)
-}
-
 function normalizePostTitle(value: string) {
   return value
     .trim()
@@ -45,82 +34,6 @@ function normalizePostTitle(value: string) {
     .replace(/[^\p{L}\p{N}\s-]/gu, "")
     .replace(/[-_]+/g, " ")
     .replace(/\s+/g, " ")
-}
-
-async function getUniquePostSlug(db: any, tenantId: string, siteId: string, base: string) {
-  const baseSlug = base || `artigo-${Date.now().toString(36)}`
-  let slug = baseSlug
-  let index = 2
-
-  while (true) {
-    const { data, error } = await db
-      .from("posts")
-      .select("id")
-      .eq("tenant_id", tenantId)
-      .eq("site_id", siteId)
-      .eq("slug", slug)
-      .maybeSingle()
-
-    if (error) throw new Error(error.message)
-    if (!data) return slug
-
-    slug = `${baseSlug}-${index}`
-    index += 1
-  }
-}
-
-async function ensurePostForTopic(input: {
-  db: any
-  tenantId: string
-  siteId: string
-  topic: any
-}) {
-  const normalizedTitle = normalizePostTitle(input.topic.topic)
-  let existingQuery = input.db
-    .from("posts")
-    .select("id, title, status")
-    .eq("tenant_id", input.tenantId)
-    .eq("site_id", input.siteId)
-
-  existingQuery = input.topic.strategy_id
-    ? existingQuery.eq("strategy_id", input.topic.strategy_id)
-    : existingQuery.is("strategy_id", null)
-
-  const { data: existingPosts, error: existingError } = await existingQuery
-  if (existingError) throw new Error(existingError.message)
-
-  const matchingPosts = (existingPosts ?? []).filter((post: any) => normalizePostTitle(post.title) === normalizedTitle)
-  const blockingPost = matchingPosts.find((post: any) => post.status !== "failed")
-
-  if (blockingPost) {
-    return { status: "existing" as const, postId: blockingPost.id }
-  }
-
-  const now = new Date().toISOString()
-  const baseSlug = slugifyTitle(input.topic.topic) || "artigo"
-  const slug = await getUniquePostSlug(input.db, input.tenantId, input.siteId, baseSlug)
-  const { data: post, error: insertError } = await input.db
-    .from("posts")
-    .insert({
-      tenant_id: input.tenantId,
-      site_id: input.siteId,
-      title: input.topic.topic,
-      slug,
-      content: input.topic.justification || "",
-      status: "draft",
-      strategy_id: input.topic.strategy_id || null,
-      scheduled_for: input.topic.scheduled_date || null,
-      created_at: now,
-      updated_at: now,
-    })
-    .select("id")
-    .single()
-
-  if (insertError || !post) {
-    throw new Error(insertError?.message ?? "Falha ao criar post.")
-  }
-
-  return { status: "created" as const, postId: post.id }
 }
 
 const STRATEGY_TYPES = new Set(["seo", "local", "blog", "conversao"])
@@ -405,8 +318,44 @@ export async function sendTopicsToProduction(topicIds: string[]) {
   if (error) return { error: `Falha ao buscar topicos: ${error.message}` }
 
   const foundTopics = topics ?? []
-  const created: Array<{ topicId: string; postId: string }> = []
-  const alreadyExisting: Array<{ topicId: string; postId: string }> = []
+  const [postsResult, briefsResult, jobsResult] = await Promise.all([
+    (db as any)
+      .from("posts")
+      .select("id, title, status, strategy_id")
+      .eq("tenant_id", tenant.id)
+      .eq("site_id", site.id),
+    (db as any)
+      .from("content_briefs")
+      .select("id, topic, status, strategy_id")
+      .eq("tenant_id", tenant.id),
+    (db as any)
+      .from("automation_jobs")
+      .select("id, type, status, payload_json")
+      .eq("tenant_id", tenant.id)
+      .in("type", ["generate_brief", "generate_post"])
+      .in("status", ["pending", "running"]),
+  ])
+
+  if (postsResult.error) return { error: `Falha ao verificar posts existentes: ${postsResult.error.message}` }
+  if (briefsResult.error) return { error: `Falha ao verificar briefings existentes: ${briefsResult.error.message}` }
+  if (jobsResult.error) return { error: `Falha ao verificar fila ativa: ${jobsResult.error.message}` }
+
+  const existingPosts = postsResult.data ?? []
+  const existingBriefs = briefsResult.data ?? []
+  const activeJobs = jobsResult.data ?? []
+  const activeTopicJobs = new Set(
+    activeJobs
+      .map((job: any) => job.payload_json?.topic_candidate_id)
+      .filter((id: unknown): id is string => typeof id === "string"),
+  )
+  const activeBriefJobs = new Set(
+    activeJobs
+      .map((job: any) => job.payload_json?.content_brief_id)
+      .filter((id: unknown): id is string => typeof id === "string"),
+  )
+
+  const queued: Array<{ topicId: string; jobId: string }> = []
+  const skipped: Array<{ topicId: string; reason: string }> = []
   const failed: Array<{ topicId: string; reason: string }> = []
 
   for (const topicId of uniqueIds) {
@@ -422,25 +371,65 @@ export async function sendTopicsToProduction(topicIds: string[]) {
       continue
     }
 
-    try {
-      const result = await ensurePostForTopic({
-        db,
-        tenantId: tenant.id,
-        siteId: site.id,
-        topic,
-      })
+    const normalizedTopic = normalizePostTitle(topic.topic)
+    const sameStrategy = (item: any) => (item.strategy_id ?? null) === (topic.strategy_id ?? null)
+    const existingPost = existingPosts.find(
+      (post: any) =>
+        post.status !== "failed" &&
+        sameStrategy(post) &&
+        normalizePostTitle(post.title) === normalizedTopic,
+    )
 
-      if (result.status === "existing") {
-        alreadyExisting.push({ topicId, postId: result.postId })
-      } else {
-        created.push({ topicId, postId: result.postId })
-      }
-    } catch (error) {
+    if (existingPost) {
+      skipped.push({ topicId, reason: "Ja existe um artigo para este topico." })
+      continue
+    }
+
+    if (activeTopicJobs.has(topicId)) {
+      skipped.push({ topicId, reason: "Este topico ja esta na fila." })
+      continue
+    }
+
+    const existingBrief = existingBriefs.find(
+      (brief: any) =>
+        brief.status !== "failed" &&
+        sameStrategy(brief) &&
+        normalizePostTitle(brief.topic) === normalizedTopic,
+    )
+
+    if (existingBrief && activeBriefJobs.has(existingBrief.id)) {
+      skipped.push({ topicId, reason: "Este topico ja esta gerando rascunho." })
+      continue
+    }
+
+    const insertResult = await (db as any)
+      .from("automation_jobs")
+      .insert({
+        tenant_id: tenant.id,
+        site_id: site.id,
+        type: existingBrief ? "generate_post" : "generate_brief",
+        status: "pending",
+        max_attempts: 3,
+        priority: 20,
+        payload_json: {
+          tenant_id: tenant.id,
+          site_id: site.id,
+          ...(existingBrief ? { content_brief_id: existingBrief.id } : { topic_candidate_id: topicId }),
+          strategy_id: topic.strategy_id ?? null,
+        },
+      })
+      .select("id")
+      .single()
+
+    if (insertResult.error || !insertResult.data) {
       failed.push({
         topicId,
-        reason: error instanceof Error ? error.message : "Falha ao criar post.",
+        reason: insertResult.error?.message ?? "Falha ao enfileirar artigo.",
       })
+      continue
     }
+
+    queued.push({ topicId, jobId: insertResult.data.id })
   }
 
   revalidateStrategies()
@@ -450,12 +439,16 @@ export async function sendTopicsToProduction(topicIds: string[]) {
   revalidatePath("/dashboard/calendario")
 
   return {
-    success: `${created.length} artigo(s) enviado(s) para producao.`,
+    success:
+      queued.length > 0
+        ? `${queued.length} artigo(s) enviado(s) para producao.`
+        : "Nenhum novo artigo foi enviado para producao.",
     summary: {
-      criados: created,
-      jaExistentes: alreadyExisting,
-      falhas: failed,
+      enfileirados: queued.length,
+      ignorados: skipped.length,
+      falhas: failed.length,
     },
+    details: { queued, skipped, failed },
   }
 }
 

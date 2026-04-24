@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArticlesList } from "@/components/articles/articles-list"
+import { BulkGenerateDialog } from "@/components/articles/bulk-generate-dialog"
 import { GenerateArticleDialog } from "@/components/articles/generate-article-dialog"
 import { ProductionQueue } from "@/components/articles/production-queue"
 import { Button } from "@/components/ui/button"
@@ -15,16 +16,27 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Sparkles, ExternalLink, Lightbulb } from "lucide-react"
-import type { ArticleItem, Strategy } from "@/lib/strategies"
+import { Sparkles, ExternalLink, Lightbulb, Layers3 } from "lucide-react"
+import type { ArticleItem, Strategy, TopicItem } from "@/lib/strategies"
+import type { ProductionProgress, ProductionQueueItem } from "@/lib/job-feed"
 
 export type ArtigosClientProps = {
   articles: ArticleItem[]
   strategies: Strategy[]
+  topics: TopicItem[]
+  productionItems: ProductionQueueItem[]
+  productionProgress: ProductionProgress
   initialStrategyId?: string
 }
 
-export function ArtigosClient({ articles, strategies, initialStrategyId }: ArtigosClientProps) {
+export function ArtigosClient({
+  articles,
+  strategies,
+  topics,
+  productionItems,
+  productionProgress,
+  initialStrategyId,
+}: ArtigosClientProps) {
   const router = useRouter()
   const [strategyFilter, setStrategyFilter] = useState<string>(
     initialStrategyId && strategies.some((strategy) => strategy.id === initialStrategyId)
@@ -32,19 +44,28 @@ export function ArtigosClient({ articles, strategies, initialStrategyId }: Artig
       : "all",
   )
   const [showGenerateDialog, setShowGenerateDialog] = useState(false)
+  const [showBulkDialog, setShowBulkDialog] = useState(false)
 
   const filteredArticles = useMemo(() => {
     if (strategyFilter === "all") return articles
     return articles.filter((a) => a.strategyId === strategyFilter)
   }, [strategyFilter, articles])
 
-  const inProduction = useMemo(
-    () =>
-      filteredArticles.filter(
-        (a) => a.status === "generating" || a.status === "queued",
-      ),
-    [filteredArticles],
-  )
+  const inProduction = useMemo(() => {
+    if (strategyFilter === "all") return productionItems
+    return productionItems.filter((item) => item.strategyId === strategyFilter)
+  }, [productionItems, strategyFilter])
+
+  const visibleProductionProgress = useMemo(() => {
+    if (strategyFilter === "all") return productionProgress
+    return {
+      total: inProduction.length,
+      created: 0,
+      running: inProduction.filter((item) => item.status === "generating").length,
+      queued: inProduction.filter((item) => item.status === "queued").length,
+      failed: 0,
+    }
+  }, [inProduction, productionProgress, strategyFilter])
 
   const currentStrategy = strategies.find((s) => s.id === strategyFilter)
 
@@ -80,10 +101,13 @@ export function ArtigosClient({ articles, strategies, initialStrategyId }: Artig
             </SelectContent>
           </Select>
 
-          {/* Button: gerar artigo */}
-          <Button className="gap-2" onClick={() => setShowGenerateDialog(true)}>
+          <Button className="gap-2" onClick={() => setShowBulkDialog(true)}>
+            <Layers3 className="h-4 w-4" />
+            Gerar em lote
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={() => setShowGenerateDialog(true)}>
             <Sparkles className="h-4 w-4" />
-            Novo Artigo (IA)
+            Novo artigo
           </Button>
         </div>
       </div>
@@ -95,6 +119,7 @@ export function ArtigosClient({ articles, strategies, initialStrategyId }: Artig
           title="Em produção"
           description="A IA está escrevendo estes artigos. Você pode acompanhar o progresso em tempo real."
           showStrategy={strategyFilter === "all"}
+          progress={visibleProductionProgress}
         />
       )}
 
@@ -134,6 +159,15 @@ export function ArtigosClient({ articles, strategies, initialStrategyId }: Artig
         onOpenChange={setShowGenerateDialog}
         onGenerated={() => router.refresh()}
         strategyId={currentStrategy?.id ?? null}
+      />
+      <BulkGenerateDialog
+        key={currentStrategy?.id ?? "all"}
+        open={showBulkDialog}
+        onOpenChange={setShowBulkDialog}
+        topics={topics}
+        strategies={strategies}
+        strategyId={currentStrategy?.id ?? null}
+        onGenerated={() => router.refresh()}
       />
     </div>
   )

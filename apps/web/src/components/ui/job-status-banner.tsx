@@ -5,25 +5,33 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { JobStatus } from "@/app/api/job-status/route"
 
-const JOB_LABELS: Record<string, { running: string; completed: string }> = {
+const JOB_LABELS = {
   keywords: {
-    running: "IA está pesquisando keywords…",
+    running: "IA esta pesquisando keywords...",
     completed: "Keywords geradas com sucesso",
+    failed: "Erro ao gerar keywords",
+    unit: "keywords",
   },
   topics: {
-    running: "IA está gerando tópicos…",
-    completed: "Tópicos gerados com sucesso",
+    running: "IA esta gerando topicos...",
+    completed: "Topicos gerados com sucesso",
+    failed: "Erro ao gerar topicos",
+    unit: "topicos",
+  },
+  articles: {
+    running: "IA esta produzindo artigos...",
+    completed: "Artigos enviados para producao",
+    failed: "Erro ao gerar artigos",
+    unit: "artigos",
   },
 }
 
 interface JobStatusBannerProps {
   status: JobStatus
-  /** "keywords" | "topics" — controls copy */
   jobLabel?: keyof typeof JOB_LABELS
   count?: number
   errorMessage?: string | null
   onRetry?: () => void
-  /** Allow the user to dismiss a failed banner (e.g. stale error) */
   onDismiss?: () => void
   className?: string
 }
@@ -37,11 +45,10 @@ export function JobStatusBanner({
   onDismiss,
   className,
 }: JobStatusBannerProps) {
-  const labels = JOB_LABELS[jobLabel] ?? JOB_LABELS.keywords
+  const labels = JOB_LABELS[jobLabel]
 
   if (status === "idle") return null
 
-  // ── Running / Pending ───────────────────────────────────────────────────────
   if (status === "pending" || status === "running") {
     return (
       <div
@@ -50,7 +57,6 @@ export function JobStatusBanner({
           className,
         )}
       >
-        {/* Pulsing dot (from prototype ProductionQueue pattern) */}
         <span className="relative flex h-2.5 w-2.5 shrink-0">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
           <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
@@ -64,7 +70,6 @@ export function JobStatusBanner({
     )
   }
 
-  // ── Completed ───────────────────────────────────────────────────────────────
   if (status === "completed") {
     return (
       <div
@@ -78,7 +83,7 @@ export function JobStatusBanner({
           {labels.completed}
           {count !== undefined && (
             <span className="ml-1 font-normal text-emerald-700">
-              — {count} {jobLabel === "keywords" ? "keywords" : "tópicos"} no total
+              - {count} {labels.unit} no total
             </span>
           )}
         </p>
@@ -86,7 +91,6 @@ export function JobStatusBanner({
     )
   }
 
-  // ── Failed ──────────────────────────────────────────────────────────────────
   if (status === "failed") {
     return (
       <div
@@ -97,9 +101,7 @@ export function JobStatusBanner({
       >
         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-destructive">
-            Erro ao gerar {jobLabel}
-          </p>
+          <p className="text-sm font-medium text-destructive">{labels.failed}</p>
           {errorMessage && (
             <p className="mt-0.5 text-xs text-destructive/80">{errorMessage}</p>
           )}

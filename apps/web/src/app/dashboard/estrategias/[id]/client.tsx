@@ -16,6 +16,7 @@ import {
   Hash,
   Lightbulb,
   MapPin,
+  MessageSquare,
   MoreVertical,
   PauseCircle,
   PlayCircle,
@@ -25,7 +26,9 @@ import {
 } from "lucide-react"
 import { KeywordsTable } from "@/components/content-plan/keywords-table"
 import { TopicsTable } from "@/components/content-plan/topics-table"
+import { StrategyAssistant } from "@/components/strategy/strategy-assistant"
 import { StrategyBriefing } from "@/components/strategy/strategy-briefing"
+import { StrategyJobBanner } from "@/components/strategy/strategy-job-banner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -41,7 +44,7 @@ import type { KeywordItem, Strategy, TopicItem } from "@/lib/strategies"
 import type { StrategyStatsMap } from "../client"
 import { archiveStrategy, duplicateStrategy } from "../actions"
 
-type StrategyTab = "briefing" | "keywords" | "topics"
+type StrategyTab = "briefing" | "chat" | "keywords" | "topics"
 type KeywordCandidate = Tables<"keyword_candidates">
 type TopicCandidate = Tables<"topic_candidates">
 
@@ -132,6 +135,8 @@ interface StrategyDetailClientProps {
   keywords: KeywordCandidate[]
   topics: TopicCandidate[]
   postsCount: number
+  initialTab?: string
+  openSuggestTopics?: boolean
 }
 
 export function StrategyDetailClient({
@@ -140,10 +145,14 @@ export function StrategyDetailClient({
   keywords,
   topics,
   postsCount,
+  initialTab,
+  openSuggestTopics = false,
 }: StrategyDetailClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [activeTab, setActiveTab] = useState<StrategyTab>("briefing")
+  const [activeTab, setActiveTab] = useState<StrategyTab>(
+    initialTab === "chat" || initialTab === "keywords" || initialTab === "topics" ? initialTab : "briefing",
+  )
 
   const keywordItems = useMemo(() => keywords.map(adaptKeyword), [keywords])
   const topicItems = useMemo(() => topics.map(adaptTopic), [topics])
@@ -277,6 +286,8 @@ export function StrategyDetailClient({
         />
       </dl>
 
+      <StrategyJobBanner strategyId={strategy.id} />
+
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as StrategyTab)}
@@ -286,6 +297,10 @@ export function StrategyDetailClient({
           <TabsTrigger value="briefing" className="gap-1.5">
             <ClipboardList className="h-3.5 w-3.5" />
             Briefing
+          </TabsTrigger>
+          <TabsTrigger value="chat" className="gap-1.5">
+            <MessageSquare className="h-3.5 w-3.5" />
+            Conversar com IA
           </TabsTrigger>
           <TabsTrigger value="keywords" className="gap-1.5">
             <Hash className="h-3.5 w-3.5" />
@@ -307,6 +322,10 @@ export function StrategyDetailClient({
           />
         </TabsContent>
 
+        <TabsContent value="chat" className="m-0">
+          <StrategyAssistant strategy={strategy} />
+        </TabsContent>
+
         <TabsContent value="keywords" className="m-0">
           <KeywordsTable
             keywords={keywordItems}
@@ -321,6 +340,7 @@ export function StrategyDetailClient({
             keywords={keywordItems}
             strategyId={strategy.id}
             strategyName={strategy.name}
+            initialSuggestOpen={openSuggestTopics}
           />
         </TabsContent>
 

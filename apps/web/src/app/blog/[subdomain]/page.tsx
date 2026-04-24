@@ -1,16 +1,28 @@
 import type { CSSProperties } from "react"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { ArticleCard } from "@/components/blog/public/article-card"
 import { PublicBlogFooter } from "@/components/blog/public/blog-footer"
 import { PublicBlogHeader } from "@/components/blog/public/blog-header"
-import { getAllPublicPosts, getPublicSiteBySubdomain } from "@/lib/blog-public-server"
+import {
+  getAllPublicPosts,
+  getPublicPostWithSiteBySlug,
+  getPublicSiteBySubdomain,
+} from "@/lib/blog-public-server"
 
 type Params = Promise<{ subdomain: string }>
 
 export async function generateMetadata({ params }: { params: Params }) {
   const { subdomain } = await params
   const site = await getPublicSiteBySubdomain(subdomain)
-  if (!site) return {}
+  if (!site) {
+    const postWithSite = await getPublicPostWithSiteBySlug(subdomain)
+    if (!postWithSite) return {}
+
+    return {
+      title: `${postWithSite.post.title} | ${postWithSite.site.name}`,
+      description: postWithSite.post.excerpt,
+    }
+  }
 
   return {
     title: `Blog | ${site.name}`,
@@ -21,7 +33,12 @@ export async function generateMetadata({ params }: { params: Params }) {
 export default async function TenantBlogPage({ params }: { params: Params }) {
   const { subdomain } = await params
   const site = await getPublicSiteBySubdomain(subdomain)
-  if (!site) notFound()
+  if (!site) {
+    const postWithSite = await getPublicPostWithSiteBySlug(subdomain)
+    if (!postWithSite) notFound()
+
+    redirect(`/blog/${postWithSite.site.subdomain}/${postWithSite.post.slug}`)
+  }
 
   const posts = await getAllPublicPosts(site.id)
   const [featured, ...rest] = posts

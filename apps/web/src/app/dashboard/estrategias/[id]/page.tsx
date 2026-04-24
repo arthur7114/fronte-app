@@ -19,10 +19,12 @@ export const metadata = {
 
 interface PageProps {
   params: Promise<{ id: string }>
+  searchParams?: Promise<{ tab?: string; openSuggest?: string }>
 }
 
-export default async function StrategyDetailPage({ params }: PageProps) {
+export default async function StrategyDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params
+  const query = await searchParams
   const { tenant } = await getAuthContext()
 
   if (!tenant) {
@@ -60,6 +62,8 @@ export default async function StrategyDetailPage({ params }: PageProps) {
       keywords={keywords}
       topics={topics}
       postsCount={postsCount}
+      initialTab={query?.tab}
+      openSuggestTopics={query?.openSuggest === "1"}
     />
   )
 }

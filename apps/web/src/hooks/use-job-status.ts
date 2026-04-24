@@ -40,6 +40,8 @@ export function useJobStatus(
   }, [])
 
   const poll = useCallback(async () => {
+    if (!strategyId || !jobType) return
+
     try {
       const res = await fetch(
         `/api/job-status?strategy_id=${encodeURIComponent(strategyId)}&type=${encodeURIComponent(jobType)}`,
@@ -88,6 +90,10 @@ export function useJobStatus(
       // Network error — keep polling
     }
   }, [strategyId, jobType, router, stopPolling])
+
+  useEffect(() => {
+    poll()
+  }, [poll])
 
   const startPolling = useCallback(() => {
     if (intervalRef.current) return // already polling

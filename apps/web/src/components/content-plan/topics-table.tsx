@@ -35,7 +35,7 @@ import {
   massApproveTopics,
   massDeleteTopics,
   massRejectTopics,
-  triggerBriefAndPostGeneration,
+  sendTopicsToProduction,
   triggerTopicResearch,
 } from "@/app/dashboard/estrategias/actions"
 import { useJobStatus } from "@/hooks/use-job-status"
@@ -60,17 +60,18 @@ type TopicsTableProps = {
   keywords?: KeywordItem[]
   strategyId?: string
   strategyName?: string
+  initialSuggestOpen?: boolean
   onApprove?: (topicId: string) => void
 }
 
 export function TopicsTable({
-  topics = TOPICS, keywords = [], strategyId, strategyName, onApprove,
+  topics = TOPICS, keywords = [], strategyId, strategyName, initialSuggestOpen = false, onApprove,
 }: TopicsTableProps) {
   useWorkspaceStore()
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [rejecting, setRejecting] = useState<TopicItem | null>(null)
   const [addOpen, setAddOpen] = useState(false)
-  const [suggestOpen, setSuggestOpen] = useState(false)
+  const [suggestOpen, setSuggestOpen] = useState(initialSuggestOpen)
   const [isPending, startTransition] = useTransition()
   const jobStatus = useJobStatus(strategyId ?? "", "research_topics")
   const briefJobStatus = useJobStatus(strategyId ?? "", "generate_brief")
@@ -201,14 +202,17 @@ export function TopicsTable({
 
     briefJobStatus.trigger()
     startTransition(async () => {
-      const results = await Promise.all(
-        approvedIds.map((id) => triggerBriefAndPostGeneration(id)),
-      )
-      const errors = results.filter((r) => r?.error).map((r) => r.error)
-      if (errors.length > 0) {
-        toast.error(`${errors.length} falha(s): ${errors[0]}`)
+      const result = await sendTopicsToProduction(approvedIds)
+      if (result.error) {
+        toast.error(result.error)
       } else {
-        toast.success(`${approvedIds.length} artigo(s) enviado(s) para geração pela IA.`)
+        const summary = result.summary ?? { enfileirados: approvedIds.length, ignorados: 0, falhas: 0 }
+        const details = [
+          `${summary.enfileirados} na fila`,
+          summary.ignorados > 0 ? `${summary.ignorados} ignorado(s)` : null,
+          summary.falhas > 0 ? `${summary.falhas} com erro` : null,
+        ].filter(Boolean).join(" · ")
+        toast.success(`Producao iniciada: ${details}.`)
       }
       clear()
     })

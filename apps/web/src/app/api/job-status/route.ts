@@ -48,16 +48,38 @@ export async function GET(req: Request) {
     const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient())
     const lookback = new Date(Date.now() - LOOKBACK_MINUTES * 60 * 1000).toISOString()
 
-    const { data, error } = await (db as any)
+    const baseQuery = (db as any)
       .from("automation_jobs")
       .select("status, error_message, finished_at, created_at")
       .eq("tenant_id", tenant.id)
       .eq("type", jobType)
       .contains("payload_json", { strategy_id: strategyId })
       .gte("created_at", lookback)
+
+    const activeResult = await baseQuery
+      .in("status", ["pending", "running"])
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
+
+    if (activeResult.error) {
+      return NextResponse.json({ error: activeResult.error.message }, { status: 500 })
+    }
+
+    const latestResult = activeResult.data
+      ? { data: activeResult.data, error: null }
+      : await ((db as any)
+        .from("automation_jobs")
+        .select("status, error_message, finished_at, created_at")
+        .eq("tenant_id", tenant.id)
+        .eq("type", jobType)
+        .contains("payload_json", { strategy_id: strategyId })
+        .gte("created_at", lookback)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle())
+
+    const { data, error } = latestResult
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

@@ -7,12 +7,16 @@ import { Clock, Loader2, Sparkles, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ArticleItem } from "@/lib/strategies"
 import { getStrategy } from "@/lib/strategies"
+import type { ProductionProgress, ProductionQueueItem } from "@/lib/job-feed"
+
+type QueueItem = ArticleItem | ProductionQueueItem
 
 type ProductionQueueProps = {
-  items: ArticleItem[]
+  items: QueueItem[]
   title?: string
   description?: string
   showStrategy?: boolean
+  progress?: ProductionProgress
   className?: string
 }
 
@@ -21,6 +25,7 @@ export function ProductionQueue({
   title = "Em produção",
   description,
   showStrategy = true,
+  progress,
   className,
 }: ProductionQueueProps) {
   if (items.length === 0) return null
@@ -41,6 +46,13 @@ export function ProductionQueue({
           </h2>
           {description && (
             <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+          )}
+          {progress && progress.total > 0 && (
+            <p className="mt-1 text-sm font-medium text-foreground">
+              {progress.created} de {progress.total} artigos criados.{" "}
+              {progress.running > 0 || progress.queued > 0 ? "Em andamento" : "Processamento concluido"}
+              {progress.failed > 0 ? ` · ${progress.failed} com erro` : ""}
+            </p>
           )}
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -75,12 +87,17 @@ function ProductionCard({
   item,
   showStrategy,
 }: {
-  item: ArticleItem
+  item: QueueItem
   showStrategy: boolean
 }) {
   const isGenerating = item.status === "generating"
-  const strategy = showStrategy ? getStrategy(item.strategyId) : undefined
+  const strategy = showStrategy
+    ? "strategyName" in item && item.strategyName
+      ? { name: item.strategyName, color: item.strategyColor ?? "var(--primary)" }
+      : getStrategy(item.strategyId)
+    : undefined
   const progress = item.progress ?? (isGenerating ? 50 : 0)
+  const statusDetail = "statusDetail" in item ? item.statusDetail : undefined
 
   return (
     <Card
@@ -124,6 +141,9 @@ function ProductionCard({
               <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
                 {item.keywords.join(" · ")}
               </p>
+            )}
+            {statusDetail && (
+              <p className="mt-1 text-xs text-muted-foreground">{statusDetail}</p>
             )}
           </div>
           <Button
