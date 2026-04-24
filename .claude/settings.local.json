@@ -25,7 +25,17 @@
       "Bash(git pull *)",
       "Bash(git stash *)",
       "Bash(git rm *)",
-      "Bash(node scripts/deploy.js)"
+      "Bash(node scripts/deploy.js)",
+      "Bash(curl -s -X POST \"http://178.18.254.64:3000/api/deploy/88b8bd07dadf66bd915f646f843fff442e3213a6c39dbf9e\" -H \"Content-Type: application/json\" -d \"{\\\\\"version\\\\\":\\\\\"v0.1.13\\\\\",\\\\\"timestamp\\\\\":\\\\\"$\\(date -u +%Y-%m-%dT%H:%M:%SZ\\)\\\\\",\\\\\"deployedBy\\\\\":\\\\\"Antigravity Agent\\\\\"}\")",
+      "Bash(curl -s -X POST \"http://178.18.254.64:3000/api/deploy/a8713a8c1c0d7a9ab4e2817381f884e4d9714f858990d610\" -H \"Content-Type: application/json\" -d \"{\\\\\"version\\\\\":\\\\\"v0.1.13\\\\\",\\\\\"timestamp\\\\\":\\\\\"$\\(date -u +%Y-%m-%dT%H:%M:%SZ\\)\\\\\",\\\\\"deployedBy\\\\\":\\\\\"Antigravity Agent\\\\\"}\")",
+      "Bash(xargs wc *)",
+      "mcp__supabase__apply_migration",
+      "Bash(curl -s -X POST https://api.supabase.com/v1/projects/qvxrhlixofoncovjhtpd/database/query -H 'Authorization: Bearer sbp_fa4d3a85012283659347b1f51bf493e9b578b97c' -H 'Content-Type: application/json' -d '{\"query\": \"SELECT column_name FROM information_schema.columns WHERE table_name = '\\\\''article_generations'\\\\'' LIMIT 1\"}')",
+      "Bash(supabase --version)",
+      "Bash(psql --version)",
+      "Bash(node -e \"require\\('pg'\\); console.log\\('pg available'\\)\")",
+      "Bash(npm install *)",
+      "Bash(node -e ' *)"
     ]
   }
 }

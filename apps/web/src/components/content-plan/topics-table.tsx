@@ -35,7 +35,7 @@ import {
   massApproveTopics,
   massDeleteTopics,
   massRejectTopics,
-  sendTopicsToProduction,
+  triggerBriefAndPostGeneration,
   triggerTopicResearch,
 } from "@/app/dashboard/estrategias/actions"
 import { useJobStatus } from "@/hooks/use-job-status"
@@ -73,6 +73,7 @@ export function TopicsTable({
   const [suggestOpen, setSuggestOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const jobStatus = useJobStatus(strategyId ?? "", "research_topics")
+  const briefJobStatus = useJobStatus(strategyId ?? "", "generate_brief")
 
   const approvedKeywords = useMemo(
     () => keywords.filter((keyword) => keyword.status === "approved"),
@@ -198,17 +199,17 @@ export function TopicsTable({
       return
     }
 
+    briefJobStatus.trigger()
     startTransition(async () => {
-      const result = await sendTopicsToProduction(approvedIds)
-      if (result.error) {
-        toast.error(result.error)
-        return
-      }
-
-      const summary = result.summary ?? { criados: [], jaExistentes: [], falhas: [] }
-      toast.success(
-        `${summary.criados.length} criado(s), ${summary.jaExistentes.length} já existente(s), ${summary.falhas.length} falha(s).`,
+      const results = await Promise.all(
+        approvedIds.map((id) => triggerBriefAndPostGeneration(id)),
       )
+      const errors = results.filter((r) => r?.error).map((r) => r.error)
+      if (errors.length > 0) {
+        toast.error(`${errors.length} falha(s): ${errors[0]}`)
+      } else {
+        toast.success(`${approvedIds.length} artigo(s) enviado(s) para geração pela IA.`)
+      }
       clear()
     })
   }
@@ -234,7 +235,7 @@ export function TopicsTable({
             <Button variant="outline" className="gap-2" onClick={() => setSuggestOpen(true)} disabled={isPending || jobStatus.isRunning || !strategyId}>
               <Sparkles className="h-4 w-4" />{isPending ? "Enviando..." : "Sugerir tópicos"}
             </Button>
-            <Button className="gap-2" onClick={() => handleSendToProduction(approvedList.map((topic) => topic.id))} disabled={isPending || approvedList.length === 0}>
+            <Button className="gap-2" onClick={() => handleSendToProduction(approvedList.map((topic) => topic.id))} disabled={isPending || briefJobStatus.isRunning || approvedList.length === 0}>
               <Send className="h-4 w-4" />Gerar artigos
             </Button>
           </div>
@@ -248,6 +249,15 @@ export function TopicsTable({
           errorMessage={jobStatus.errorMessage}
           onRetry={() => setSuggestOpen(true)}
           onDismiss={jobStatus.dismiss}
+          className="mb-4"
+        />
+        <JobStatusBanner
+          status={briefJobStatus.status}
+          jobLabel="articles"
+          count={approvedList.length}
+          errorMessage={briefJobStatus.errorMessage}
+          onRetry={() => handleSendToProduction(approvedList.map((t) => t.id))}
+          onDismiss={briefJobStatus.dismiss}
           className="mb-4"
         />
 
@@ -354,7 +364,7 @@ export function TopicsTable({
             </Button>
           )}
           {selectedAllApproved && (
-            <Button size="sm" className="gap-1.5" onClick={() => handleSendToProduction()} disabled={isPending}>
+            <Button size="sm" className="gap-1.5" onClick={() => handleSendToProduction()} disabled={isPending || briefJobStatus.isRunning}>
               <Send className="h-3.5 w-3.5" />Gerar artigos
             </Button>
           )}
