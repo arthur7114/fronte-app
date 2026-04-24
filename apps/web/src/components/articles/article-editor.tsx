@@ -1,28 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { marked } from "marked"
 import { toast } from "sonner"
 import type { Tables } from "@super/db"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  ArrowLeft,
-  Sparkles,
-  Save,
-  Eye,
-  Send,
-  Bold,
-  Italic,
-  List,
-  ListOrdered,
-  Link2,
-  Image,
-  Heading2,
-  Quote,
-  RefreshCcw,
-} from "lucide-react"
+import { ArrowLeft, Eye, Loader2, RefreshCcw, Save, Send, Sparkles } from "lucide-react"
+import { RichEditor } from "@/components/editor/rich-editor"
+import type { RichEditorRef } from "@/components/editor/rich-editor"
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 type ArticleGeneration = Tables<"article_generations">
 export type PostWithGeneration = Tables<"posts"> & {
@@ -45,6 +37,10 @@ type ArticleEditorProps = {
   initialData?: PostWithGeneration
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 const LOCKED_STATUSES = new Set(["queued", "generating", "publishing", "failed"])
 
 function getErrorMessage(error: unknown) {
@@ -60,10 +56,7 @@ function getArticleGeneration(post?: PostWithGeneration) {
 function isReviewResult(value: unknown): value is ReviewResult {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false
   const result = value as ReviewResult
-  return (
-    result.seo_score === undefined ||
-    typeof result.seo_score === "number"
-  )
+  return result.seo_score === undefined || typeof result.seo_score === "number"
 }
 
 function clampScore(score: number) {
@@ -82,6 +75,19 @@ function getScoreColor(score: number | null) {
   if (score >= 80) return "text-green-600"
   if (score >= 60) return "text-amber-600"
   return "text-destructive"
+}
+
+/** Strip HTML tags and count words */
+function getWordCount(html: string): number {
+  const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
+  return text ? text.split(/\s+/).length : 0
+}
+
+/** Convert markdown to HTML, skip if already HTML */
+function markdownToHtml(raw: string): string {
+  if (!raw) return ""
+  if (/<[a-z][\s\S]*>/i.test(raw)) return raw
+  return marked.parse(raw) as string
 }
 
 function buildChecklist({
@@ -104,27 +110,32 @@ function buildChecklist({
     return review.feedback.map((label) => ({ label, done }))
   }
 
-  const firstParagraph = content.split(/\n\s*\n/)[0] ?? ""
+  // Extract first paragraph text from HTML
+  const match = content.match(/<p[^>]*>([\s\S]*?)<\/p>/i)
+  const firstParagraph = match
+    ? match[1].replace(/<[^>]*>/g, "")
+    : content.replace(/<[^>]*>/g, "").substring(0, 500)
+
   const normalizedKeyword = keyword?.toLowerCase().trim()
 
   return [
     { label: "Título preenchido", done: title.trim().length >= 3 },
     { label: "Meta descrição preenchida", done: metaDescription.trim().length > 0 },
-    { label: "Subtítulos (H2) presentes", done: /^##\s+/m.test(content) },
+    { label: "Subtítulos (H2) presentes", done: content.includes("<h2") },
     {
       label: "Palavra-chave no primeiro parágrafo",
-      done: normalizedKeyword ? firstParagraph.toLowerCase().includes(normalizedKeyword) : false,
+      done: normalizedKeyword
+        ? firstParagraph.toLowerCase().includes(normalizedKeyword)
+        : false,
     },
     { label: "Conteúdo com pelo menos 300 palavras", done: getWordCount(content) >= 300 },
     { label: "Score de SEO calculado", done: score !== null },
   ]
 }
 
-function getWordCount(content: string) {
-  const trimmed = content.trim()
-  if (!trimmed) return 0
-  return trimmed.split(/\s+/).length
-}
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export function ArticleEditor({
   articleId,
@@ -134,9 +145,11 @@ export function ArticleEditor({
   initialData,
 }: ArticleEditorProps) {
   const router = useRouter()
+  const editorRef = useRef<RichEditorRef>(null)
+
   const generation = getArticleGeneration(initialData)
   const reviewResult = isReviewResult(generation?.review_result)
-    ? generation.review_result
+    ? (generation.review_result as ReviewResult)
     : null
   const initialSeoScore = initialData?.seo_score ?? reviewResult?.seo_score ?? null
   const primaryKeyword = generation?.primary_keyword ?? null
@@ -145,9 +158,11 @@ export function ArticleEditor({
 
   const [title, setTitle] = useState(initialData?.title ?? "")
   const [metaDescription, setMetaDescription] = useState(initialData?.meta_description ?? "")
-  const [content, setContent] = useState(initialData?.content ?? "")
+  // Convert markdown → HTML once on init
+  const [content, setContent] = useState(() => markdownToHtml(initialData?.content ?? ""))
   const [isSaving, setIsSaving] = useState(false)
   const [isApproving, setIsApproving] = useState(false)
+  const [isSuggestingMeta, setIsSuggestingMeta] = useState(false)
 
   const seoScore = initialSeoScore === null ? null : clampScore(initialSeoScore)
   const scoreOffset = seoScore === null ? 226 : 226 * (1 - seoScore / 100)
@@ -161,6 +176,7 @@ export function ArticleEditor({
     review: reviewResult,
     score: seoScore,
   })
+  const wordCount = getWordCount(content)
 
   const handleBack = () => {
     if (onBack) onBack()
@@ -171,20 +187,12 @@ export function ArticleEditor({
     setIsSaving(true)
     try {
       const { saveArticleDraft } = await import("@/app/dashboard/artigos/actions")
-      const result = await saveArticleDraft(postId, {
-        title,
-        metaDescription,
-        content,
-      })
-
+      const result = await saveArticleDraft(postId, { title, metaDescription, content })
       if (result.error) throw new Error(result.error)
-
       toast.success("Rascunho salvo.")
       router.refresh()
     } catch (error) {
-      toast.error("Não foi possível salvar o rascunho.", {
-        description: getErrorMessage(error),
-      })
+      toast.error("Não foi possível salvar o rascunho.", { description: getErrorMessage(error) })
     } finally {
       setIsSaving(false)
     }
@@ -199,27 +207,40 @@ export function ArticleEditor({
       toast.success("Artigo aprovado e publicado!")
       router.refresh()
     } catch (error) {
-      toast.error("Erro ao aprovar artigo", {
-        description: getErrorMessage(error),
-      })
+      toast.error("Erro ao aprovar artigo.", { description: getErrorMessage(error) })
     } finally {
       setIsApproving(false)
     }
   }
 
-  const toolbarButtons = [
-    { icon: Bold, label: "Negrito" },
-    { icon: Italic, label: "Itálico" },
-    { icon: Heading2, label: "Subtítulo" },
-    { icon: List, label: "Lista" },
-    { icon: ListOrdered, label: "Lista numerada" },
-    { icon: Quote, label: "Citação" },
-    { icon: Link2, label: "Link" },
-    { icon: Image, label: "Imagem" },
-  ]
+  const handleSuggestMeta = async (field: "title" | "description" | "both") => {
+    const plainText = content.replace(/<[^>]*>/g, " ").trim()
+    if (!plainText) {
+      toast.error("Adicione conteúdo ao artigo antes de sugerir metadados.")
+      return
+    }
+    setIsSuggestingMeta(true)
+    try {
+      const res = await fetch("/api/editor-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "suggest-meta", content: plainText }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      if (field !== "description" && data.title) setTitle(data.title)
+      if (field !== "title" && data.metaDescription) setMetaDescription(data.metaDescription)
+      toast.success("Metadados sugeridos pela IA ✦")
+    } catch (error) {
+      toast.error("Não foi possível sugerir metadados.", { description: getErrorMessage(error) })
+    } finally {
+      setIsSuggestingMeta(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={handleBack} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
@@ -237,7 +258,7 @@ export function ArticleEditor({
             disabled={isLocked || isSaving || isApproving}
           >
             {isSaving ? (
-              <RefreshCcw className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Save className="h-4 w-4" />
             )}
@@ -249,7 +270,7 @@ export function ArticleEditor({
             disabled={isLocked || isSaving || isApproving}
           >
             {isApproving ? (
-              <RefreshCcw className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Send className="h-4 w-4" />
             )}
@@ -258,6 +279,7 @@ export function ArticleEditor({
         </div>
       </div>
 
+      {/* AI banner */}
       {isNew && !isLocked && (
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="flex items-start gap-3 p-4">
@@ -269,24 +291,30 @@ export function ArticleEditor({
                 Artigo gerado pela IA com sucesso
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Revise, edite e ajuste o conteúdo conforme necessário antes de publicar.
+                Revise, edite e ajuste o conteúdo. Selecione qualquer texto para formatação e ações de IA.
+                Pressione <kbd className="rounded border border-border bg-muted px-1 font-mono text-[10px]">/</kbd> para
+                inserir blocos.
               </p>
             </div>
           </CardContent>
         </Card>
       )}
 
+      {/* Locked notice */}
       {isLocked && (
         <Card className="border-border bg-muted/30">
           <CardContent className="p-4 text-sm text-muted-foreground">
-            Este artigo está com status <strong>{initialData?.status ?? "indisponível"}</strong>.
-            Aguarde a geração terminar ou resolva o erro antes de editar.
+            Este artigo está com status{" "}
+            <strong>{initialData?.status ?? "indisponível"}</strong>. Aguarde a geração
+            terminar ou resolva o erro antes de editar.
           </CardContent>
         </Card>
       )}
 
+      {/* Main layout */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4 lg:col-span-2">
+          {/* Title */}
           <Card>
             <CardContent className="p-4">
               <label className="mb-2 block text-sm font-medium text-foreground">
@@ -295,22 +323,34 @@ export function ArticleEditor({
               <input
                 type="text"
                 value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                className="w-full border-0 bg-transparent text-xl font-semibold text-foreground outline-none placeholder:text-muted-foreground"
+                onChange={(e) => setTitle(e.target.value)}
+                disabled={isLocked}
+                className="w-full border-0 bg-transparent text-xl font-semibold text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-60"
                 placeholder="Digite o título..."
               />
               <div className="mt-2 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
+                <span className={`text-xs ${title.length > 70 ? "text-destructive" : "text-muted-foreground"}`}>
                   {title.length}/70 caracteres
                 </span>
-                <Button variant="ghost" size="sm" className="gap-1 text-primary" disabled>
-                  <Sparkles className="h-3 w-3" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1 text-primary"
+                  onClick={() => handleSuggestMeta("title")}
+                  disabled={isLocked || isSuggestingMeta}
+                >
+                  {isSuggestingMeta ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3" />
+                  )}
                   Sugerir título
                 </Button>
               </div>
             </CardContent>
           </Card>
 
+          {/* Meta description */}
           <Card>
             <CardContent className="p-4">
               <label className="mb-2 block text-sm font-medium text-foreground">
@@ -318,70 +358,71 @@ export function ArticleEditor({
               </label>
               <textarea
                 value={metaDescription}
-                onChange={(event) => setMetaDescription(event.target.value)}
+                onChange={(e) => setMetaDescription(e.target.value)}
+                disabled={isLocked}
                 rows={2}
-                className="w-full resize-none border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                className="w-full resize-none border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-60"
                 placeholder="Uma breve descrição do artigo para aparecer nos resultados de busca..."
               />
               <div className="mt-2 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
+                <span
+                  className={`text-xs ${metaDescription.length > 160 ? "text-destructive" : "text-muted-foreground"}`}
+                >
                   {metaDescription.length}/160 caracteres
                 </span>
-                <Button variant="ghost" size="sm" className="gap-1 text-primary" disabled>
-                  <Sparkles className="h-3 w-3" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1 text-primary"
+                  onClick={() => handleSuggestMeta("description")}
+                  disabled={isLocked || isSuggestingMeta}
+                >
+                  {isSuggestingMeta ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3" />
+                  )}
                   Gerar descrição
                 </Button>
               </div>
             </CardContent>
           </Card>
 
+          {/* Rich text editor */}
           <Card>
             <CardContent className="p-0">
-              <div className="flex items-center gap-1 border-b border-border p-2">
-                {toolbarButtons.map((btn) => (
-                  <Button
-                    key={btn.label}
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    title={btn.label}
-                    disabled
-                  >
-                    <btn.icon className="h-4 w-4" />
-                  </Button>
-                ))}
-                <div className="ml-auto">
-                  <Button variant="ghost" size="sm" className="gap-1 text-primary" disabled>
+              {/* Mini top bar */}
+              <div className="flex items-center justify-between border-b border-border px-4 py-2">
+                <span className="text-xs text-muted-foreground">{wordCount} palavras</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground">
+                    Pressione{" "}
+                    <kbd className="rounded border border-border bg-muted px-1 font-mono text-[10px]">
+                      /
+                    </kbd>{" "}
+                    para comandos · Selecione texto para formatar ou usar IA
+                  </span>
+                  <Button variant="ghost" size="sm" className="ml-2 gap-1 text-muted-foreground" disabled>
                     <RefreshCcw className="h-3 w-3" />
                     Regenerar
                   </Button>
                 </div>
               </div>
 
-              <div className="p-4">
-                <textarea
-                  value={content}
-                  onChange={(event) => setContent(event.target.value)}
-                  rows={20}
-                  className="w-full resize-none border-0 bg-transparent text-sm leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
-                  placeholder="Comece a escrever seu artigo..."
-                />
-              </div>
-
-              <div className="flex items-center justify-between border-t border-border p-4">
-                <span className="text-xs text-muted-foreground">
-                  {getWordCount(content)} palavras
-                </span>
-                <Button variant="outline" size="sm" className="gap-2" disabled>
-                  <Sparkles className="h-4 w-4" />
-                  Expandir com IA
-                </Button>
-              </div>
+              <RichEditor
+                ref={editorRef}
+                content={content}
+                onChange={setContent}
+                editable={!isLocked}
+                placeholder="Comece a escrever ou pressione / para ver os comandos disponíveis..."
+              />
             </CardContent>
           </Card>
         </div>
 
+        {/* Sidebar */}
         <div className="space-y-4">
+          {/* SEO Score */}
           <Card>
             <CardContent className="p-4">
               <h3 className="mb-4 font-medium text-foreground">Pontuação SEO</h3>
@@ -417,9 +458,9 @@ export function ArticleEditor({
                 </div>
                 <div className="flex-1">
                   <p className={`text-sm font-medium ${scoreColor}`}>{scoreLabel}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {seoScore === null
-                      ? "A revisão da IA ainda não calculou a pontuação deste artigo."
+                      ? "A revisão da IA ainda não calculou a pontuação."
                       : "Pontuação carregada da revisão da IA."}
                   </p>
                 </div>
@@ -427,6 +468,7 @@ export function ArticleEditor({
             </CardContent>
           </Card>
 
+          {/* Checklist */}
           <Card>
             <CardContent className="p-4">
               <h3 className="mb-4 font-medium text-foreground">Lista de verificação</h3>
@@ -434,18 +476,16 @@ export function ArticleEditor({
                 {checklist.map((item) => (
                   <div key={item.label} className="flex items-center gap-2">
                     <div
-                      className={`h-5 w-5 rounded-full ${
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
                         item.done
                           ? "bg-green-100 text-green-600"
                           : "bg-muted text-muted-foreground"
-                      } flex items-center justify-center`}
+                      }`}
                     >
                       {item.done ? "✓" : "○"}
                     </div>
                     <span
-                      className={`text-sm ${
-                        item.done ? "text-foreground" : "text-muted-foreground"
-                      }`}
+                      className={`text-sm ${item.done ? "text-foreground" : "text-muted-foreground"}`}
                     >
                       {item.label}
                     </span>
@@ -455,6 +495,7 @@ export function ArticleEditor({
             </CardContent>
           </Card>
 
+          {/* Keywords */}
           <Card>
             <CardContent className="p-4">
               <h3 className="mb-3 font-medium text-foreground">Palavras-chave alvo</h3>
