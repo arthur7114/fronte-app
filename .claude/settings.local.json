@@ -43,7 +43,12 @@
       "Bash(node -e \"const p = require\\('./node_modules/@tiptap/extension-bubble-menu/package.json'\\); console.log\\(JSON.stringify\\(Object.keys\\(p.exports || {}\\), null, 2\\)\\)\")",
       "Bash(node -e \"try { const m = require\\('./node_modules/@tiptap/extension-bubble-menu'\\); console.log\\(Object.keys\\(m\\)\\); } catch\\(e\\) { console.log\\(e.message\\); }\")",
       "Bash(node -e \"const r = require\\('./node_modules/@tiptap/react/package.json'\\); console.log\\(r.version\\); const b = require\\('./node_modules/@tiptap/extension-bubble-menu/package.json'\\); console.log\\(b.version\\);\")",
-      "Bash(node -e \"const m = require\\('./node_modules/@tiptap/extension-bubble-menu'\\); const B = m.BubbleMenu; console.log\\(typeof B, B.toString\\(\\).substring\\(0, 200\\)\\);\")"
+      "Bash(node -e \"const m = require\\('./node_modules/@tiptap/extension-bubble-menu'\\); const B = m.BubbleMenu; console.log\\(typeof B, B.toString\\(\\).substring\\(0, 200\\)\\);\")",
+      "Bash(curl -s -X POST \"http://178.18.254.64:3000/api/deploy/88b8bd07dadf66bd915f646f843fff442e3213a6c39dbf9e\")",
+      "Bash(curl -s -X POST \"http://178.18.254.64:3000/api/deploy/a8713a8c1c0d7a9ab4e2817381f884e4d9714f858990d610\")",
+      "Bash(wait)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
