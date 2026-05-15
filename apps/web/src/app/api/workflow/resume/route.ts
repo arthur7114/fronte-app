@@ -4,6 +4,7 @@ import { getAuthContext } from "@/lib/auth-context";
 import { mastra } from "@/lib/mastra";
 
 export const maxDuration = 60;
+export const dynamic = "force-dynamic";
 
 type ResumeBody = {
   runId: string;

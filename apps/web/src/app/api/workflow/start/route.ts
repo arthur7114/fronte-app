@@ -6,6 +6,7 @@ import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin";
 import { getServerSupabaseClient } from "@/lib/supabase/server";
 
 export const maxDuration = 60;
+export const dynamic = "force-dynamic";
 
 type StartBody = {
   generationId: string;

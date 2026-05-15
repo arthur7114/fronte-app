@@ -4,6 +4,7 @@ import { getAuthContext } from "@/lib/auth-context";
 import { mastra } from "@/lib/mastra";
 
 export const maxDuration = 30;
+export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {

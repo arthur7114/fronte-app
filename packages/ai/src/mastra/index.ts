@@ -10,7 +10,10 @@ import {
 } from "./agents/index";
 import { createArticleWorkflow } from "./workflows/index";
 
-const storageUrl = process.env.MASTRA_STORAGE_URL ?? "file:./mastra.db";
+// Vercel/Lambda filesystem is read-only outside /tmp; default to in-memory so
+// the workflow boots in serverless. Set MASTRA_STORAGE_URL to a Turso libsql://
+// URL (or file:/tmp/... for ephemeral file storage) for persistence in prod.
+const storageUrl = process.env.MASTRA_STORAGE_URL ?? ":memory:";
 
 export const mastra = new Mastra({
   agents: {
@@ -22,7 +25,7 @@ export const mastra = new Mastra({
   workflows: {
     createArticleWorkflow,
   },
-  storage: new LibSQLStore({ url: storageUrl }),
+  storage: new LibSQLStore({ id: "super-ai", url: storageUrl }),
   logger: new PinoLogger({ name: "super-ai", level: "info" }),
 });
 
