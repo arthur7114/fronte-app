@@ -5,8 +5,57 @@ import type { TablesUpdate } from "@super/db"
 import { getAuthContext } from "@/lib/auth-context"
 import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin"
 import { getServerSupabaseClient } from "@/lib/supabase/server"
-import { initializeArticleGeneration, type ArticleBriefing } from "@/lib/article-agent"
 import { validatePostInput } from "@/lib/post"
+
+// Inlined from the deleted lib/article-agent.ts (the rest of the file moved into
+// the Mastra workflow `createArticleWorkflow`).
+export interface ArticleBriefing {
+  topic: string
+  primary_keyword?: string
+  tone?: string
+  target_length?: string
+  additional_instructions?: string
+}
+
+async function initializeArticleGeneration(
+  tenantId: string,
+  postId: string,
+  strategyId: string | null,
+  briefing: ArticleBriefing,
+): Promise<string> {
+  const db = (await getDb()) as unknown as {
+    from: (table: string) => {
+      insert: (row: Record<string, unknown>) => {
+        select: (cols: string) => { single: () => Promise<{ data: { id: string } | null; error: { message: string } | null }> }
+      }
+      update: (row: Record<string, unknown>) => { eq: (col: string, val: unknown) => { eq: (col: string, val: unknown) => Promise<unknown> } }
+    }
+  }
+
+  const { data, error } = await db
+    .from("article_generations")
+    .insert({
+      tenant_id: tenantId,
+      post_id: postId,
+      strategy_id: strategyId,
+      topic: briefing.topic,
+      primary_keyword: briefing.primary_keyword,
+      tone: briefing.tone ?? "profissional e acessível",
+      target_length: briefing.target_length ?? "médio (1000 palavras)",
+      additional_instructions: briefing.additional_instructions,
+      phase: "briefing",
+    })
+    .select("id")
+    .single()
+
+  if (error || !data) {
+    throw new Error(`Failed to initialize article generation: ${error?.message}`)
+  }
+
+  await db.from("posts").update({ generation_id: data.id }).eq("id", postId).eq("tenant_id", tenantId)
+
+  return data.id
+}
 
 export type SaveArticleDraftInput = {
   title: string
@@ -87,32 +136,30 @@ export async function startArticleWorkflow(
   const base = `${proto}://${host}`;
   const cookie = headers.get("cookie") ?? "";
 
-  const response = await fetch(`${base}/api/workflow/start`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", cookie },
-    body: JSON.stringify({
-      generationId: wizard.generationId,
-      postId: wizard.postId,
-      strategyId,
-      topic: briefing.topic,
-      primaryKeyword: briefing.primary_keyword ?? null,
-      tone: briefing.tone ?? null,
-      targetLength: briefing.target_length ?? null,
-      additionalInstructions: briefing.additional_instructions ?? null,
-      operationMode: briefing.operationMode,
-      qualityThreshold: briefing.qualityThreshold,
-    }),
+  // Trigger workflow directly (no HTTP roundtrip).
+  const { triggerWorkflow } = await import("@/lib/workflow-trigger");
+  const result = await triggerWorkflow("create-article", {
+    generationId: wizard.generationId,
+    postId: wizard.postId,
+    tenantId: wizard.tenantId,
+    strategyId,
+    topic: briefing.topic,
+    primaryKeyword: briefing.primary_keyword ?? null,
+    tone: briefing.tone ?? "profissional e acessível",
+    targetLength: briefing.target_length ?? "médio (1000 palavras)",
+    additionalInstructions: briefing.additional_instructions ?? null,
+    operationMode: briefing.operationMode ?? "manual",
+    qualityThreshold: briefing.qualityThreshold ?? 70,
   });
 
-  if (!response.ok) {
-    return { error: `Workflow start falhou: ${response.status}` };
+  if ("error" in result) {
+    return { error: `Workflow start falhou: ${result.error}` };
   }
 
-  const data = (await response.json()) as { runId?: string; operationMode?: string };
   return {
-    success: true,
-    runId: data.runId,
-    operationMode: data.operationMode,
+    success: true as const,
+    runId: result.runId,
+    operationMode: briefing.operationMode,
     generationId: wizard.generationId,
     postId: wizard.postId,
     tenantId: wizard.tenantId,
