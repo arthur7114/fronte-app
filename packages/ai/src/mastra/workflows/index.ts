@@ -1,1 +1,1 @@
-export { createArticleWorkflow } from "./create-article.js";
+export { createArticleWorkflow } from "./create-article";

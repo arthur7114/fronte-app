@@ -1,7 +1,7 @@
 import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
 
-import { supabaseDb } from "../tools/supabase.js";
+import { supabaseDb } from "../tools/supabase";
 
 // ----------------------------------------------------------------------
 // Schemas

@@ -7,8 +7,8 @@ import {
   contentStrategist,
   articleWriter,
   qualityReviewer,
-} from "./agents/index.js";
-import { createArticleWorkflow } from "./workflows/index.js";
+} from "./agents/index";
+import { createArticleWorkflow } from "./workflows/index";
 
 const storageUrl = process.env.MASTRA_STORAGE_URL ?? "file:./mastra.db";
 

@@ -1,8 +1,8 @@
-export { mastra, type SuperMastra } from "./mastra/index.js";
-export { createArticleWorkflow } from "./mastra/workflows/index.js";
+export { mastra, type SuperMastra } from "./mastra/index";
+export { createArticleWorkflow } from "./mastra/workflows/index";
 export {
   seoResearcher,
   contentStrategist,
   articleWriter,
   qualityReviewer,
-} from "./mastra/agents/index.js";
+} from "./mastra/agents/index";
