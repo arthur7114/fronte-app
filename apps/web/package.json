@@ -38,6 +38,7 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@super/ai": "*",
     "@super/db": "*",
     "@super/shared": "*",
     "@tiptap/extension-bubble-menu": "^3.22.4",

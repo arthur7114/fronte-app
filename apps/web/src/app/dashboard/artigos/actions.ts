@@ -60,6 +60,65 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Erro inesperado."
 }
 
+/**
+ * Mastra-backed workflow start. Creates the post + article_generations row using the
+ * existing helpers, then triggers the `createArticleWorkflow` via the workflow API.
+ *
+ * Returns the workflow `runId` (Mastra) so the caller can poll `/api/workflow/status`
+ * and the `generationId` for compatibility with the legacy phase poller.
+ *
+ * Use this instead of `startArticleWizard` to opt into the HITL / autonomous engine.
+ */
+export async function startArticleWorkflow(
+  strategyId: string | null,
+  briefing: ArticleBriefing & {
+    operationMode?: "manual" | "assisted" | "automatic";
+    qualityThreshold?: number;
+  },
+) {
+  const wizard = await startArticleWizard(strategyId, briefing);
+  if (!wizard.success || !wizard.generationId || !wizard.postId || !wizard.tenantId) {
+    return { error: wizard.error ?? "Falha ao inicializar geração." };
+  }
+
+  const headers = await import("next/headers").then((m) => m.headers());
+  const host = headers.get("host");
+  const proto = headers.get("x-forwarded-proto") ?? "http";
+  const base = `${proto}://${host}`;
+  const cookie = headers.get("cookie") ?? "";
+
+  const response = await fetch(`${base}/api/workflow/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", cookie },
+    body: JSON.stringify({
+      generationId: wizard.generationId,
+      postId: wizard.postId,
+      strategyId,
+      topic: briefing.topic,
+      primaryKeyword: briefing.primary_keyword ?? null,
+      tone: briefing.tone ?? null,
+      targetLength: briefing.target_length ?? null,
+      additionalInstructions: briefing.additional_instructions ?? null,
+      operationMode: briefing.operationMode,
+      qualityThreshold: briefing.qualityThreshold,
+    }),
+  });
+
+  if (!response.ok) {
+    return { error: `Workflow start falhou: ${response.status}` };
+  }
+
+  const data = (await response.json()) as { runId?: string; operationMode?: string };
+  return {
+    success: true,
+    runId: data.runId,
+    operationMode: data.operationMode,
+    generationId: wizard.generationId,
+    postId: wizard.postId,
+    tenantId: wizard.tenantId,
+  };
+}
+
 export async function startArticleWizard(strategyId: string | null, briefing: ArticleBriefing) {
   const { tenant, site } = await getAuthContext()
   if (!tenant) throw new Error("Não autenticado.")
