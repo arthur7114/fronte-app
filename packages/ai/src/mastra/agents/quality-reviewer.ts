@@ -26,7 +26,8 @@ threshold is enforced downstream and may flip the workflow into human review.
 `.trim(),
   model: async ({ requestContext }) => {
     const tenantId = requestContext?.get("tenantId") as string | undefined;
-    const model = await getModelForTenant(tenantId);
+    const strategyId = requestContext?.get("strategyId") as string | undefined;
+    const model = await getModelForTenant(tenantId, strategyId);
     return openai(model);
   },
 });

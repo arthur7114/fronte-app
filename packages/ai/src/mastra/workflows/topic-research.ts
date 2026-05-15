@@ -37,8 +37,10 @@ const TopicResearchOutput = z.object({
   needsApproval: z.boolean(),
 });
 
-function tenantCtx(tenantId: string) {
-  return new RequestContext([["tenantId", tenantId]]);
+function tenantCtx(tenantId: string, strategyId?: string | null) {
+  const entries: Array<[string, string]> = [["tenantId", tenantId]];
+  if (strategyId) entries.push(["strategyId", strategyId]);
+  return new RequestContext(entries);
 }
 
 const generateTopicsStep = createStep({
@@ -120,7 +122,7 @@ const generateTopicsStep = createStep({
     const agent = mastra.getAgent("topicResearcher");
     const result = await agent.generate(prompt, {
       output: z.object({ topics: z.array(TopicSchema) }),
-      requestContext: tenantCtx(inputData.tenantId),
+      requestContext: tenantCtx(inputData.tenantId, inputData.strategyId),
     });
 
     const topics = result.object.topics;

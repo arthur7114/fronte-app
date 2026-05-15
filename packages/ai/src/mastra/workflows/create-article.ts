@@ -8,8 +8,10 @@ import { supabaseDb } from "../tools/supabase";
  * Build a Mastra RequestContext carrying the tenantId so each agent's
  * dynamic model resolver can read `ai_preferences.model` for the right tenant.
  */
-function tenantCtx(tenantId: string) {
-  return new RequestContext([["tenantId", tenantId]]);
+function tenantCtx(tenantId: string, strategyId?: string | null) {
+  const entries: Array<[string, string]> = [["tenantId", tenantId]];
+  if (strategyId) entries.push(["strategyId", strategyId]);
+  return new RequestContext(entries);
 }
 
 // ----------------------------------------------------------------------
@@ -165,7 +167,7 @@ const researchStep = createStep({
 
       const result = await agent.generate(prompt, {
         output: ResearchResultSchema,
-        requestContext: tenantCtx(inputData.tenantId),
+        requestContext: tenantCtx(inputData.tenantId, inputData.strategyId),
       });
 
       research = result.object;
@@ -239,7 +241,7 @@ const structureStep = createStep({
 
       const result = await agent.generate(prompt, {
         output: StructureResultSchema,
-        requestContext: tenantCtx(inputData.tenantId),
+        requestContext: tenantCtx(inputData.tenantId, inputData.strategyId),
       });
       structure = result.object;
 
@@ -325,7 +327,7 @@ const writeStep = createStep({
 
       const result = await agent.generate(prompt, {
         output: WriteResultSchema,
-        requestContext: tenantCtx(inputData.tenantId),
+        requestContext: tenantCtx(inputData.tenantId, inputData.strategyId),
       });
       draft = result.object;
 
@@ -385,7 +387,7 @@ const reviewStep = createStep({
 
       const result = await agent.generate(prompt, {
         output: ReviewResultSchema,
-        requestContext: tenantCtx(inputData.tenantId),
+        requestContext: tenantCtx(inputData.tenantId, inputData.strategyId),
       });
       review = result.object;
 

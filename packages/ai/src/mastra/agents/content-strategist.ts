@@ -25,7 +25,8 @@ Constraints:
 `.trim(),
   model: async ({ requestContext }) => {
     const tenantId = requestContext?.get("tenantId") as string | undefined;
-    const model = await getModelForTenant(tenantId);
+    const strategyId = requestContext?.get("strategyId") as string | undefined;
+    const model = await getModelForTenant(tenantId, strategyId);
     return openai(model);
   },
 });

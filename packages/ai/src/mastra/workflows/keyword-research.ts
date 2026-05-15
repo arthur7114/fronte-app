@@ -39,8 +39,10 @@ const KeywordResearchOutput = z.object({
   needsApproval: z.boolean(),
 });
 
-function tenantCtx(tenantId: string) {
-  return new RequestContext([["tenantId", tenantId]]);
+function tenantCtx(tenantId: string, strategyId?: string | null) {
+  const entries: Array<[string, string]> = [["tenantId", tenantId]];
+  if (strategyId) entries.push(["strategyId", strategyId]);
+  return new RequestContext(entries);
 }
 
 const generateKeywordsStep = createStep({
@@ -97,7 +99,7 @@ const generateKeywordsStep = createStep({
     const agent = mastra.getAgent("keywordStrategist");
     const result = await agent.generate(prompt, {
       output: z.object({ keywords: z.array(KeywordSchema) }),
-      requestContext: tenantCtx(inputData.tenantId),
+      requestContext: tenantCtx(inputData.tenantId, inputData.strategyId),
     });
 
     const keywords = result.object.keywords;
