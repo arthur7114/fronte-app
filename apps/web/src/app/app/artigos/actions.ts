@@ -30,89 +30,37 @@ const POST_INTENT_TO_STATUS: Record<PostIntent, PostStatus> = {
   publish_now: "published",
 };
 
-async function findPublishJobsForPost(
-  admin: ReturnType<typeof getAdminSupabaseClient>,
-  tenantId: string,
-  siteId: string,
-  postId: string,
-) {
-  const result = (await admin
-    .from("automation_jobs")
-    .select("id")
-    .eq("tenant_id", tenantId)
-    .eq("site_id", siteId)
-    .eq("type", "publish_post")
-    .in("status", ["pending", "running"])
-    .contains("payload_json", { post_id: postId })) as {
-    data: Array<Pick<Tables<"automation_jobs">, "id">> | null;
-    error: { message: string } | null;
-  };
-
-  if (result.error) {
-    throw new Error(result.error.message);
-  }
-
-  return result.data ?? [];
-}
-
+/**
+ * Legacy publish-job orchestration removed.
+ *
+ * Publication is now driven directly by `posts.status` and `posts.scheduled_for`.
+ * The Supabase Edge Function `publish-scheduled-posts` (running on pg_cron)
+ * reads posts with status="scheduled" and scheduled_for <= now() and pushes
+ * to the configured CMS. No worker, no automation_jobs row needed.
+ *
+ * These functions are kept as no-ops so the existing call sites in
+ * `mutatePost` continue to compile without behavior change.
+ */
 async function cancelPublishJobsForPost(
-  admin: ReturnType<typeof getAdminSupabaseClient>,
-  tenantId: string,
-  siteId: string,
-  postId: string,
-  reason: string,
+  _admin: ReturnType<typeof getAdminSupabaseClient>,
+  _tenantId: string,
+  _siteId: string,
+  _postId: string,
+  _reason: string,
 ) {
-  const jobs = await findPublishJobsForPost(admin, tenantId, siteId, postId);
-
-  if (jobs.length === 0) {
-    return;
-  }
-
-  const updateResult = await admin
-    .from("automation_jobs")
-    .update({
-      status: "cancelled",
-      finished_at: new Date().toISOString(),
-      error_message: reason,
-      result_json: null,
-    } satisfies TablesUpdate<"automation_jobs">)
-    .in("id", jobs.map((job) => job.id))
-    .eq("tenant_id", tenantId);
-
-  if (updateResult.error) {
-    throw new Error(updateResult.error.message);
-  }
+  // no-op (publish-post jobs deprecated)
 }
 
 async function enqueuePublishJob(
-  admin: ReturnType<typeof getAdminSupabaseClient>,
-  input: {
+  _admin: ReturnType<typeof getAdminSupabaseClient>,
+  _input: {
     tenantId: string;
     siteId: string;
     postId: string;
     scheduledFor: string;
   },
 ) {
-  const result = await admin
-    .from("automation_jobs")
-    .insert({
-      tenant_id: input.tenantId,
-      site_id: input.siteId,
-      type: "publish_post",
-      status: "pending",
-      priority: 40,
-      max_attempts: APP_DEFAULTS.maxJobAttempts,
-      scheduled_for: input.scheduledFor,
-      payload_json: {
-        tenant_id: input.tenantId,
-        site_id: input.siteId,
-        post_id: input.postId,
-      },
-    } satisfies TablesInsert<"automation_jobs">);
-
-  if (result.error) {
-    throw new Error(result.error.message);
-  }
+  // no-op (publish-post jobs deprecated; pg_cron + edge function handle it from posts)
 }
 
 async function mutatePost(

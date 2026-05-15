@@ -440,51 +440,14 @@ function enforceToolPolicy(toolName: AssistantToolName, args: any, mode: Operati
   return null
 }
 
-async function cancelPublishJobsForPost(db: any, tenantId: string, siteId: string, postId: string, reason: string) {
-  const { data: jobs, error } = await db
-    .from("automation_jobs")
-    .select("id")
-    .eq("tenant_id", tenantId)
-    .eq("site_id", siteId)
-    .eq("type", "publish_post")
-    .in("status", ["pending", "running"])
-    .contains("payload_json", { post_id: postId })
-
-  if (error) throw new Error(error.message)
-  if (!jobs?.length) return
-
-  const { error: updateError } = await db
-    .from("automation_jobs")
-    .update({
-      status: "cancelled",
-      finished_at: new Date().toISOString(),
-      error_message: reason,
-      result_json: null,
-      updated_at: new Date().toISOString(),
-    })
-    .in("id", jobs.map((job: any) => job.id))
-    .eq("tenant_id", tenantId)
-
-  if (updateError) throw new Error(updateError.message)
+// Deprecated: publish-post jobs no longer used. The Edge Function
+// publish-scheduled-posts reads posts.status + posts.scheduled_for directly.
+async function cancelPublishJobsForPost(_db: any, _tenantId: string, _siteId: string, _postId: string, _reason: string) {
+  // no-op
 }
 
-async function enqueuePublishJob(db: any, tenantId: string, siteId: string, postId: string, scheduledFor: string) {
-  const { error } = await db.from("automation_jobs").insert({
-    tenant_id: tenantId,
-    site_id: siteId,
-    type: "publish_post",
-    status: "pending",
-    priority: 40,
-    max_attempts: 3,
-    scheduled_for: scheduledFor,
-    payload_json: {
-      tenant_id: tenantId,
-      site_id: siteId,
-      post_id: postId,
-    },
-  })
-
-  if (error) throw new Error(error.message)
+async function enqueuePublishJob(_db: any, _tenantId: string, _siteId: string, _postId: string, _scheduledFor: string) {
+  // no-op (posts.scheduled_for + pg_cron handle scheduling)
 }
 
 async function getUniquePostSlug(db: any, tenantId: string, siteId: string, preferredSlug: string, usedSlugs: Set<string>) {
@@ -547,52 +510,114 @@ async function executeAssistantTool(db: any, tenantId: string, strategyId: strin
   if (toolName === "strategy_queue_job") {
     if (!context.site) throw new Error("Nenhum site configurado para executar jobs.")
     const jobType = args.job_type
-    const payloadBase = { tenant_id: tenantId, site_id: context.site.id, strategy_id: strategyId }
-    const job: Record<string, unknown> = {
-      tenant_id: tenantId,
-      site_id: context.site.id,
-      type: jobType,
-      status: "pending",
-      max_attempts: 3,
-      priority: 10,
-      payload_json: payloadBase,
-    }
+    const { triggerWorkflow } = await import("@/lib/workflow-trigger")
 
     if (jobType === "generate_keyword_strategy") {
-      job.priority = 5
-      job.payload_json = { ...payloadBase, keyword_count: Math.max(1, Math.min(50, Number(args.keyword_count) || 10)) }
-    } else if (jobType === "research_topics") {
-      job.payload_json = {
-        ...payloadBase,
-        topic_count: Math.max(1, Math.min(50, Number(args.topic_count) || 10)),
-        keyword_ids: Array.isArray(args.keyword_ids) ? args.keyword_ids : undefined,
-        scope: args.scope,
-      }
-    } else if (jobType === "generate_brief") {
-      if (!args.topic_candidate_id) throw new Error("topic_candidate_id e obrigatorio para gerar brief.")
-      const { data: topic, error } = await db.from("topic_candidates").select("id, status, strategy_id").eq("id", args.topic_candidate_id).eq("tenant_id", tenantId).single()
-      if (error || !topic || topic.strategy_id !== strategyId) throw new Error("Topico nao encontrado nesta estrategia.")
-      if (topic.status !== "approved") throw new Error("Aprove o topico antes de gerar o brief.")
-      job.priority = 20
-      job.payload_json = { ...payloadBase, topic_candidate_id: args.topic_candidate_id }
-    } else if (jobType === "generate_post") {
-      if (!args.content_brief_id) throw new Error("content_brief_id e obrigatorio para gerar post.")
-      const { data: brief, error } = await db.from("content_briefs").select("id, status, strategy_id").eq("id", args.content_brief_id).eq("tenant_id", tenantId).single()
-      if (error || !brief || brief.strategy_id !== strategyId) throw new Error("Brief nao encontrado nesta estrategia.")
-      if (brief.status !== "approved") throw new Error("Aprove o brief antes de gerar o post.")
-      job.priority = 30
-      job.payload_json = { ...payloadBase, content_brief_id: args.content_brief_id }
-    } else if (jobType === "publish_post") {
-      if (!args.post_id || !args.scheduled_for) throw new Error("post_id e scheduled_for sao obrigatorios para publicar.")
-      job.priority = 40
-      job.scheduled_for = args.scheduled_for
-      job.payload_json = { tenant_id: tenantId, site_id: context.site.id, post_id: args.post_id }
+      const result = await triggerWorkflow("keyword-research", {
+        tenantId,
+        siteId: context.site.id,
+        strategyId,
+        keywordCount: Math.max(5, Math.min(60, Number(args.keyword_count) || 20)),
+      })
+      if ("error" in result) throw new Error(result.error)
+      revalidateStrategyWorkspace()
+      return { ok: true, run: { id: result.runId, workflow: "keyword-research" } }
     }
 
-    const { data, error } = await db.from("automation_jobs").insert(job).select("*").single()
-    if (error) throw new Error(error.message)
-    revalidateStrategyWorkspace()
-    return { ok: true, job: data }
+    if (jobType === "research_topics") {
+      const result = await triggerWorkflow("topic-research", {
+        tenantId,
+        siteId: context.site.id,
+        strategyId,
+        topicCount: Math.max(3, Math.min(30, Number(args.topic_count) || 10)),
+        keywordIds: Array.isArray(args.keyword_ids) ? args.keyword_ids : undefined,
+        scope: ["selected", "without_topics", "all_approved"].includes(args.scope) ? args.scope : "all_approved",
+      })
+      if ("error" in result) throw new Error(result.error)
+      revalidateStrategyWorkspace()
+      return { ok: true, run: { id: result.runId, workflow: "topic-research" } }
+    }
+
+    if (jobType === "generate_brief" || jobType === "generate_post") {
+      const topicId = args.topic_candidate_id ?? args.content_brief_id
+      if (!topicId) throw new Error("topic_candidate_id e obrigatorio para gerar artigo.")
+
+      const { data: topic, error } = await db
+        .from("topic_candidates")
+        .select("id, topic, status, strategy_id, journey_stage")
+        .eq("id", topicId)
+        .eq("tenant_id", tenantId)
+        .single()
+
+      if (error || !topic || topic.strategy_id !== strategyId) throw new Error("Topico nao encontrado nesta estrategia.")
+      if (topic.status !== "approved") throw new Error("Aprove o topico antes de gerar artigo.")
+
+      const slug = topic.topic
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "")
+        .slice(0, 80)
+
+      const { data: post, error: postErr } = await db
+        .from("posts")
+        .insert({
+          tenant_id: tenantId,
+          site_id: context.site.id,
+          title: topic.topic,
+          slug,
+          status: "queued",
+          strategy_id: strategyId,
+        })
+        .select("id")
+        .single()
+      if (postErr || !post) throw new Error(`Erro criando post: ${postErr?.message}`)
+
+      const { data: generation, error: genErr } = await db
+        .from("article_generations")
+        .insert({
+          tenant_id: tenantId,
+          post_id: post.id,
+          strategy_id: strategyId,
+          topic: topic.topic,
+          phase: "briefing",
+        })
+        .select("id")
+        .single()
+      if (genErr || !generation) throw new Error(`Erro iniciando geração: ${genErr?.message}`)
+
+      await db.from("posts").update({ generation_id: generation.id }).eq("id", post.id)
+
+      const result = await triggerWorkflow("create-article", {
+        tenantId,
+        postId: post.id,
+        generationId: generation.id,
+        strategyId,
+        topic: topic.topic,
+        primaryKeyword: null,
+        tone: "profissional e acessível",
+        targetLength: "médio (1000 palavras)",
+        additionalInstructions: null,
+      })
+      if ("error" in result) throw new Error(result.error)
+      revalidateStrategyWorkspace()
+      return { ok: true, run: { id: result.runId, workflow: "create-article" } }
+    }
+
+    if (jobType === "publish_post") {
+      if (!args.post_id) throw new Error("post_id e obrigatorio para publicar.")
+      const result = await triggerWorkflow("publish", {
+        tenantId,
+        postId: args.post_id,
+        scheduledFor: args.scheduled_for ?? null,
+      })
+      if ("error" in result) throw new Error(result.error)
+      revalidateStrategyWorkspace()
+      return { ok: true, run: { id: result.runId, workflow: "publish" } }
+    }
+
+    throw new Error(`Tipo de job desconhecido: ${jobType}`)
   }
 
   if (toolName === "strategy_set_keyword_status") {
