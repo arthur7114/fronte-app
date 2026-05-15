@@ -12,9 +12,7 @@
     "./agents": "./src/mastra/agents/index.ts"
   },
   "scripts": {
-    "lint": "echo 'Lint skipped for ai package' && exit 0",
-    "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "lint": "echo 'Lint skipped for ai package' && exit 0"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.63",
