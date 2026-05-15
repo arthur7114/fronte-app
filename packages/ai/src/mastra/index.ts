@@ -8,8 +8,15 @@ import {
   contentStrategist,
   articleWriter,
   qualityReviewer,
+  keywordStrategist,
+  topicResearcher,
 } from "./agents/index";
-import { createArticleWorkflow } from "./workflows/index";
+import {
+  createArticleWorkflow,
+  keywordResearchWorkflow,
+  topicResearchWorkflow,
+  publishWorkflow,
+} from "./workflows/index";
 
 /**
  * Storage resolution:
@@ -40,9 +47,14 @@ export const mastra = new Mastra({
     contentStrategist,
     articleWriter,
     qualityReviewer,
+    keywordStrategist,
+    topicResearcher,
   },
   workflows: {
     createArticleWorkflow,
+    keywordResearchWorkflow,
+    topicResearchWorkflow,
+    publishWorkflow,
   },
   storage,
   logger: new PinoLogger({ name: "super-ai", level: "info" }),

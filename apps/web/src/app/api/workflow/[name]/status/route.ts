@@ -2,14 +2,23 @@ import { NextResponse } from "next/server";
 
 import { getAuthContext } from "@/lib/auth-context";
 import { mastra } from "@/lib/mastra";
+import { getWorkflowKey, isWorkflowSlug } from "@/lib/workflow-registry";
 
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
+export async function GET(
+  req: Request,
+  context: { params: Promise<{ name: string }> },
+) {
   try {
     const { tenant } = await getAuthContext();
     if (!tenant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { name } = await context.params;
+    if (!isWorkflowSlug(name)) {
+      return NextResponse.json({ error: `Unknown workflow: ${name}` }, { status: 404 });
+    }
 
     const runId = new URL(req.url).searchParams.get("runId");
     if (!runId) return NextResponse.json({ error: "Missing runId" }, { status: 400 });
@@ -20,7 +29,7 @@ export async function GET(req: Request) {
     }
 
     const snapshot = await storage.loadWorkflowSnapshot({
-      workflowName: "createArticleWorkflow",
+      workflowName: getWorkflowKey(name),
       runId,
     });
 

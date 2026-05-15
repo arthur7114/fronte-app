@@ -1,34 +1,40 @@
 import { NextResponse } from "next/server";
 
 import { getAuthContext } from "@/lib/auth-context";
-import { mastra } from "@/lib/mastra";
+import { getWorkflowBySlug, isWorkflowSlug } from "@/lib/workflow-registry";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 type ResumeBody = {
   runId: string;
-  stepId: "research" | "structure" | "review";
+  stepId: string;
   approved: boolean;
   rejectReason?: string;
-  edits?: {
-    title?: string;
-    meta_description?: string;
-    content?: string;
-  };
+  edits?: Record<string, unknown>;
+  keywordsToKeep?: string[];
+  topicsToKeep?: string[];
 };
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  context: { params: Promise<{ name: string }> },
+) {
   try {
     const { tenant } = await getAuthContext();
     if (!tenant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { name } = await context.params;
+    if (!isWorkflowSlug(name)) {
+      return NextResponse.json({ error: `Unknown workflow: ${name}` }, { status: 404 });
+    }
 
     const body = (await req.json()) as ResumeBody;
     if (!body.runId || !body.stepId) {
       return NextResponse.json({ error: "Missing runId or stepId" }, { status: 400 });
     }
 
-    const workflow = mastra.getWorkflow("createArticleWorkflow");
+    const workflow = getWorkflowBySlug(name);
     const run = await workflow.createRunAsync({ runId: body.runId });
 
     void run.resume({
@@ -37,6 +43,8 @@ export async function POST(req: Request) {
         approved: body.approved,
         rejectReason: body.rejectReason,
         edits: body.edits,
+        keywordsToKeep: body.keywordsToKeep,
+        topicsToKeep: body.topicsToKeep,
       },
     });
 
