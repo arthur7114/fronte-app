@@ -1,9 +1,10 @@
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 
-const DEFAULT_MODEL = process.env.MASTRA_DEFAULT_MODEL ?? "gpt-4o-mini";
+import { getModelForTenant } from "../tools/preferences";
 
 export const contentStrategist = new Agent({
+  id: "contentStrategist",
   name: "Content Strategist",
   instructions: `
 You are an expert SEO Content Strategist writing in Brazilian Portuguese.
@@ -22,5 +23,9 @@ Constraints:
 - Reflect the strategy tone and audience
 - If a rejection-reason was provided, incorporate the correction (do not repeat the mistake)
 `.trim(),
-  model: openai(DEFAULT_MODEL),
+  model: async ({ requestContext }) => {
+    const tenantId = requestContext?.get("tenantId") as string | undefined;
+    const model = await getModelForTenant(tenantId);
+    return openai(model);
+  },
 });

@@ -76,6 +76,16 @@ export const supabaseDb = {
     });
   },
 
+  async getAiPreferences(tenantId: string) {
+    const rows = await supabaseRequest<Array<{ model?: string | null }>>("ai_preferences", {
+      searchParams: {
+        select: "model,tone_of_voice,writing_style,expertise_level",
+        tenant_id: `eq.${tenantId}`,
+      },
+    });
+    return rows[0] ?? null;
+  },
+
   async getStrategy(strategyId: string, tenantId: string) {
     const rows = await supabaseRequest<unknown[]>("strategies", {
       searchParams: {

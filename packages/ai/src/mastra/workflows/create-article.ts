@@ -1,7 +1,16 @@
 import { createStep, createWorkflow } from "@mastra/core/workflows";
+import { RequestContext } from "@mastra/core/request-context";
 import { z } from "zod";
 
 import { supabaseDb } from "../tools/supabase";
+
+/**
+ * Build a Mastra RequestContext carrying the tenantId so each agent's
+ * dynamic model resolver can read `ai_preferences.model` for the right tenant.
+ */
+function tenantCtx(tenantId: string) {
+  return new RequestContext([["tenantId", tenantId]]);
+}
 
 // ----------------------------------------------------------------------
 // Schemas
@@ -156,6 +165,7 @@ const researchStep = createStep({
 
       const result = await agent.generate(prompt, {
         output: ResearchResultSchema,
+        requestContext: tenantCtx(inputData.tenantId),
       });
 
       research = result.object;
@@ -229,6 +239,7 @@ const structureStep = createStep({
 
       const result = await agent.generate(prompt, {
         output: StructureResultSchema,
+        requestContext: tenantCtx(inputData.tenantId),
       });
       structure = result.object;
 
@@ -314,6 +325,7 @@ const writeStep = createStep({
 
       const result = await agent.generate(prompt, {
         output: WriteResultSchema,
+        requestContext: tenantCtx(inputData.tenantId),
       });
       draft = result.object;
 
@@ -373,6 +385,7 @@ const reviewStep = createStep({
 
       const result = await agent.generate(prompt, {
         output: ReviewResultSchema,
+        requestContext: tenantCtx(inputData.tenantId),
       });
       review = result.object;
 

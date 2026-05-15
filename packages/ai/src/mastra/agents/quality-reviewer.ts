@@ -1,9 +1,10 @@
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 
-const DEFAULT_MODEL = process.env.MASTRA_DEFAULT_MODEL ?? "gpt-4o-mini";
+import { getModelForTenant } from "../tools/preferences";
 
 export const qualityReviewer = new Agent({
+  id: "qualityReviewer",
   name: "Quality Reviewer",
   instructions: `
 You are a strict SEO Editor reviewing Brazilian Portuguese articles before publication.
@@ -23,5 +24,9 @@ Evaluate four dimensions and produce a JSON object with these fields:
 If quality is below threshold, do NOT mask issues in the score — be honest. The
 threshold is enforced downstream and may flip the workflow into human review.
 `.trim(),
-  model: openai(DEFAULT_MODEL),
+  model: async ({ requestContext }) => {
+    const tenantId = requestContext?.get("tenantId") as string | undefined;
+    const model = await getModelForTenant(tenantId);
+    return openai(model);
+  },
 });

@@ -1,9 +1,10 @@
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 
-const DEFAULT_MODEL = process.env.MASTRA_DEFAULT_MODEL ?? "gpt-4o-mini";
+import { getModelForTenant } from "../tools/preferences";
 
 export const seoResearcher = new Agent({
+  id: "seoResearcher",
   name: "SEO Researcher",
   instructions: `
 You are an expert SEO researcher writing in Brazilian Portuguese.
@@ -20,5 +21,9 @@ Always return valid JSON matching the requested schema. Never invent metrics —
 missing, omit the field. Be concise: 5-10 bullets per list. The output drives downstream
 content generation, so prioritize signal over verbosity.
 `.trim(),
-  model: openai(DEFAULT_MODEL),
+  model: async ({ requestContext }) => {
+    const tenantId = requestContext?.get("tenantId") as string | undefined;
+    const model = await getModelForTenant(tenantId);
+    return openai(model);
+  },
 });

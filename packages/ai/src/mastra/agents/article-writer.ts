@@ -1,9 +1,10 @@
 import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 
-const DEFAULT_MODEL = process.env.MASTRA_DEFAULT_MODEL ?? "gpt-4o-mini";
+import { getModelForTenant } from "../tools/preferences";
 
 export const articleWriter = new Agent({
+  id: "articleWriter",
   name: "Article Writer",
   instructions: `
 You are a Senior Content Writer producing Brazilian Portuguese articles.
@@ -22,5 +23,9 @@ Rules:
 - If a rejection-reason was provided, address it directly in this draft.
 - Output ONLY the markdown content (no JSON wrapper, no preface).
 `.trim(),
-  model: openai(DEFAULT_MODEL),
+  model: async ({ requestContext }) => {
+    const tenantId = requestContext?.get("tenantId") as string | undefined;
+    const model = await getModelForTenant(tenantId);
+    return openai(model);
+  },
 });
