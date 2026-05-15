@@ -5,8 +5,57 @@ import type { TablesUpdate } from "@super/db"
 import { getAuthContext } from "@/lib/auth-context"
 import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin"
 import { getServerSupabaseClient } from "@/lib/supabase/server"
-import { initializeArticleGeneration, type ArticleBriefing } from "@/lib/article-agent"
 import { validatePostInput } from "@/lib/post"
+
+// Inlined from the deleted lib/article-agent.ts (the rest of the file moved into
+// the Mastra workflow `createArticleWorkflow`).
+export interface ArticleBriefing {
+  topic: string
+  primary_keyword?: string
+  tone?: string
+  target_length?: string
+  additional_instructions?: string
+}
+
+async function initializeArticleGeneration(
+  tenantId: string,
+  postId: string,
+  strategyId: string | null,
+  briefing: ArticleBriefing,
+): Promise<string> {
+  const db = (await getDb()) as unknown as {
+    from: (table: string) => {
+      insert: (row: Record<string, unknown>) => {
+        select: (cols: string) => { single: () => Promise<{ data: { id: string } | null; error: { message: string } | null }> }
+      }
+      update: (row: Record<string, unknown>) => { eq: (col: string, val: unknown) => { eq: (col: string, val: unknown) => Promise<unknown> } }
+    }
+  }
+
+  const { data, error } = await db
+    .from("article_generations")
+    .insert({
+      tenant_id: tenantId,
+      post_id: postId,
+      strategy_id: strategyId,
+      topic: briefing.topic,
+      primary_keyword: briefing.primary_keyword,
+      tone: briefing.tone ?? "profissional e acessível",
+      target_length: briefing.target_length ?? "médio (1000 palavras)",
+      additional_instructions: briefing.additional_instructions,
+      phase: "briefing",
+    })
+    .select("id")
+    .single()
+
+  if (error || !data) {
+    throw new Error(`Failed to initialize article generation: ${error?.message}`)
+  }
+
+  await db.from("posts").update({ generation_id: data.id }).eq("id", postId).eq("tenant_id", tenantId)
+
+  return data.id
+}
 
 export type SaveArticleDraftInput = {
   title: string
@@ -58,6 +107,63 @@ async function getDb(): Promise<DbClient> {
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Erro inesperado."
+}
+
+/**
+ * Mastra-backed workflow start. Creates the post + article_generations row using the
+ * existing helpers, then triggers the `createArticleWorkflow` via the workflow API.
+ *
+ * Returns the workflow `runId` (Mastra) so the caller can poll `/api/workflow/status`
+ * and the `generationId` for compatibility with the legacy phase poller.
+ *
+ * Use this instead of `startArticleWizard` to opt into the HITL / autonomous engine.
+ */
+export async function startArticleWorkflow(
+  strategyId: string | null,
+  briefing: ArticleBriefing & {
+    operationMode?: "manual" | "assisted" | "automatic";
+    qualityThreshold?: number;
+  },
+) {
+  const wizard = await startArticleWizard(strategyId, briefing);
+  if (!wizard.success || !wizard.generationId || !wizard.postId || !wizard.tenantId) {
+    return { error: wizard.error ?? "Falha ao inicializar geração." };
+  }
+
+  const headers = await import("next/headers").then((m) => m.headers());
+  const host = headers.get("host");
+  const proto = headers.get("x-forwarded-proto") ?? "http";
+  const base = `${proto}://${host}`;
+  const cookie = headers.get("cookie") ?? "";
+
+  // Trigger workflow directly (no HTTP roundtrip).
+  const { triggerWorkflow } = await import("@/lib/workflow-trigger");
+  const result = await triggerWorkflow("create-article", {
+    generationId: wizard.generationId,
+    postId: wizard.postId,
+    tenantId: wizard.tenantId,
+    strategyId,
+    topic: briefing.topic,
+    primaryKeyword: briefing.primary_keyword ?? null,
+    tone: briefing.tone ?? "profissional e acessível",
+    targetLength: briefing.target_length ?? "médio (1000 palavras)",
+    additionalInstructions: briefing.additional_instructions ?? null,
+    operationMode: briefing.operationMode ?? "manual",
+    qualityThreshold: briefing.qualityThreshold ?? 70,
+  });
+
+  if ("error" in result) {
+    return { error: `Workflow start falhou: ${result.error}` };
+  }
+
+  return {
+    success: true as const,
+    runId: result.runId,
+    operationMode: briefing.operationMode,
+    generationId: wizard.generationId,
+    postId: wizard.postId,
+    tenantId: wizard.tenantId,
+  };
 }
 
 export async function startArticleWizard(strategyId: string | null, briefing: ArticleBriefing) {

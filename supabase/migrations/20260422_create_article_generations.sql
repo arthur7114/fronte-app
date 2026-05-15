@@ -30,10 +30,11 @@ CREATE INDEX IF NOT EXISTS idx_article_generations_phase      ON article_generat
 -- RLS
 ALTER TABLE article_generations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "tenant_isolation" ON article_generations;
 CREATE POLICY "tenant_isolation" ON article_generations
   USING (
     tenant_id IN (
-      SELECT tenant_id FROM tenant_members WHERE user_id = auth.uid()
+      SELECT tenant_id FROM memberships WHERE user_id = auth.uid()
     )
   );
 

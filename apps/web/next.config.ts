@@ -57,6 +57,11 @@ for (const [key, value] of Object.entries(mergedEnv)) {
 }
 
 const nextConfig: NextConfig = {
+  // The build worker that runs `tsc` blows up the 8 GB Vercel container when
+  // typechecking Mastra (v1.34 has very heavy generics). The repo is
+  // typechecked independently via `npm run typecheck` / CI, so the production
+  // build can rely on that and skip the in-build pass.
+  typescript: { ignoreBuildErrors: true },
   env: {
     NEXT_PUBLIC_SUPABASE_URL:
       process.env.NEXT_PUBLIC_SUPABASE_URL ?? mergedEnv.NEXT_PUBLIC_SUPABASE_URL,

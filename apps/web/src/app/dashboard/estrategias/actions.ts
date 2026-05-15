@@ -318,45 +318,20 @@ export async function sendTopicsToProduction(topicIds: string[]) {
   if (error) return { error: `Falha ao buscar topicos: ${error.message}` }
 
   const foundTopics = topics ?? []
-  const [postsResult, briefsResult, jobsResult] = await Promise.all([
-    (db as any)
-      .from("posts")
-      .select("id, title, status, strategy_id")
-      .eq("tenant_id", tenant.id)
-      .eq("site_id", site.id),
-    (db as any)
-      .from("content_briefs")
-      .select("id, topic, status, strategy_id")
-      .eq("tenant_id", tenant.id),
-    (db as any)
-      .from("automation_jobs")
-      .select("id, type, status, payload_json")
-      .eq("tenant_id", tenant.id)
-      .in("type", ["generate_brief", "generate_post"])
-      .in("status", ["pending", "running"]),
-  ])
+  const postsResult = await (db as any)
+    .from("posts")
+    .select("id, title, status, strategy_id")
+    .eq("tenant_id", tenant.id)
+    .eq("site_id", site.id)
 
   if (postsResult.error) return { error: `Falha ao verificar posts existentes: ${postsResult.error.message}` }
-  if (briefsResult.error) return { error: `Falha ao verificar briefings existentes: ${briefsResult.error.message}` }
-  if (jobsResult.error) return { error: `Falha ao verificar fila ativa: ${jobsResult.error.message}` }
 
   const existingPosts = postsResult.data ?? []
-  const existingBriefs = briefsResult.data ?? []
-  const activeJobs = jobsResult.data ?? []
-  const activeTopicJobs = new Set(
-    activeJobs
-      .map((job: any) => job.payload_json?.topic_candidate_id)
-      .filter((id: unknown): id is string => typeof id === "string"),
-  )
-  const activeBriefJobs = new Set(
-    activeJobs
-      .map((job: any) => job.payload_json?.content_brief_id)
-      .filter((id: unknown): id is string => typeof id === "string"),
-  )
-
-  const queued: Array<{ topicId: string; jobId: string }> = []
+  const queued: Array<{ topicId: string; runId: string }> = []
   const skipped: Array<{ topicId: string; reason: string }> = []
   const failed: Array<{ topicId: string; reason: string }> = []
+
+  const { triggerWorkflow } = await import("@/lib/workflow-trigger")
 
   for (const topicId of uniqueIds) {
     const topic = foundTopics.find((item: any) => item.id === topicId)
@@ -385,51 +360,70 @@ export async function sendTopicsToProduction(topicIds: string[]) {
       continue
     }
 
-    if (activeTopicJobs.has(topicId)) {
-      skipped.push({ topicId, reason: "Este topico ja esta na fila." })
-      continue
-    }
+    // Create post + generation + trigger workflow
+    const slug = topic.topic
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "")
+      .slice(0, 80)
 
-    const existingBrief = existingBriefs.find(
-      (brief: any) =>
-        brief.status !== "failed" &&
-        sameStrategy(brief) &&
-        normalizePostTitle(brief.topic) === normalizedTopic,
-    )
-
-    if (existingBrief && activeBriefJobs.has(existingBrief.id)) {
-      skipped.push({ topicId, reason: "Este topico ja esta gerando rascunho." })
-      continue
-    }
-
-    const insertResult = await (db as any)
-      .from("automation_jobs")
+    const postIns = await (db as any)
+      .from("posts")
       .insert({
         tenant_id: tenant.id,
         site_id: site.id,
-        type: existingBrief ? "generate_post" : "generate_brief",
-        status: "pending",
-        max_attempts: 3,
-        priority: 20,
-        payload_json: {
-          tenant_id: tenant.id,
-          site_id: site.id,
-          ...(existingBrief ? { content_brief_id: existingBrief.id } : { topic_candidate_id: topicId }),
-          strategy_id: topic.strategy_id ?? null,
-        },
+        title: topic.topic,
+        slug,
+        status: "queued",
+        strategy_id: topic.strategy_id ?? null,
       })
       .select("id")
       .single()
 
-    if (insertResult.error || !insertResult.data) {
-      failed.push({
-        topicId,
-        reason: insertResult.error?.message ?? "Falha ao enfileirar artigo.",
-      })
+    if (postIns.error || !postIns.data) {
+      failed.push({ topicId, reason: postIns.error?.message ?? "Falha ao criar post." })
       continue
     }
 
-    queued.push({ topicId, jobId: insertResult.data.id })
+    const genIns = await (db as any)
+      .from("article_generations")
+      .insert({
+        tenant_id: tenant.id,
+        post_id: postIns.data.id,
+        strategy_id: topic.strategy_id ?? null,
+        topic: topic.topic,
+        phase: "briefing",
+      })
+      .select("id")
+      .single()
+
+    if (genIns.error || !genIns.data) {
+      failed.push({ topicId, reason: genIns.error?.message ?? "Falha ao iniciar geração." })
+      continue
+    }
+
+    await (db as any).from("posts").update({ generation_id: genIns.data.id }).eq("id", postIns.data.id)
+
+    const result = await triggerWorkflow("create-article", {
+      tenantId: tenant.id,
+      postId: postIns.data.id,
+      generationId: genIns.data.id,
+      strategyId: topic.strategy_id ?? null,
+      topic: topic.topic,
+      primaryKeyword: null,
+      tone: "profissional e acessível",
+      targetLength: "médio (1000 palavras)",
+      additionalInstructions: null,
+    })
+
+    if ("error" in result) {
+      failed.push({ topicId, reason: result.error })
+      continue
+    }
+
+    queued.push({ topicId, runId: result.runId })
   }
 
   revalidateStrategies()
@@ -456,25 +450,18 @@ export async function triggerKeywordStrategy(strategyId: string, keywordCount: n
   const { tenant, site } = await getAuthContext()
   if (!tenant) throw new Error("Nao autenticado.")
   if (!site) return { error: "Nenhum site configurado." }
-  const db = await getDb()
 
-  const { error } = await (db as any).from("automation_jobs").insert({
-    tenant_id: tenant.id,
-    site_id: site.id,
-    type: "generate_keyword_strategy",
-    status: "pending",
-    max_attempts: 3,
-    priority: 5,
-    payload_json: {
-      tenant_id: tenant.id,
-      site_id: site.id,
-      strategy_id: strategyId,
-      keyword_count: keywordCount,
-    },
+  const { triggerWorkflow } = await import("@/lib/workflow-trigger")
+  const result = await triggerWorkflow("keyword-research", {
+    tenantId: tenant.id,
+    siteId: site.id,
+    strategyId,
+    keywordCount,
   })
-  if (error) return { error: error.message }
+
+  if ("error" in result) return { error: result.error }
   revalidateStrategies()
-  return { success: `Job de ${keywordCount} palavras-chave agendado com sucesso.` }
+  return { success: `Pesquisa de ${keywordCount} palavras-chave iniciada (run ${result.runId.slice(0, 8)}).` }
 }
 
 export async function approveTopicCandidate(topicId: string) {
@@ -506,27 +493,27 @@ export async function triggerTopicResearch(
   const { tenant, site } = await getAuthContext()
   if (!tenant) throw new Error("Nao autenticado.")
   if (!site) return { error: "Nenhum site configurado." }
-  const db = await getDb()
 
-  const { error } = await (db as any).from("automation_jobs").insert({
-    tenant_id: tenant.id,
-    site_id: site.id,
-    type: "research_topics",
-    status: "pending",
-    max_attempts: 3,
-    priority: 10,
-    payload_json: {
-      tenant_id: tenant.id,
-      site_id: site.id,
-      strategy_id: strategyId,
-      topic_count: options.topicCount,
-      keyword_ids: options.keywordIds,
-      scope: options.scope,
-    },
+  const mappedScope =
+    options.scope === "selected_keywords"
+      ? "selected"
+      : options.scope === "without_approved_topics"
+        ? "without_topics"
+        : "all_approved"
+
+  const { triggerWorkflow } = await import("@/lib/workflow-trigger")
+  const result = await triggerWorkflow("topic-research", {
+    tenantId: tenant.id,
+    siteId: site.id,
+    strategyId,
+    topicCount: options.topicCount ?? 10,
+    keywordIds: options.keywordIds,
+    scope: mappedScope,
   })
-  if (error) return { error: error.message }
+
+  if ("error" in result) return { error: result.error }
   revalidateStrategies()
-  return { success: "Job de topicos agendado com sucesso." }
+  return { success: `Pesquisa de tópicos iniciada (run ${result.runId.slice(0, 8)}).` }
 }
 
 export async function triggerBriefAndPostGeneration(topicId: string) {
@@ -535,25 +522,70 @@ export async function triggerBriefAndPostGeneration(topicId: string) {
   if (!site) return { error: "Nenhum site configurado." }
   const db = await getDb()
 
-  const { data } = await (db as any).from("topic_candidates").select("strategy_id").eq("id", topicId).single()
+  const { data: topic } = await (db as any)
+    .from("topic_candidates")
+    .select("id, topic, strategy_id, journey_stage")
+    .eq("id", topicId)
+    .single()
 
-  const { error } = await (db as any).from("automation_jobs").insert({
-    tenant_id: tenant.id,
-    site_id: site.id,
-    type: "generate_brief",
-    status: "pending",
-    max_attempts: 3,
-    priority: 20,
-    payload_json: {
+  if (!topic) return { error: "Tópico não encontrado." }
+
+  // Create the post + article_generations row first (legacy logic, kept here)
+  const slug = topic.topic
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 80)
+
+  const { data: post, error: postErr } = await (db as any)
+    .from("posts")
+    .insert({
       tenant_id: tenant.id,
       site_id: site.id,
-      topic_candidate_id: topicId,
-      strategy_id: data?.strategy_id || null,
-    },
+      title: topic.topic,
+      slug,
+      status: "queued",
+      strategy_id: topic.strategy_id ?? null,
+    })
+    .select("id")
+    .single()
+
+  if (postErr || !post) return { error: `Erro ao criar post: ${postErr?.message}` }
+
+  const { data: generation, error: genErr } = await (db as any)
+    .from("article_generations")
+    .insert({
+      tenant_id: tenant.id,
+      post_id: post.id,
+      strategy_id: topic.strategy_id ?? null,
+      topic: topic.topic,
+      phase: "briefing",
+    })
+    .select("id")
+    .single()
+
+  if (genErr || !generation) return { error: `Erro ao iniciar geração: ${genErr?.message}` }
+
+  await (db as any).from("posts").update({ generation_id: generation.id }).eq("id", post.id)
+
+  const { triggerWorkflow } = await import("@/lib/workflow-trigger")
+  const result = await triggerWorkflow("create-article", {
+    tenantId: tenant.id,
+    postId: post.id,
+    generationId: generation.id,
+    strategyId: topic.strategy_id ?? null,
+    topic: topic.topic,
+    primaryKeyword: null,
+    tone: "profissional e acessível",
+    targetLength: "médio (1000 palavras)",
+    additionalInstructions: null,
   })
-  if (error) return { error: error.message }
+
+  if ("error" in result) return { error: result.error }
   revalidateStrategies()
-  return { success: "Job de artigo agendado com sucesso." }
+  return { success: `Geração de artigo iniciada (run ${result.runId.slice(0, 8)}).` }
 }
 
 export async function getActiveStrategyJobs(strategyId: string) {

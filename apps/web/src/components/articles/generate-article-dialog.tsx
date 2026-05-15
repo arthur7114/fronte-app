@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Sparkles, Loader2, FileText, Target, Zap, SearchCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { startArticleWizard } from "@/app/dashboard/artigos/actions"
+import { startArticleWorkflow } from "@/app/dashboard/artigos/actions"
 
 type GenerateArticleDialogProps = {
   open: boolean
@@ -68,21 +68,16 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Erro inesperado."
 }
 
-async function runArticlePhase(
-  generationId: string,
-  tenantId: string,
-  phase: GenerationPhase,
-) {
-  const response = await fetch("/api/article-agent", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ generationId, tenantId, phase }),
-  })
-
-  const data = (await response.json()) as ArticleAgentResponse
-
-  if (!response.ok || !data.success) {
-    throw new Error(data.error || `Falha na fase ${phase}.`)
+async function pollWorkflowDone(runId: string, timeoutMs = 90_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const res = await fetch(`/api/workflow/create-article/status?runId=${runId}`)
+    if (res.ok) {
+      const { snapshot } = (await res.json()) as { snapshot?: { status?: string } }
+      const status = snapshot?.status
+      if (status === "success" || status === "suspended" || status === "failed") return
+    }
+    await new Promise((r) => setTimeout(r, 3000))
   }
 }
 
@@ -115,7 +110,7 @@ export function GenerateArticleDialog({
     setCompletedPhases([])
 
     try {
-      const result = await startArticleWizard(strategyId ?? null, {
+      const result = await startArticleWorkflow(strategyId ?? null, {
         topic: trimmedTopic,
         primary_keyword: keyword.trim() || undefined,
         tone: selectedTone.value,
@@ -123,17 +118,25 @@ export function GenerateArticleDialog({
         additional_instructions: brief.trim() || undefined,
       })
 
-      if (result.error || !result.generationId || !result.tenantId || !result.postId) {
-        throw new Error(result.error || "Não foi possível iniciar a geração.")
+      if ("error" in result || !result.success || !result.postId || !result.runId) {
+        const msg = "error" in result ? result.error : "Não foi possível iniciar a geração."
+        throw new Error(msg)
       }
 
-      for (const phase of generationPhases) {
-        setCurrentPhase(phase.id)
-        await runArticlePhase(result.generationId, result.tenantId, phase.id)
-        setCompletedPhases((previous) => [...previous, phase.id])
-      }
+      // Fake-progress UI (cosmetic) while we poll the workflow snapshot.
+      // The real phases run inside the Mastra workflow on the server.
+      setCurrentPhase("research")
+      setCompletedPhases(["research"])
+      setCurrentPhase("structure")
 
-      toast.success("Artigo gerado com sucesso.")
+      await pollWorkflowDone(result.runId)
+
+      setCompletedPhases(generationPhases.map((p) => p.id))
+      toast.success(
+        result.operationMode === "manual"
+          ? "Pipeline iniciado. Revise em /dashboard/aprovacoes."
+          : "Artigo gerado com sucesso.",
+      )
       router.refresh()
       onOpenChange(false)
       onGenerated?.(result.postId)

@@ -214,38 +214,27 @@ export async function enqueueTopicResearch(
     .filter(Boolean);
   const scope = String(formData.get("scope") ?? "") || undefined;
 
-  const result = (await workspace.admin
-    .from("automation_jobs")
-    .insert({
-      tenant_id: workspace.tenant.id,
-      site_id: workspace.site.id,
-      type: "research_topics",
-      status: "pending",
-      max_attempts: APP_DEFAULTS.maxJobAttempts,
-      priority: 10,
-      payload_json: {
-        tenant_id: workspace.tenant.id,
-        site_id: workspace.site.id,
-        automation_config_id: automationConfig.id,
-        strategy_id: strategyId || null,
-        topic_count: Number.isFinite(topicCount) ? Math.max(1, Math.min(50, topicCount)) : 10,
-        keyword_ids: keywordIds.length > 0 ? keywordIds : undefined,
-        scope,
-      },
-    } satisfies TablesInsert<"automation_jobs">)
-    .select("id")
-    .single()) as {
-    data: { id: string } | null;
-    error: { message: string } | null;
-  };
+  if (!strategyId) {
+    return { error: "Selecione uma estratégia antes de pesquisar tópicos." };
+  }
 
-  if (result.error || !result.data) {
-    return { error: "Nao foi possivel enfileirar a pesquisa de temas agora." };
+  const { triggerWorkflow } = await import("@/lib/workflow-trigger");
+  const result = await triggerWorkflow("topic-research", {
+    tenantId: workspace.tenant.id,
+    siteId: workspace.site.id,
+    strategyId,
+    topicCount: Number.isFinite(topicCount) ? Math.max(3, Math.min(30, topicCount)) : 10,
+    keywordIds: keywordIds.length > 0 ? keywordIds : undefined,
+    scope: scope === "selected" || scope === "without_topics" ? scope : "all_approved",
+  });
+
+  if ("error" in result) {
+    return { error: `Não foi possível iniciar a pesquisa de tópicos: ${result.error}` };
   }
 
   revalidateAutomationPaths(workspace.site.subdomain);
 
-  return { success: "Pesquisa de temas enfileirada. Acompanhe a execucao em Jobs." };
+  return { success: `Pesquisa de tópicos iniciada (run ${result.runId.slice(0, 8)}). Acompanhe em Aprovações.` };
 }
 
 export async function enqueueKeywordStrategy(
@@ -255,37 +244,24 @@ export async function enqueueKeywordStrategy(
   const workspace = await requireAutomationWorkspace();
   const strategyId = String(formData.get("strategy_id") ?? "").trim() || null;
 
-  const result = (await workspace.admin
-    .from("automation_jobs")
-    .insert({
-      tenant_id: workspace.tenant.id,
-      site_id: workspace.site.id,
-      type: "generate_keyword_strategy",
-      status: "pending",
-      max_attempts: APP_DEFAULTS.maxJobAttempts,
-      priority: 5,
-      payload_json: {
-        tenant_id: workspace.tenant.id,
-        site_id: workspace.site.id,
-        strategy_id: strategyId,
-      },
-    } satisfies TablesInsert<"automation_jobs">)
-    .select("id")
-    .single()) as {
-    data: { id: string } | null;
-    error: { message: string } | null;
-  };
+  if (!strategyId) {
+    return { error: "Selecione uma estratégia antes de gerar palavras-chave." };
+  }
 
-  if (result.error || !result.data) {
-    console.error("[enqueueKeywordStrategy] Database error:", result.error);
-    return {
-      error: `Erro ao enfileirar: ${result.error?.message ?? "Falha desconhecida no banco."}`,
-    };
+  const { triggerWorkflow } = await import("@/lib/workflow-trigger");
+  const result = await triggerWorkflow("keyword-research", {
+    tenantId: workspace.tenant.id,
+    siteId: workspace.site.id,
+    strategyId,
+  });
+
+  if ("error" in result) {
+    return { error: `Erro ao iniciar pesquisa de palavras-chave: ${result.error}` };
   }
 
   revalidateAutomationPaths(workspace.site.subdomain);
 
-  return { success: "Geracao de estrategia enfileirada. Acompanhe em Jobs." };
+  return { success: `Pesquisa de palavras-chave iniciada (run ${result.runId.slice(0, 8)}). Acompanhe em Aprovações.` };
 }
 
 export async function moderateTopicCandidate(
@@ -446,34 +422,26 @@ export async function enqueueDraftGeneration(
     return { error: "O briefing selecionado nao foi encontrado.", briefId };
   }
 
-  const result = (await workspace.admin
-    .from("automation_jobs")
-    .insert({
-      tenant_id: workspace.tenant.id,
-      site_id: workspace.site.id,
-      type: "generate_post",
-      status: "pending",
-      max_attempts: APP_DEFAULTS.maxJobAttempts,
-      priority: 30,
-      payload_json: {
-        tenant_id: workspace.tenant.id,
-        site_id: workspace.site.id,
-        content_brief_id: brief.id,
-      },
-    } satisfies TablesInsert<"automation_jobs">)
-    .select("id")
-    .single()) as {
-    data: { id: string } | null;
-    error: { message: string } | null;
-  };
+  const { triggerWorkflow } = await import("@/lib/workflow-trigger");
+  const result = await triggerWorkflow("create-article", {
+    tenantId: workspace.tenant.id,
+    siteId: workspace.site.id,
+    strategyId: brief.strategy_id ?? null,
+    contentBriefId: brief.id,
+    topic: brief.topic,
+    primaryKeyword: (brief.keywords ?? [])[0] ?? null,
+    tone: null,
+    targetLength: "médio (1000 palavras)",
+    additionalInstructions: brief.angle ?? null,
+  });
 
-  if (result.error || !result.data) {
-    return { error: "Nao foi possivel enfileirar a geracao do draft agora.", briefId };
+  if ("error" in result) {
+    return { error: `Não foi possível iniciar a geração do artigo: ${result.error}`, briefId };
   }
 
   revalidateAutomationPaths(workspace.site.subdomain);
 
-  return { success: "Job de draft enfileirado. Confira o andamento em Jobs.", briefId };
+  return { success: `Geração de artigo iniciada (run ${result.runId.slice(0, 8)}). Acompanhe em Aprovações.`, briefId };
 }
 
 export async function createStrategy(

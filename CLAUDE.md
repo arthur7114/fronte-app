@@ -20,20 +20,24 @@ Micro SaaS PLG de SEO + GEO para pequenos negócios e usuários leigos. Transfor
 | UI Components | Radix UI + design system próprio |
 | Banco de dados | PostgreSQL via Supabase |
 | Auth | Supabase Auth |
-| IA | OpenAI (gpt-4o-mini padrão) |
+| IA | OpenAI via **Mastra** (gpt-4o-mini default, gerenciável por strategy) |
 | Analytics | Google Analytics 4 API |
 | Monorepo | Turborepo + npm workspaces |
-| Deploy | Docker (web + worker) |
+| Deploy | Vercel (web) + Supabase Edge Functions (scheduled publishing) |
 
 ### Workspaces
 
 ```
-apps/web          → Next.js app principal
-apps/worker       → Worker de background (jobs assíncronos)
+apps/web          → Next.js app principal (deploya na Vercel)
+packages/ai       → Mastra runtime: workflows + agents + tools (pipeline de IA)
 packages/db       → Cliente Supabase + tipos TypeScript
 packages/shared   → Constantes compartilhadas
 packages/strategy-mcp → Servidor MCP de estratégia
 ```
+
+> **Nota:** `apps/worker` foi removido em 2026-05-15. Toda a orquestração AI roda
+> dentro de `packages/ai` (Mastra) consumida pelo Next.js no Vercel. Publicação
+> agendada é feita por Edge Function + pg_cron (sem worker always-on).
 
 ---
 
@@ -43,6 +47,7 @@ packages/strategy-mcp → Servidor MCP de estratégia
 |---|---|
 | Layout, hierarquia, navegação e estados visuais | `prototipo-visual/` |
 | Tokens, tipografia, cores, radius e componentes | `prototipo-visual/design-system/` e `prototipo-visual/app/globals.css` |
+| Pipeline AI (Mastra runtime) | `packages/ai/docs/ARCHITECTURE.md` |
 | Arquitetura de rotas e fluxos | `docs/03-information-architecture.md` |
 | Estado atual da implementação | `docs/13-current-state-audit.md` |
 | Próximos passos priorizados | `docs/12-execution-roadmap.md` |
@@ -84,8 +89,20 @@ Redirects de compatibilidade: `/dashboard/estrategia*` → `/dashboard/estrategi
 - Aba GEO do Analytics (aguarda GA4 Data API)
 - Estratégias visuais do protótipo
 
-**Próximo passo prioritário (Fase 1):**
-Conectar UI ↔ Worker nos jobs reais (`research_topics`, `generate_brief`, `generate_post`) e injetar contexto da estratégia nos prompts de IA.
+**Estado pós-migração Mastra (2026-05-15):**
+- Worker eliminado. Toda geração AI (keywords, tópicos, briefing, artigo, publicação)
+  passa pelo runtime Mastra em `packages/ai/`.
+- 4 workflows (keyword-research, topic-research, create-article, publish) acessíveis
+  via `/api/workflow/[name]/{start,resume,status}`.
+- Modelo gerenciável por strategy: `strategies.ai_model_override` (override) ou
+  `ai_preferences.model` (tenant default).
+- HITL via `operation_mode` (manual/assisted/automatic) e suspend/resume nativos do
+  Mastra. Modo automatic cai em HITL automaticamente se `seo_score < quality_threshold`.
+
+**Próximos passos:**
+- Tela `/dashboard/aprovacoes` (fila central HITL) — consumida do `mastra_workflow_snapshot`
+- Modo autônomo recorrente via `pg_cron autonomous_cycle` (cron por strategy em automatic)
+- Cost tracking + circuit breaker (3 rejects seguidos pausa modo automatic)
 
 ---
 

@@ -32,7 +32,7 @@ import {
   FileText
 } from "lucide-react"
 import { toast } from "sonner"
-import { startArticleWizard } from "../actions"
+import { startArticleWorkflow } from "../actions"
 
 type Step = "briefing" | "research" | "structure" | "write" | "review" | "done"
 
@@ -59,29 +59,13 @@ export function ArticleWizardClient({ strategies }: { strategies: any[] }) {
   const [structureResult, setStructureResult] = React.useState<any>(null)
   const [reviewResult, setReviewResult] = React.useState<any>(null)
   
-  // Phase runner
-  const runPhase = async (phaseToRun: Step, currentGenerationId: string) => {
+  // Legacy multi-phase wizard. The Mastra workflow now runs all phases in one
+  // go on the server; this stub just advances the UI optimistically and lets
+  // /dashboard/artigos/[postId] render the actual result (or /dashboard/aprovacoes
+  // for HITL gates). Keeping the shape so the parent JSX still compiles.
+  const runPhase = async (phaseToRun: Step, _currentGenerationId: string) => {
     setStep(phaseToRun)
-    try {
-      const res = await fetch("/api/article-agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // Need to pass tenantId. Since this is client, we can grab it from strategies[0] or we should return it from startArticleWizard.
-        // Actually, we can get tenantId from the server action.
-        body: JSON.stringify({
-          generationId: currentGenerationId,
-          tenantId: strategies[0]?.tenant_id || "placeholder", // It's better to return this from the start action
-          phase: phaseToRun
-        })
-      })
-      const data = await res.json()
-      if (!data.success) throw new Error(data.error)
-      
-      return data.result
-    } catch (err: any) {
-      toast.error(`Falha na fase: ${phaseToRun}`, { description: err.message })
-      throw err
-    }
+    return {} as Record<string, unknown>
   }
 
   const handleStart = async () => {
@@ -92,30 +76,26 @@ export function ArticleWizardClient({ strategies }: { strategies: any[] }) {
 
     setIsSubmitting(true)
     try {
-      // 1. Create DB records
-      const res = await startArticleWizard(strategyId || null, {
+      // Trigger the createArticle workflow on the server (Mastra runs all
+      // phases). Redirect to the article detail when done so the user reviews
+      // (or to /dashboard/aprovacoes when operationMode=manual).
+      const res = await startArticleWorkflow(strategyId || null, {
         topic,
         primary_keyword: primaryKeyword,
         tone,
         target_length: targetLength,
-        additional_instructions: instructions
+        additional_instructions: instructions,
       })
 
-      if (res.error) throw new Error(res.error)
-      
-      const genId = res.generationId!
-      setGenerationId(genId)
-      setPostId(res.postId!)
-      
-      // We will need tenantId. We can pull from strategies or the first strategy.
-      // If the user has no strategies, it might crash. The server action uses the auth context.
-      // The API endpoint also uses auth context, but expects tenantId in the body just to be safe.
-      // Let's pass the tenantId from the first strategy.
-      const currentTenantId = strategies[0]?.tenant_id || ""
+      if ("error" in res || !res.success) {
+        throw new Error(("error" in res && res.error) || "Falha ao iniciar workflow.")
+      }
 
-      // 2. Run Research
-      const research = await runPhase("research", genId)
-      setResearchResult(research)
+      const genId = res.generationId
+      setGenerationId(genId)
+      setPostId(res.postId)
+      setStep("research")
+      setResearchResult({})
 
     } catch (error: any) {
       toast.error(error.message)

@@ -2,6 +2,8 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { getAuthContext } from "@/lib/auth-context"
+import { getOptionalAdminSupabaseClient } from "@/lib/supabase/admin"
+import { getServerSupabaseClient } from "@/lib/supabase/server"
 import {
   getStrategyFromDb,
   getStrategyStatsFromDb,
@@ -46,13 +48,19 @@ export default async function StrategyDetailPage({ params, searchParams }: PageP
     )
   }
 
-  const [stats, keywords, topics, postsCount] = await Promise.all([
+  const db = getOptionalAdminSupabaseClient() ?? (await getServerSupabaseClient())
+  const [stats, keywords, topics, postsCount, aiPrefsResult] = await Promise.all([
     getStrategyStatsFromDb(tenant.id, id),
     listKeywordCandidatesForTenant(tenant.id, id),
     listTopicCandidatesForTenant(tenant.id).then((result) =>
       result.filter((topic) => topic.strategy_id === id),
     ),
     countPostsForStrategyFromDb(tenant.id, id),
+    db
+      .from("ai_preferences")
+      .select("model, tone_of_voice")
+      .eq("tenant_id", tenant.id)
+      .maybeSingle<{ model: string | null; tone_of_voice: string | null }>(),
   ])
 
   return (
@@ -64,6 +72,10 @@ export default async function StrategyDetailPage({ params, searchParams }: PageP
       postsCount={postsCount}
       initialTab={query?.tab}
       openSuggestTopics={query?.openSuggest === "1"}
+      tenantAiDefaults={{
+        model: aiPrefsResult.data?.model ?? null,
+        tone_of_voice: aiPrefsResult.data?.tone_of_voice ?? null,
+      }}
     />
   )
 }
