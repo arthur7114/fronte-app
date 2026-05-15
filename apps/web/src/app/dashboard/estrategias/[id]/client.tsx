@@ -43,8 +43,9 @@ import { cn } from "@/lib/utils"
 import type { KeywordItem, Strategy, TopicItem } from "@/lib/strategies"
 import type { StrategyStatsMap } from "../client"
 import { archiveStrategy, duplicateStrategy } from "../actions"
+import { AiConfigPanel } from "./ai-config-panel"
 
-type StrategyTab = "briefing" | "chat" | "keywords" | "topics"
+type StrategyTab = "briefing" | "chat" | "keywords" | "topics" | "ai-config"
 type KeywordCandidate = Tables<"keyword_candidates">
 type TopicCandidate = Tables<"topic_candidates">
 
@@ -137,6 +138,7 @@ interface StrategyDetailClientProps {
   postsCount: number
   initialTab?: string
   openSuggestTopics?: boolean
+  tenantAiDefaults?: { model: string | null; tone_of_voice: string | null }
 }
 
 export function StrategyDetailClient({
@@ -147,11 +149,14 @@ export function StrategyDetailClient({
   postsCount,
   initialTab,
   openSuggestTopics = false,
+  tenantAiDefaults = { model: null, tone_of_voice: null },
 }: StrategyDetailClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [activeTab, setActiveTab] = useState<StrategyTab>(
-    initialTab === "chat" || initialTab === "keywords" || initialTab === "topics" ? initialTab : "briefing",
+    initialTab === "chat" || initialTab === "keywords" || initialTab === "topics" || initialTab === "ai-config"
+      ? initialTab
+      : "briefing",
   )
 
   const keywordItems = useMemo(() => keywords.map(adaptKeyword), [keywords])
@@ -312,6 +317,10 @@ export function StrategyDetailClient({
             Tópicos
             <span className="ml-1 text-xs text-muted-foreground">{topicItems.length}</span>
           </TabsTrigger>
+          <TabsTrigger value="ai-config" className="gap-1.5">
+            <Sparkles className="h-3.5 w-3.5" />
+            Configuração IA
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="briefing" className="m-0">
@@ -341,6 +350,20 @@ export function StrategyDetailClient({
             strategyId={strategy.id}
             strategyName={strategy.name}
             initialSuggestOpen={openSuggestTopics}
+          />
+        </TabsContent>
+
+        <TabsContent value="ai-config" className="m-0">
+          <AiConfigPanel
+            strategyId={strategy.id}
+            defaults={{
+              operation_mode: (strategy as any).operation_mode ?? null,
+              quality_threshold: (strategy as any).quality_threshold ?? null,
+              ai_model_override: (strategy as any).ai_model_override ?? null,
+              tone_override: (strategy as any).tone_override ?? null,
+              audience_override: (strategy as any).audience_override ?? null,
+            }}
+            tenantDefaults={tenantAiDefaults}
           />
         </TabsContent>
 
