@@ -85,25 +85,26 @@ DATAFORSEO_PASSWORD=...
 
 ## Storage
 
-MVP usa **LibSQL** local (`file:./mastra.db`). Funciona para single-instance worker e
-desenvolvimento. Para produção multi-instance, trocar para `@mastra/pg` apontando para
-o Supabase Postgres — Mastra cria automaticamente as tabelas de workflow_runs/snapshots.
+Produção usa **PostgresStore** (`@mastra/pg`) apontando para o Supabase Postgres via
+`DATABASE_URL`. Mastra cria automaticamente as tabelas `mastra_*` na primeira execução.
 
-```ts
-// alternativa em packages/ai/src/mastra/index.ts
-import { PostgresStore } from "@mastra/pg";
-const storage = new PostgresStore({ connectionString: process.env.DATABASE_URL });
-```
+Fallback em ordem:
+1. `MASTRA_STORAGE_URL` (libsql:// ou postgres://) — wins se setada
+2. `DATABASE_URL` (postgres) — usa Supabase Postgres
+3. LibSQL in-memory — apenas para testes / fluxos síncronos curtos
 
-## Migração a partir do código anterior
+## Migração (concluída em 2026-05-15)
 
-- `apps/web/src/lib/article-agent.ts` (runResearchPhase, runStructurePhase, runWritePhase,
-  runReviewPhase) → agora vivem como **steps** do workflow `createArticle`
-- `apps/web/src/app/api/article-agent/route.ts` → continua funcionando como adapter
-  síncrono (mantido durante transição), mas `/api/workflow/start` é o caminho oficial
-- Prompts em `apps/worker/src/prompts.ts` → migrados para `instructions` dos agents
-- Auto-aprovação implícita de brief no worker (`processor.ts` ~linha 560) → **a remover**
-  na próxima iteração quando o worker virar dispatcher de Mastra
+- `apps/worker/` foi **removido**. Todos os jobs (keyword research, topic research,
+  brief, post, publish) viraram workflows Mastra em `packages/ai/src/mastra/workflows/`.
+- `apps/web/src/lib/article-agent.ts` e `/api/article-agent` foram **removidos** —
+  substituídos pelo workflow `createArticleWorkflow` em
+  `packages/ai/src/mastra/workflows/create-article.ts`.
+- Prompts em `apps/worker/src/prompts.ts` foram migrados para `instructions` dos
+  agents Mastra.
+- Tabela `automation_jobs` está deprecada (mantida só para audit histórico).
+  Nenhum código novo escreve nela. Estado de orquestração agora vem do
+  `mastra_workflow_snapshot` que Mastra gerencia automaticamente.
 
 ## Typecheck
 

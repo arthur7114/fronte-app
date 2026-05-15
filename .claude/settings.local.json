@@ -48,7 +48,9 @@
       "Bash(curl -s -X POST \"http://178.18.254.64:3000/api/deploy/a8713a8c1c0d7a9ab4e2817381f884e4d9714f858990d610\")",
       "Bash(wait)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git remote *)",
+      "Bash(git push *)"
     ]
   }
 }
